@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210" height="70" viewBox="36 12 168 56" role="img" aria-label="okfy">
+  <title>okfy</title>
+  <!-- The okfy wordmark: each letter is a node, a filled circle in its node-kind colour
+       (Directory, the blue Concept colour, File, Concept type) with the letter in white,
+       joined by links in the graph link colour. The nodes sit closer together and at
+       slightly uneven heights. Same mark as #brandMark in okfy.html. -->
+  <path d="M60.5 37 L99.5 43 M99.5 43 L140.5 37 M140.5 37 L179.5 43" fill="none" stroke="#6a7488" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="60.5" cy="37" r="16" fill="#8b93a7"/>
+  <circle cx="99.5" cy="43" r="16" fill="#5b8def"/>
+  <circle cx="140.5" cy="37" r="16" fill="#c9a24d"/>
+  <circle cx="179.5" cy="43" r="16" fill="#a274d6"/>
+  <g fill="#ffffff" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="20" text-anchor="middle">
+    <text x="60.5" y="44">o</text>
+    <text x="99.5" y="50">k</text>
+    <text x="140.5" y="44">f</text>
+    <text x="179.5" y="50">y</text>
+  </g>
+</svg>

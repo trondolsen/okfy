@@ -1,0 +1,201 @@
+---
+type: Reference
+title: Assistant
+description: The optional in-page AI agent that answers questions about the loaded bundle and calls internal tools through an LLM provider the user configures.
+tags: [interface, assistant, ai, agent, tools, providers]
+okfx:
+  mode: reference
+  version: praxis/1
+sources:
+  - id: source
+    resource: ../../okfy.html
+    title: okfy.html – the assistant client, tools and panel
+  - id: readme
+    resource: ../../README.md
+    title: okfy – README
+  - id: fetch
+    resource: https://fetch.spec.whatwg.org/
+    title: Fetch Standard
+  - id: streams
+    resource: https://streams.spec.whatwg.org/
+    title: Streams Standard
+  - id: mcp
+    resource: https://modelcontextprotocol.io/specification/2026-07-28
+    title: Model Context Protocol specification
+  - id: deepseek
+    resource: https://api-docs.deepseek.com/
+    title: DeepSeek API documentation
+  - id: mistral
+    resource: https://docs.mistral.ai/api/
+    title: Mistral API documentation
+  - id: azure
+    resource: https://learn.microsoft.com/en-us/azure/ai-services/openai/
+    title: Azure OpenAI documentation
+  - id: llamacpp
+    resource: https://github.com/ggml-org/llama.cpp/tree/master/tools/server
+    title: llama.cpp HTTP server
+  - id: deepseek-models
+    resource: https://api.deepseek.com/models
+    title: DeepSeek – list models
+  - id: mistral-models
+    resource: https://api.mistral.ai/v1/models
+    title: Mistral – list models
+  - id: azure-models
+    resource: https://learn.microsoft.com/en-us/rest/api/azureopenai/models/list?view=rest-azureopenai-2024-10-21
+    title: Azure OpenAI – models list REST API
+  - id: llama-api
+    resource: https://llama.app/docs/api
+    title: llama API documentation
+  - id: agents
+    resource: https://agents.md/
+    title: AGENTS.md – a simple, open format for guiding coding agents
+  - id: autoplay
+    resource: https://www.w3.org/TR/autoplay-detection/
+    title: Autoplay detection
+  - id: webaudio
+    resource: https://www.w3.org/TR/webaudio/
+    title: Web Audio API
+  - id: mistral-tts
+    resource: https://docs.mistral.ai/studio/audio/text_to_speech
+    title: Mistral – text to speech
+  - id: mistral-audio
+    resource: https://docs.mistral.ai/studio/audio/overview
+    title: Mistral – audio overview
+  - id: mistral-speech-api
+    resource: https://docs.mistral.ai/api/endpoint/audio/speech
+    title: Mistral – Audio Speech endpoint
+  - id: mistral-voices
+    resource: https://docs.mistral.ai/studio/audio/text_to_speech/voices
+    title: Mistral – voices
+  - id: mistral-realtime
+    resource: https://docs.mistral.ai/studio/audio/speech_to_text/realtime_transcription
+    title: Mistral – realtime transcription
+  - id: mistral-realtime-auth
+    resource: https://docs.mistral.ai/studio/audio/speech_to_text/realtime_transcription/client_auth
+    title: Mistral – realtime transcription client authentication
+  - id: memgpt
+    resource: https://arxiv.org/abs/2310.08560
+    title: "Pack et al. – MemGPT: Towards LLMs as Operating Systems"
+  - id: amem
+    resource: https://arxiv.org/abs/2502.12110
+    title: "Xu et al. – A-MEM: Agentic Memory for LLM Agents"
+  - id: ctx-eng
+    resource: https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents
+    title: "Anthropic – Effective context engineering for AI agents"
+---
+
+# What it is
+
+The **Assistant** is a panel that lets you chat about the currently loaded bundle. It is enabled by default on a desktop layout and toggled from the **Assistant** button in the toolbar. The agent answers questions, and to ground its answers it calls a small set of read-only tools over the graph the viewer has already loaded — for example searching concepts, reading one concept's Markdown, and listing a concept's incoming and outgoing links.[^source]
+
+The panel is **enabled by default**: on a desktop layout it opens at startup, with the filter panel collapsed beneath it, and the toolbar's **Assistant** button toggles it. Nothing is sent anywhere until you ask a question — or open the model field's picker, which lists the provider's models without asking anything. When you ask, the panel sends your prompt and the concepts the tools return to the LLM provider you configured. See [Assistant data flow](../security/assistant-data-flow.md) for the privacy and network model.
+
+The viewer's own instructions for working inside okfy follow the AGENTS.md convention[^agents] and are exposed as the generated [`.runtime/AGENTS.md`](runtime.md) page, so the file you can read is the file the model is given. They are added to the assistant's system prompt on startup, alongside a short base instruction. The instructions close with an **Output language** section naming the **interface language** as the preferred output language for both the written reply and the spoken commentary, so the assistant answers and speaks in the language the viewer is set to rather than the language of the bundle or the question. That section is generated from the current setting: changing the interface language retargets the instructions, and the open `.runtime/AGENTS.md` page is regenerated in place. Because the earlier turns stay in the prompt and would otherwise anchor the answer, the section says explicitly that the language can change mid-conversation and to switch to the interface language for the rest of the reply rather than keeping the earlier one. The instructions also tell the model to **judge when a request is about the page open in the preview** — a request to mark, highlight or find text, or to jump to a heading, refers to that page rather than the graph — and to open it (or ask which page is meant) before acting, and to **keep track of what it has already done**, not repeating or undoing a prior action unless asked. They also say to treat a request to **narrow the view as additive** — keep the filters already applied and add to them, for example with a search query, rather than clearing the panel — and to clear or replace a filter only when the user asks to reset or moves to an unrelated scope.
+
+The assistant's session statistics are also exposed as the generated [`.runtime/assistant.md`](runtime.md) page: the provider and model (never the key or token), token usage, transcript counts and per-tool call counts. Like the other runtime pages, it regenerates while open.
+
+# The panel
+
+The header carries a **speaker** toggle that turns audio output on or off, and a **microphone** toggle to its right that turns voice input on or off (described under **Voice input** below). When the assistant speaks, its commentary appears in its own bubble — separate from the written answer — marked as active and showing a live **mel-spectrogram** of the audio, while the panel's chat form shows an inline **speaker** — click it to interrupt. The commentary can appear and start as soon as it is ready, before the written answer. While it plays, the bubble shows a **stop symbol** that interrupts it. The active bubble always stays in view, sticking to the top or the bottom edge of the transcript depending on which way you scroll — so new bubbles below, or scrolling by hand, never push it out of range. When the speech ends, or is interrupted, the bubble keeps its rendered spectrogram and the stop symbol becomes a **replay symbol** that plays that clip again. The assistant is docked to the right edge. Opening it closes the filter panel so the assistant owns that edge; the filter panel starts collapsed and can be reopened, docked immediately to the assistant's left. The legend and the deck stay visible, with the deck docking just left of the assistant. Drag the handle on the assistant's left edge to resize it (or focus the handle and use the arrow keys); the width is clamped between 320 px and 90 % of the window and is remembered in the browser. The toolbar and the loading spinner stay clear of the panels. A notice at the top names the host that will receive your prompt, the concepts the tools read and your key; dismiss it with its close button — the dismissal is remembered in this browser for that host, so it stays hidden across reloads — and it comes back if you point the provider at a different host. An always-visible token counter beside the model chip sums the input and output tokens the provider reports for the session: a small ring to its left, showing **context-length usage**, starts empty and fills clockwise from 12 o'clock as the conversation's prompt grows toward the context limit — the context window the selected model reports when its listing provides one, otherwise the built-in prompt budget, and freed again when the conversation is compacted (see the agent loop below) — and its up-arrow fills with output tokens and its down-arrow with input tokens, each against its limit, and the input arrow flashes as the request is sent while the output arrow flashes as the reply arrives; hover it for the breakdown — the token lines, the context length, the request count, and the bytes sent and received in data-size units, each for the session and the last request. A **budget** symbol beside the counter sets a session budget for the input and output tokens together — one-tap presets cover common sessions — and shows the amount once set; the symbol turns to a warning colour, and a new question stops with a notice, once the budget is spent, until you raise or clear it. The budget is remembered in the browser. Links in a reply are navigational: the startup instructions tell the model to link every internal reference, and a bundle link opens the node in the viewer's preview — a directory link enters that directory, a `#tag` link toggles the tag filter — while an external link opens in a new browser tab.[^source]
+
+# Providers
+
+The assistant speaks the OpenAI-compatible chat completions API, so one client covers several providers:[^deepseek][^mistral][^azure][^llamacpp]
+
+| Provider | Base URL | Authentication |
+| --- | --- | --- |
+| DeepSeek | `https://api.deepseek.com` | `Authorization: Bearer` |
+| Mistral | `https://api.mistral.ai/v1` | `Authorization: Bearer` |
+| Azure OpenAI | `https://<resource>.openai.azure.com` | `api-key` header, deployment in the path, `api-version` query |
+| llama.cpp server | `http://localhost:9931/v1` | none, or `Authorization: Bearer` when the server sets `--api-key` |
+| Custom | any OpenAI-compatible base URL | `Authorization: Bearer` |
+
+For Azure, the base URL is the resource endpoint and the **model** field is the deployment name; the client builds `/openai/deployments/<deployment>/chat/completions?api-version=...`.
+
+# Models
+
+The **Model or deployment** field accepts a typed name, and the button inside it opens a searchable list of the chat provider's own models: `GET <base>/models` for the OpenAI-compatible providers (DeepSeek, Mistral, llama.cpp and any custom one), and `GET <base>/openai/models?api-version=...` for Azure.[^deepseek-models][^mistral-models][^azure-models][^llama-api] Type in the list's search box to filter it, then choose a row to set the field. The chat list keeps only models that can do the assistant's job — chat completion with tool calling — dropping any the provider reports as lacking either (an embeddings-only model, or one with `function_calling: false`), while a listing that reports nothing at all is left as is. When a model reports a price per token — for example a custom OpenRouter-style endpoint whose listing carries a `pricing` object — its input/output cost per million tokens is shown on a dimmed second line; a model whose price is not reported shows a dimmed `No cost information` line instead. A further dimmed line reports what the endpoint says about the model's tool calling and the token maximum it reports (`max_output_tokens`, or the context window as a fallback); both are omitted when the provider says nothing. A context window the listing reports (`max_context_length` / `context_length`) is kept as the model's **context length**, which the token counter's ring and its input arrow measure the prompt against, so the ring reflects the model's real window rather than the built-in budget. The listing is fetched only when you open the picker, uses the same configured host and credentials as a chat, and is the only contact made before a question is asked; the answer is bounded, and the picker never overwrites a name you typed. The picker groups the models by provider: the active provider's freshly fetched list, plus, for each configured provider, the models already listed this session and its default model. Choosing a model from another group switches the active provider to it. Selecting a model sets **Max output tokens** to the maximum it reports and bounds the field by it, so a request never asks for more output tokens than the model accepts. The model the next question will use is also shown on a chip below the chat input, which opens the same picker. A separate **audio output model** field opens the same picker, narrowed to its own provider's models that report audio output (OpenRouter's `architecture.output_modalities`, an `input->output` modality with audio on the output side, or an explicit audio-output flag such as `capabilities.audio_speech`); a speech-*input* model is not offered. It has its own provider setup, and the choice is remembered in the browser.
+
+# Settings
+
+Opening **Settings** first shows an **acknowledgement** gate, once per browser (remembered in `localStorage`), before any other control is usable: it explains that okfy is an **agent harness** — it gives the configured model a short, bounded loop of tools that can read the bundle and change what the viewer shows — that the prompt and the concepts those tools read are sent to the provider you configure, and that the model's answers can be wrong while its tool calls act in the viewer on its own initiative. Until you accept it, the pane's other controls stay hidden; **Cancel** closes Settings without accepting. After the exchange, the cogwheel's **Settings** is split into a section per model role plus generation: **Chat model** (the chat provider and base URL, its **Authentication** — mode, key or token, Azure API version and OAuth, plus remembering the key — and the chat model), **Audio output model** (its own provider, base URL, authentication, key, Azure API version, model and **Voice**), **Audio input model** (its own provider, base URL, authentication, key and Azure API version, the model the microphone transcribes with, and the **input device**), and **Generation** (streaming, temperature and maximum output tokens). The provider setups are independent, so audio output, input and the chat can come from different services. Any of them can be a **local** server: a base URL is accepted over `http` on loopback as well as `https` anywhere, and a bind-all address a server prints when it listens on every interface (`0.0.0.0`, or `::`) is normalized to `127.0.0.1` so it is reachable, since a browser cannot connect to the wildcard address itself.[^source] The **audio input model** list offers only the models the provider reports as able to transcribe in real time — the `audio_transcription_realtime` capability — the same models the realtime endpoint accepts;[^mistral-realtime] a batch or text-to-speech model is not offered, since it needs the finished-clip endpoint instead. The field also accepts a typed model id, and the **input device** select lists the host's `audioinput` devices. The maximum output tokens field is bounded by and defaults to the selected chat model's reported maximum, and the hint names it; when your value differs from that maximum, a **Default** link reverts it to the model's value. Opening Settings replaces the chat — the transcript and the input form are hidden while you configure, and come back when you close it. The keys are kept **in memory** unless you tick **Remember the key in this browser**, which stores them in `localStorage`. Responses stream by default, using the response body read as Server-Sent Events;[^fetch][^streams] turning **Stream responses** off waits for the whole reply.
+
+# Audio output
+
+The **speaker** toggle in the panel header turns the assistant's voice on or off. When it is on and an **audio output model** is set, the assistant calls a **`speak`** tool on each reply to comment on its answer aloud through that provider's text-to-speech endpoint — `POST <base>/audio/speech` for the OpenAI-compatible services (including Mistral's Voxtral TTS),[^mistral-tts][^mistral-audio][^mistral-speech-api] or the Azure deployment path with the api-version query. A **Voice** field sets the voice to speak with; its inline button lists the provider's own voices — each row naming the languages that voice speaks, read across every page of the provider's paged voice list and ordered by display name — when the provider offers one (Mistral's `/audio/voices`),[^mistral-voices] and a voice id can also be typed. The field shows the chosen voice by the provider's **display name** (a typed id, or one the provider does not list, is shown as it is), while the id is what is stored and sent. Mistral's Voxtral TTS speaks with a preset or custom voice id (or a reference clip) and requires one, so the id is sent as `voice_id` (and, for OpenAI-compatible servers, as `voice`); when the field is left empty the assistant lists the provider's preset voices once and picks one that speaks the **interface language**. The spoken language follows that language selection: the preset voices name the languages they cover — region-qualified tags such as `en_us` are matched by their primary subtag — so a voice that speaks the interface language is preferred. That coverage is a **recommendation**, not a requirement: the interface language is spoken whatever the voices list, and the per-turn system note tells the model which language to use — naming the interface language and offering **English** as a fallback when the model does not list it — so the commentary is written in it. (Voxtral TTS documents a fixed set — English, French, Spanish, Portuguese, Italian, Dutch, German, Hindi and Arabic.)[^mistral-tts] A voice set in Settings is always used as it is. The reply may be the audio bytes themselves or, as Mistral returns it, base64 audio in a JSON `audio_data` field — both are handled. The text is bounded and fetched in capped chunks; each clip is decoded and played through the **Web Audio API**,[^webaudio] queued after any clip already playing, so speech streams clip by clip. The spoken commentary is shown in its own bubble in the transcript, separate from the written answer, so it can appear and start as soon as it is ready; its bubble is marked as the active one and stays pinned to the top of the transcript while it plays, so later bubbles cannot push it out of view. The bytes are decoded rather than handed to a media element, so speech itself needs no `media-src`; the page's `media-src blob:` is there only for the preview's video player. The browser only allows sound once the page has been interacted with, so the audio context is resumed on a user gesture (opening the panel and asking a question already provides it);[^autoplay] a clip that cannot be decoded is reported rather than silently dropped. While a clip is playing, the bubble being spoken is marked and carries a **rolling mel-spectrogram** of the audio, redrawn live as it plays — time runs left to right, mel frequency runs bottom to top over the 0–8 kHz range where speech detail lives, and each band's loudness shades from the panel's dark blue up to the accent colour — while an inline **speaker** appears in the input prompt; click the speaker to interrupt — the queue clears, the current clip stops, and a clip still being fetched or decoded is dropped, so speech never starts after an interruption. While a clip plays, the bubble shows a **stop symbol** in place of the replay symbol — click it to interrupt — and the active bubble stays in view, sticking to the top or bottom edge of the transcript as you scroll. After the clip ends, or is interrupted, the bubble keeps its rendered spectrogram and the **replay symbol** returns, playing the clip's kept bytes again without contacting the provider. If the model finishes a reply without speaking on its own, the viewer asks once more — a small chat request that forces the `speak` tool and carries only the question and the answer — so a reply is not left silent; that extra request is skipped once the session token budget is spent. The audio provider is contacted only when the model calls `speak`, under the same host, credential and size limits as a chat, and nothing is spoken while the toggle is off.
+
+# Voice input
+
+The **microphone** toggle in the panel header, to the right of the speaker, turns voice input on or off. It is only usable once an **audio input model** is set in Settings — the toggle explains that and stays off otherwise — and turning it on captures the chosen **input device** with `getUserMedia` and starts listening; turning it off, or closing the panel, stops the capture and releases the tracks. The input device is chosen either from the **Input device** select in Settings or from a small selection menu opened by right-clicking the toggle; both read the host's `audioinput` devices through `navigator.mediaDevices.enumerateDevices`. The labels only resolve after the browser has granted the microphone, and before then the host reports anonymous placeholder inputs, not real, selectable devices; both surfaces leave those out, so the select offers only **System default** with a notice to turn the microphone on — closeable with its × for the session — and the menu says the same, rather than listing a placeholder as if it were a device. Turning the microphone on asks for permission once, and the names fill in on both surfaces afterwards. The microphone also needs a secure, top-level context: okfy must be served over http(s) or localhost, so a `file://` page — or an embedding frame without `allow="microphone"` — is refused, and the toggle says precisely why instead of reporting the browser's raw error. When the permission is simply denied, the message points at both places it must be allowed — the operating system's privacy settings and the browser's site permissions for the page.
+
+The audio input model is a separate provider setup, like the audio output one, and its picker lists only the models the provider reports as able to transcribe in real time — the models that carry the `audio_transcription_realtime` capability, the same ones the streaming endpoint accepts.[^mistral-realtime] The viewer speaks the provider's realtime transcription WebSocket: it opens `<base>/audio/transcriptions/realtime?model=<model>` with the model as a query parameter, and one utterance is one session — the socket opens when speech starts and closes when the text is done. A browser cannot set an `Authorization` header on a WebSocket, so the configured key is first exchanged for a short-lived realtime token (`rt_*`) through `POST <base>/client/sessions` with `{purpose:"realtime", model}`; the token is minted for each session, close to when its socket connects, and carried in the socket's subprotocol, so the key itself never reaches the socket and a retired token is never reused.[^mistral-realtime-auth] The audio is streamed as raw PCM — `pcm_s16le`, mono, 16 kHz — captured through the Web Audio API and sent as base64 `input_audio.append` frames; audio captured before the socket is configured is buffered and flushed on connect through an ordered, real-time-paced send queue — a backlog is spaced out at the audio's own rate rather than burst onto the service (whose streaming queue can overflow on a burst), the queue is bounded so a slow connect cannot grow the latency without bound, and the end markers wait for it to drain. When the user stops, the viewer sends `input_audio.flush` and `input_audio.end`, the provider answers with `transcription.text.delta` events and a final `transcription.done`, and a failed session is reported and stops listening rather than retrying on every utterance. A provider-side overload (a streaming queue overflow, or a 429 or 503) is instead reported as a short, actionable notice rather than the service's raw RPC error and is treated as transient: the microphone stays on, held briefly so continued speech cannot open a session on every frame, so the user can simply speak again.
+
+Listening is continuous and local, and the detector is **self-calibrating** so the same code works across microphones and rooms. An **AnalyserNode** over the captured stream is folded frame by frame into a small state machine that decides two things: when the user has started speaking, and when they have finished. The first frames set the room's quiet level from the quietest frame seen, so an utterance that starts while the detector is still measuring cannot teach it its own level; the level is then **kept across utterances**, so the next one opens on its onset rather than re-measuring the room. Afterwards an onset a few times above that level opens a **user bubble** — its own entry in the transcript, marked and **stuck to the top or bottom edge** as you scroll, like the assistant's — and starts a realtime session. The recognised text streams into the bubble as it arrives, and the same analyser drives a **rolling mel-spectrogram** of the input across the bubble from the first frame you speak, the mirror of the spoken one. The most recent audio is kept in a short **pre-roll**, so when the onset fires the words spoken while the detector was still deciding are sent with it and an utterance's first syllables are not clipped. To keep that opening quick, the next session's token is minted while the microphone is idle, so opening a session does not pay a round trip on the click. A sustained quiet after speech (the behavioural end-of-speech detection) ends the session, with a long utterance capped so a stuck microphone cannot listen forever, and the spectrogram is frozen into the bubble so it stays in the transcript. Because the threshold follows the learned floor rather than a fixed level, a soft voice in a quiet room still fires while a steady hum does not, and the floor is only tracked from frames below the onset, so speech never raises the threshold meant to detect it. An utterance shorter than a third of a second is discarded rather than transcribed, so a cough, click or pop — which the held onset also rejects — does not fire a request. The finished text is sent as the question — the same turn a typed message runs. The viewer keeps folding frames while the assistant speaks, so the user can **talk over the reply**: the detector then needs a louder, longer onset, which keeps the assistant's own voice from triggering it, and the moment the user's speech is detected the assistant's speech stops and its queue clears — the utterance is then transcribed as usual. Frames are folded throughout the turn, so the user can also speak while the assistant is only thinking, calling tools or writing its reply; the question it recognises is held and asked once that turn ends — placed after that turn's own messages so the transcript the model reads ends with the question rather than the reply it interrupted — rather than being dropped.
+
+# Tools
+
+The tools are shaped like Model Context Protocol tools — each has a `name`, a `description` and a JSON Schema `inputSchema` — but they run **in-process**: there is no MCP client and no external tool server is contacted.[^mcp] The read tools inspect the loaded graph; the deck tools change the deck panel (see [Declared decks](declared-decks.md) and [Build a deck of cards](deck.md)); the scene tools drive the viewer itself — the filter panel, the graph's focus, the open page and the legend. The mutating tools take an array, so several changes apply in one call. The tool array is **constant for the whole session**: `speak` is always offered and decides at call time whether audio output is on, so the prompt prefix that carries the tools stays cacheable across turns. The full-page deck reading view is the **user's** to leave: while it is open, the scene tools decline to close it, to step out of it or to open a page outside the deck, and the deck being read is **locked** — the deck tools (`create_decks`, `add_to_decks`, `remove_from_decks`, `delete_decks`, `set_active_deck`) decline, since a change would rebuild the stream under the reader.
+
+| Tool | Purpose |
+| --- | --- |
+| `search_concepts` | Search concepts by free text over title, description, tags and path. |
+| `read_concept` | Peek at one concept by path; returns frontmatter only, or the Markdown body with `full: true`. |
+| `list_neighbors` | List the concepts a concept links to and the concepts that link to it. |
+| `list_facets` | List kinds, concept types, tags and statuses with counts. |
+| `graph_overview` | Summarize file, link and concept counts and the top hub concepts. |
+| `open_concept` | Open a concept in the viewer's preview panel. |
+| `list_decks` | List the decks and the concept paths each one holds. |
+| `create_decks` | Create one or more decks, each optionally named and pre-filled with concept paths. |
+| `add_to_decks` | Add several concepts to decks in one call (the active deck by default), each item naming a deck and a path. |
+| `remove_from_decks` | Remove several pages from decks in one call (the active deck by default). |
+| `delete_decks` | Delete one or more decks by name in one call. |
+| `set_active_deck` | Make a deck the active one the viewer shows. |
+| `viewer_filters` | Read, list, change or clear the filter panel: `read` returns its state, `list` the values the bundle can be filtered by, `set` applies the search query and field, an `ops` array of per-facet include/exclude (or `clear`), and Tags/Labels, and `clear` empties the search and every facet (optionally the legend too). Each `ops` `include` or `exclude` **replaces** that facet and `clear` empties it, so narrowing a view means reading the state first and keeping the values that are already set. |
+| `viewer_legends` | `list` the legend's groups with their counts and selection state, or `set` the selection (select, unselect or clear groups in one call). |
+| `viewer_directory` | Move the graph into a directory, or back to the root. |
+| `viewer_tag` | Filter the graph to a tag, either including, excluding or toggling it. |
+| `viewer_preview` | Drive the preview panel: `history` lists the pages and the current position, `back`/`forward` step through them, `close` closes the open page. |
+| `viewer_highlight` | Highlight text and headings on the open page. A `texts` string may be a phrase or a whole paragraph: matching spans bold, links and code and tolerates reflowed whitespace and Markdown markers, and each match is marked with a single ● badge at its top-right tinted with the page's node colour; optionally scroll to the first match. |
+| `viewer_scroll` | Scroll the open page to a heading matched by its text. |
+| `viewer_selection` | Read the text the user has selected on the open page. |
+| `speak` | Comment on the answer aloud through the audio output model; it is always offered and does nothing while audio output is off. |
+
+The agent loop is bounded: it runs at most a fixed number of tool steps per question, trims the prompt and each tool result to a character cap, and stops after a request timeout. When the step cap is reached the turn does not end on an error: the model gets one more request with the tools withheld, so it closes with an answer about what it found. Every tool call's reply is reserved in the same step as the call, and a tool that fails still answers its call, so a message that arrives while a tool runs — the microphone can open a user bubble mid-turn — can never split a tool-call message from its replies, which providers require them to follow. A reply from a **thinking-mode** model rides back with the trace that produced it: the reasoning is kept with any tool call — including the commentary call the viewer forces when a reply would otherwise be silent — and sent on the next request, which those providers require and which is never shown as the answer. The field is present on **every** tool-call message: a call a provider answers without a trace (the forced commentary call, say) is sent back with an empty one rather than with the field omitted, which thinking-mode providers reject with an HTTP 400. To keep a long session from growing without bound, the replayed history is **trimmed**: every tool call keeps its reply, but only the most recent few tool results are sent in full — older ones are shortened to a leading excerpt, never dropped to a placeholder, so the assistant can still recall what it did — and reasoning from older tool-call rounds is shortened, while the most recent round's reasoning is kept whole so a thinking-mode model can continue it. When the prompt still nears the model's **context length**, the conversation is **compacted**: the viewer asks the model once for a short summary of the older turns, replays only the most recent turns verbatim, and carries the summary as a system message, marking the point with a notice in the transcript; the summary request's own tokens count toward the session total but not toward the per-request readings.[^memgpt][^amem][^ctx-eng] The bundle is treated as untrusted input: the system prompt tells the model to treat concept text and tool results as data and never as instructions, so a hostile concept cannot redirect the agent.[^source]
+
+# Disabling the assistant
+
+The assistant is optional and can be switched off entirely at build time. **`ASSISTANT_ENABLED`** is a constant near the top of `okfy.html`; set it to `false` and the viewer ships without the assistant. There is no URL parameter for it — it is set in the file. With the flag off, the assistant's toolbar button and its panel are removed at startup and the assistant never initialises, so no part of it appears in the interface; the rest of the viewer, including the `.runtime` pages, is unaffected.[^source]
+
+# Connections
+
+- [Interface](index.md)
+- [Assistant data flow](../security/assistant-data-flow.md)
+- [Runtime directory](runtime.md)
+- [Limits and budgets](../security/limits-and-budgets.md)
+- [Local processing](../principles/local-processing.md)
+- [Untrusted bundles](../principles/untrusted-bundles.md)
+
+[^source]: `okfy.html`, the assistant section: provider presets, the request client, the tool list and the panel.
+[^deepseek]: DeepSeek API documentation, "Invoke The Chat API".
+[^mistral]: Mistral API documentation.
+[^azure]: Azure OpenAI documentation.
+[^llamacpp]: llama.cpp HTTP server, "OpenAI-compatible API Endpoints".
+[^fetch]: Fetch Standard.
+[^streams]: Streams Standard.
+[^mcp]: Model Context Protocol specification, "Architecture" and "Security and Trust & Safety".
+[^deepseek-models]: DeepSeek API documentation, "Lists the currently available models".
+[^mistral-models]: Mistral API documentation, "List Models".
+[^azure-models]: Azure OpenAI REST API, "Models – List".
+[^llama-api]: llama API documentation, "models".
+[^agents]: AGENTS.md, a simple, open format for guiding coding agents.
+[^webaudio]: Web Audio API.
+[^mistral-tts]: Mistral, "Text to speech".
+[^mistral-audio]: Mistral, "Audio overview".
+[^mistral-speech-api]: Mistral API reference, "Audio Speech – POST /v1/audio/speech".
+[^mistral-voices]: Mistral, "Voices" – text-to-speech voice management.
+[^mistral-realtime]: Mistral, "Realtime" transcription.
+[^mistral-realtime-auth]: Mistral, "Realtime transcription – client authentication".
+[^memgpt]: Pack et al., "MemGPT: Towards LLMs as Operating Systems".
+[^amem]: Xu et al., "A-MEM: Agentic Memory for LLM Agents".
+[^ctx-eng]: Anthropic, "Effective context engineering for AI agents".
+[^autoplay]: Autoplay detection.

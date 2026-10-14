@@ -1,0 +1,19 @@
+{
+  "name": "okfy-tests",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "test": "playwright test --config playwright.config.cjs",
+    "test:unit": "node --test unit/security.test.cjs unit/serve.test.mjs",
+    "test:server": "node --test unit/serve.test.mjs",
+    "test:security": "node --test unit/security.test.cjs",
+    "screenshot": "node scripts/screenshot.mjs",
+    "serve": "node support/serve.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

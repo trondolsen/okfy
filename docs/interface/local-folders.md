@@ -1,0 +1,45 @@
+---
+type: Workflow
+title: Open a local folder
+description: Steps to browse a bundle from disk with the folder picker or drag-and-drop.
+tags: [workflow, local, file-system-access, how-to]
+okfx:
+  mode: how-to
+  version: praxis/1
+sources:
+  - id: readme
+    resource: ../../README.md
+    title: okfy – README
+  - id: source
+    resource: ../../okfy.html
+    title: okfy.html – pickFolder, fromDataTransfer
+---
+
+# Goal
+
+Browse a bundle stored on your own machine, without a web server.[^readme]
+
+# Steps
+
+1. Copy `okfy.html` into the folder you want to browse, or open the HTML file directly.
+2. Open the HTML file in a browser.
+3. Choose **Open folder…** and select the bundle directory, **or** drag the folder onto the window.
+
+# What happens
+
+The tool reads the Markdown files and shows one level at a time: `?depth=N` keeps deeper files hidden but available, and clicking a dashed node reveals the next level. Attachments and non-Markdown files appear as nodes and are read only when opened.[^source]
+
+# Notes
+
+- The folder picker uses the File System Access API when the browser provides it, and falls back to a directory file input otherwise.
+- Directories whose name starts with `.` are skipped, and the read is bounded by the same file, byte and depth limits as server loading.
+- On `file://`, auto-load is impossible; opening a folder is the intended path. The viewer starts on the About panel, so dismiss it by clicking outside or use the toolbar's **Open folder…** control.[^readme]
+
+# Connections
+
+- [URL parameters](url-parameters.md)
+- [Limits and budgets](../security/limits-and-budgets.md)
+- [Crawling](../algorithms/crawling.md)
+
+[^readme]: Project README, "In local web-browser".
+[^source]: `pickFolder` and `fromDataTransfer` in the tool source.
