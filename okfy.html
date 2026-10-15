@@ -673,7 +673,7 @@
   #asProvHead { padding: 0 0 6px; }
   #asProvHead[hidden], #asProvFields[hidden], #asProvButtons[hidden] { display: none; }
   .as-provset-name { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--text); }
-  .as-provkinds { display: block; max-height: 150px; overflow: auto; margin: 0 0 6px; }
+  .as-provkinds { display: block; margin: 0 0 6px; }
   .as-provkinds[hidden] { display: none; }
   .as-provremove { color: var(--muted); }
   .as-provremove:hover { color: var(--text); }
@@ -15976,10 +15976,11 @@
   }
   // The setup's controls follow its step: the kind list while a provider is being picked, then the
   // options — with Add, or Update and Remove for a configured provider. The picking step keeps no
-  // buttons at all, so the row is the only control there.
+  // heading and no buttons at all, so the row is the only control there, and a configured
+  // provider's own row already names it, so its setup carries no heading either.
   function asProvSyncDialog() {
     var editing = !!asCfg.providers[asProvEdit];
-    if (asEls.provHead) asEls.provHead.hidden = !asProvEdit;
+    if (asEls.provHead) asEls.provHead.hidden = !asProvEdit || editing;
     if (asEls.provList) asEls.provList.hidden = !!asProvEdit;
     if (asEls.provFields) asEls.provFields.hidden = !asProvEdit;
     if (asEls.provButtons) asEls.provButtons.hidden = !asProvEdit;

@@ -417,6 +417,7 @@ test('leverandører legges til én gang, settes opp i raden sin og kan fjernes',
   await page.evaluate(() => document.querySelector('#asProvConfigured [data-provider="llamacpp"] [data-act="configure"]').click());
   await expect(page.locator('#asProvConfigured [data-provider="llamacpp"].open #asProvPanel')).toBeVisible();
   await expect(page.locator('#asProvList')).toBeHidden();
+  await expect(page.locator('#asProvHead')).toBeHidden();   // the row above already names it
   await expect(page.locator('#asProvDisplay')).toHaveValue('Local llama');
   await expect(page.locator('#asProvSave')).toHaveText('Update');
   await expect(page.locator('#asProvRemove')).toBeVisible();
