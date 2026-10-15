@@ -208,11 +208,11 @@ test('husker at varselnotisen er avvist for en vert', async ({ page }) => {
   // The dismissal is remembered for this host across a reload.
   await loadBundle(page);
   await expect(page.locator('#asWarn')).toBeHidden();
-  // Pointing at a different host warns again.
+  // Pointing at a different host warns again — adopting a new provider changes the chat host.
   await page.evaluate(() => {
-    const base = document.getElementById('asBase');
-    base.value = 'https://api.mistral.ai/v1';
-    base.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="mistral"]').click();
+    document.getElementById('asProvSave').click();
   });
   await expect(page.locator('#asWarn')).toBeVisible();
   await expect(page.locator('#asWarnText')).toContainText('api.mistral.ai');
@@ -250,11 +250,11 @@ test('velger en lydutgangsmodell fra modellene som støtter det', async ({ page 
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
-  // The audio output model has its own provider; point it at the keyless local one.
+  // Add the keyless local provider; the model roles that have no provider of their own adopt it.
   await page.evaluate(() => {
-    const p = document.getElementById('asAudioProvider');
-    p.value = 'llamacpp';
-    p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
   });
   await page.route('**/v1/models', route => route.fulfill({
     status: 200, contentType: 'application/json',
@@ -272,27 +272,22 @@ test('velger en lydutgangsmodell fra modellene som støtter det', async ({ page 
   await page.evaluate(() => document.querySelector('#asModelList .as-model-row').click());
   await expect(page.locator('#asModelMenu')).toBeHidden();
   await expect.poll(async () => page.evaluate(() => document.getElementById('asAudioModel').value)).toBe('audio-model');
-  // The chat model and its provider are untouched.
-  await expect.poll(async () => page.evaluate(() => document.getElementById('asModel').value)).toBe('deepseek-flash');
+  // Adopting the provider cleared the chat model with it: the local preset names no chat model.
+  await expect.poll(async () => page.evaluate(() => document.getElementById('asModel').value)).toBe('');
 });
 
-test('en lokal lydleverandør med bind-adressen 0.0.0.0 normaliseres til loopback', async ({ page }) => {
+test('en lokal leverandør med bind-adressen 0.0.0.0 normaliseres til loopback', async ({ page }) => {
   // A local server is often configured with the address it printed when it bound — 0.0.0.0 — which
   // a browser cannot connect to. It is accepted and rewritten to 127.0.0.1, so the model list loads.
+  // The provider setup is shared, so the config is seeded the way the popup's editor would store it.
+  await page.addInitScript(() => { try { localStorage.setItem('okfy.assistant', JSON.stringify({
+    provider: 'llamacpp', model: '',
+    providers: { llamacpp: { base: 'http://0.0.0.0:8004/v1', auth: 'none', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { model: '' }
+  })); } catch (e) {} });
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
-  await page.evaluate(() => {
-    const p = document.getElementById('asAudioProvider');
-    p.value = 'llamacpp';
-    p.dispatchEvent(new Event('change'));
-    const b = document.getElementById('asAudioBase');
-    b.value = 'http://0.0.0.0:8004/v1';
-    b.dispatchEvent(new Event('change'));
-    const m = document.getElementById('asAudioModel');
-    m.value = '';
-    m.dispatchEvent(new Event('change'));
-  });
   let requested = '';
   await page.route('**/models', route => {
     requested = route.request().url();
@@ -304,23 +299,27 @@ test('en lokal lydleverandør med bind-adressen 0.0.0.0 normaliseres til loopbac
   await page.evaluate(() => document.getElementById('asAudioOpen').click());
   await expect(page.locator('#asModelList .as-model-row')).toHaveCount(1);
   await expect(page.locator('#asModelList .as-model-row')).toHaveAttribute('data-id', 'audio-model');
-  // The bind-all address reached the provider as loopback; the field keeps what the user typed.
+  // The bind-all address reached the provider as loopback; its inline setup keeps what was stored.
   expect(requested).toContain('127.0.0.1:8004');
-  await expect.poll(async () => page.evaluate(() => document.getElementById('asAudioBase').value)).toBe('http://0.0.0.0:8004/v1');
+  await expect(page.locator('#asProvConfigured [data-provider="llamacpp"]')).toHaveCount(1);
+  await page.evaluate(() => document.querySelector('#asProvConfigured [data-provider="llamacpp"] [data-act="configure"]').click());
+  // The setup opens inline in the listing, with no provider kind list.
+  await expect(page.locator('#asProvConfigured #asProvPanel')).toBeVisible();
+  await expect(page.locator('#asProvList')).toBeHidden();
+  await expect(page.locator('#asBase')).toHaveValue('http://0.0.0.0:8004/v1');
 });
 
 test('velger en stemme fra stemmene leverandøren oppgir', async ({ page }) => {
+  // The audio provider's shared setup carries the key the voices endpoint needs; it is seeded the
+  // way the popup's provider editor would store it.
+  await page.addInitScript(() => { try { localStorage.setItem('okfy.assistant', JSON.stringify({
+    provider: 'mistral', model: '',
+    providers: { mistral: { base: 'https://api.mistral.ai/v1', auth: 'bearer', key: 'k', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { model: '' }
+  })); } catch (e) {} });
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
-  await page.evaluate(() => {
-    const p = document.getElementById('asAudioProvider');
-    p.value = 'mistral';
-    p.dispatchEvent(new Event('change'));
-    const k = document.getElementById('asAudioKey');
-    k.value = 'k';
-    k.dispatchEvent(new Event('change'));
-  });
   await page.route('**/audio/voices**', route => route.fulfill({
     status: 200, contentType: 'application/json',
     body: JSON.stringify({ items: [
@@ -350,6 +349,107 @@ test('velger en stemme fra stemmene leverandøren oppgir', async ({ page }) => {
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('okfy.assistant')).audio.voice)).toBe('voice-fr');
 });
 
+test('leverandører legges til én gang, settes opp i raden sin og kan fjernes', async ({ page }) => {
+  await loadBundle(page);
+  await expect(page.locator('#assistant')).toBeVisible();
+  await page.evaluate(() => document.getElementById('asSettingsBtn').click());
+
+  // DeepSeek is configured by default. A row is inert — only its gearwheel acts.
+  await expect(page.locator('#asProvConfigured [data-provider="deepseek"]')).toHaveCount(1);
+  await expect(page.locator('#asProvConfigured [data-provider="deepseek"] .as-provrow-btn')).toHaveCount(1);
+
+  // The add symbol opens the provider kind list inside its own dashed row, and goes with it.
+  await page.evaluate(() => document.getElementById('asProvider').click());
+  await expect(page.locator('#asProvConfigured .as-provaddrow.open #asProvPanel')).toBeVisible();
+  await expect(page.locator('#asProvider')).toBeHidden();
+  await expect(page.locator('#asProvList')).toBeVisible();
+  await expect(page.locator('#asProvList [data-kind]')).toHaveCount(5);
+  await expect(page.locator('#asProvList [data-kind="deepseek"]')).toBeDisabled();
+  await expect(page.locator('#asProvList [data-kind="llamacpp"]')).toBeEnabled();
+  // The picking step keeps no heading, no options and no buttons at all.
+  await expect(page.locator('#asProvHead')).toBeHidden();
+  await expect(page.locator('#asProvFields')).toBeHidden();
+  await expect(page.locator('#asProvButtons')).toBeHidden();
+
+  // Picking a provider replaces the kind list with its options, in the same row.
+  await page.evaluate(() => document.querySelector('#asProvList [data-kind="llamacpp"]').click());
+  await expect(page.locator('#asProvList')).toBeHidden();
+  await expect(page.locator('#asProvHead')).toBeVisible();
+  await expect(page.locator('#asProvFields')).toBeVisible();
+  await expect(page.locator('#asProvButtons')).toBeVisible();
+  await expect(page.locator('#asProvName')).toHaveText('llama.cpp (local)');
+  await expect(page.locator('#asBase')).toHaveValue('http://localhost:9931/v1');
+  await expect(page.locator('#asProvSave')).toHaveText('Add');
+  await expect(page.locator('#asProvRemove')).toBeHidden();
+  // It is not added until Add.
+  await expect(page.locator('#asProvConfigured [data-provider="llamacpp"]')).toHaveCount(0);
+
+  // Add commits the setup, names it, and closes the row.
+  await page.evaluate(() => {
+    document.getElementById('asProvDisplay').value = 'Local llama';
+    document.getElementById('asProvSave').click();
+  });
+  await expect(page.locator('#asProvPanel')).toBeHidden();
+  await expect(page.locator('#asProvider')).toBeVisible();
+  await expect(page.locator('#asProvConfigured [data-provider="llamacpp"] .as-provrow-name')).toHaveText('Local llama');
+  await expect(page.locator('#asProvConfigured [data-provider="llamacpp"] .as-provrow-detail')).toContainText('localhost:9931');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('okfy.assistant')).modelProvider)).toBe('llamacpp');
+
+  // Adding it again is refused — the kind listing greys it out — and a press outside closes it.
+  await page.evaluate(() => document.getElementById('asProvider').click());
+  await expect(page.locator('#asProvList [data-kind="llamacpp"]')).toBeDisabled();
+  await page.locator('#assistant .as-head span').first().click();
+  await expect(page.locator('#asProvPanel')).toBeHidden();
+  await expect(page.locator('#asProvider')).toBeVisible();
+
+  // Cancel closes the options step too, leaving nothing added.
+  await page.evaluate(() => {
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="azure"]').click();
+  });
+  await expect(page.locator('#asProvButtons')).toBeVisible();
+  await page.evaluate(() => document.getElementById('asProvCancel').click());
+  await expect(page.locator('#asProvPanel')).toBeHidden();
+  await expect(page.locator('#asProvConfigured [data-provider="azure"]')).toHaveCount(0);
+
+  // The gearwheel opens a configured provider's options inside its own row, without the kind list,
+  // and a press outside leaves it alone.
+  await page.evaluate(() => document.querySelector('#asProvConfigured [data-provider="llamacpp"] [data-act="configure"]').click());
+  await expect(page.locator('#asProvConfigured [data-provider="llamacpp"].open #asProvPanel')).toBeVisible();
+  await expect(page.locator('#asProvList')).toBeHidden();
+  await expect(page.locator('#asProvDisplay')).toHaveValue('Local llama');
+  await expect(page.locator('#asProvSave')).toHaveText('Update');
+  await expect(page.locator('#asProvRemove')).toBeVisible();
+  await page.locator('#assistant .as-head span').first().click();
+  await expect(page.locator('#asProvPanel')).toBeVisible();
+
+  // Editing the base URL updates the listing's details, and Update closes it.
+  await page.evaluate(() => {
+    const b = document.getElementById('asBase');
+    b.value = 'http://localhost:8004/v1';
+    b.dispatchEvent(new Event('change'));
+  });
+  await expect(page.locator('#asProvConfigured [data-provider="llamacpp"] .as-provrow-detail')).toContainText('localhost:8004');
+  await page.evaluate(() => document.getElementById('asProvSave').click());
+  await expect(page.locator('#asProvPanel')).toBeHidden();
+  // The gearwheel toggles the options closed for the provider it is already showing.
+  await page.evaluate(() => document.querySelector('#asProvConfigured [data-provider="llamacpp"] [data-act="configure"]').click());
+  await expect(page.locator('#asProvPanel')).toBeVisible();
+  await page.evaluate(() => document.querySelector('#asProvConfigured [data-provider="llamacpp"] [data-act="configure"]').click());
+  await expect(page.locator('#asProvPanel')).toBeHidden();
+
+  // Remove deletes it, and the model roles that used it fall back.
+  await page.evaluate(() => document.querySelector('#asProvConfigured [data-provider="llamacpp"] [data-act="configure"]').click());
+  await page.evaluate(() => document.getElementById('asProvRemove').click());
+  await expect(page.locator('#asProvConfigured [data-provider="llamacpp"]')).toHaveCount(0);
+  await expect(page.locator('#asProvPanel')).toBeHidden();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('okfy.assistant')).modelProvider)).toBe('');
+  expect(await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okfy.assistant')).providers))).toEqual(['deepseek']);
+  // And it can be added again afterwards.
+  await page.evaluate(() => document.getElementById('asProvider').click());
+  await expect(page.locator('#asProvList [data-kind="llamacpp"]')).toBeEnabled();
+});
+
 test('assistenten snakker svaret og kan avbrytes', async ({ page }) => {
   // A stand-in Web Audio API: decoding succeeds and playback never ends, so the speaking
   // indicator stays up until it is interrupted.
@@ -368,12 +468,9 @@ test('assistenten snakker svaret og kan avbrytes', async ({ page }) => {
   // Point both providers at the keyless local one; give the audio setup a model.
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider');
-    p.value = 'llamacpp';
-    p.dispatchEvent(new Event('change'));
-    const a = document.getElementById('asAudioProvider');
-    a.value = 'llamacpp';
-    a.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const m = document.getElementById('asAudioModel');
     m.value = 'tts';
     m.dispatchEvent(new Event('change'));
@@ -467,12 +564,9 @@ test('avbrytelse mens klippet dekodes spiller ikke av lyden', async ({ page }) =
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider');
-    p.value = 'llamacpp';
-    p.dispatchEvent(new Event('change'));
-    const a = document.getElementById('asAudioProvider');
-    a.value = 'llamacpp';
-    a.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const m = document.getElementById('asAudioModel');
     m.value = 'tts';
     m.dispatchEvent(new Event('change'));
@@ -530,12 +624,9 @@ test('assistenten anbefaler grensesnittspråket når modellen ikke lister det', 
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider');
-    p.value = 'llamacpp';
-    p.dispatchEvent(new Event('change'));
-    const a = document.getElementById('asAudioProvider');
-    a.value = 'llamacpp';
-    a.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const m = document.getElementById('asAudioModel');
     m.value = 'tts';
     m.dispatchEvent(new Event('change'));
@@ -597,8 +688,9 @@ test('sender tenkningen tilbake med det påtvungne speak-kallet', async ({ page 
   await loadBundle(page);
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
-    const a = document.getElementById('asAudioProvider'); a.value = 'llamacpp'; a.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const m = document.getElementById('asAudioModel'); m.value = 'tts'; m.dispatchEvent(new Event('change'));
     const v = document.getElementById('asAudioVoice'); v.value = 'v1'; v.dispatchEvent(new Event('change'));
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
@@ -646,8 +738,9 @@ test('et påtvunget speak-kall uten tenkning beholder reasoning_content-feltet',
   await loadBundle(page);
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
-    const a = document.getElementById('asAudioProvider'); a.value = 'llamacpp'; a.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const m = document.getElementById('asAudioModel'); m.value = 'tts'; m.dispatchEvent(new Event('change'));
     const v = document.getElementById('asAudioVoice'); v.value = 'v1'; v.dispatchEvent(new Event('change'));
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
@@ -683,7 +776,9 @@ test('assistenten styrer filterpanelet og oversikten', async ({ page }) => {
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -707,12 +802,52 @@ test('assistenten styrer filterpanelet og oversikten', async ({ page }) => {
   await expect(page.locator('#legendBody .lg.sel')).toContainText('Guide');
 });
 
+test('search_concepts søker med filterpanelets parametere uten å endre panelet', async ({ page }) => {
+  await loadBundle(page);
+  await expect(page.locator('#assistant')).toBeVisible();
+  await page.evaluate(() => document.getElementById('asSettingsBtn').click());
+  await page.evaluate(() => {
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
+    const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
+  });
+  await page.evaluate(() => document.getElementById('asSettingsBtn').click());
+
+  const bodies = [];
+  let turn = 0;
+  await page.route('**/v1/chat/completions', route => {
+    bodies.push(route.request().postDataJSON());
+    turn++;
+    const message = turn === 1
+      ? { role: 'assistant', content: '', tool_calls: [
+          { id: 's1', type: 'function', function: { name: 'search_concepts', arguments: JSON.stringify({ query: 'referansekonsept', field: 'description', types: { include: ['Reference'] } }) } },
+          { id: 's2', type: 'function', function: { name: 'search_concepts', arguments: JSON.stringify({ tags: { include: ['testing/reference'] } }) } }
+        ] }
+      : { role: 'assistant', content: 'Funnet.' };
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ choices: [{ message }] }) });
+  });
+
+  await page.evaluate(() => { document.getElementById('asInput').value = 'Hva sier referansen?'; document.getElementById('asSend').click(); });
+  // The tool results carry the concepts the panel's parameters select - a field-scoped query with a
+  // type facet, then a tag facet alone - and neither call touches the panel or the view.
+  const searchResults = () => (bodies[1] ? bodies[1].messages.filter(m => m.role === 'tool' && m.name === 'search_concepts') : []);
+  await expect.poll(async () => searchResults().length).toBe(2);
+  expect(JSON.parse(searchResults()[0].content).results.map(r => r.path)).toEqual(['nested/reference.md']);
+  const byTag = JSON.parse(searchResults()[1].content);
+  expect(byTag.results.map(r => r.path)).toEqual(['nested/reference.md']);
+  expect(byTag.filter.tags).toEqual({ include: ['testing/reference'], exclude: [] });
+  await expect(page.locator('#search')).toHaveValue('');
+});
+
 test('assistenten markerer, leser og lukker forhåndsvisningen', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -783,7 +918,9 @@ test('assistenten navigerer forhåndsvisningens historikk', async ({ page }) => 
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -832,7 +969,9 @@ test('tokenbruk-popupen viser bytes sendt og mottatt', async ({ page }) => {
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -861,7 +1000,9 @@ test('komprimerer konteksten når den nærmer seg vindusgrensen', async ({ page 
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -899,9 +1040,9 @@ test('assistenten avslutter med et svar når verktøystegene er brukt opp', asyn
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider');
-    p.value = 'llamacpp';
-    p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const s = document.getElementById('asStream');
     s.checked = false;
     s.dispatchEvent(new Event('change'));
@@ -934,9 +1075,9 @@ test('assistenten sender tenkningen tilbake med verktøykallet', async ({ page }
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider');
-    p.value = 'llamacpp';
-    p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const s = document.getElementById('asStream');
     s.checked = false;
     s.dispatchEvent(new Event('change'));
@@ -977,8 +1118,9 @@ test('assistenten får kommentar selv når modellen glemmer å snakke', async ({
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
-    const a = document.getElementById('asAudioProvider'); a.value = 'llamacpp'; a.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const m = document.getElementById('asAudioModel'); m.value = 'tts'; m.dispatchEvent(new Event('change'));
     const v = document.getElementById('asAudioVoice'); v.value = 'voice-1'; v.dispatchEvent(new Event('change'));
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
@@ -1153,9 +1295,9 @@ test('assistenten henter og søker i modellisten fra leverandøren', async ({ pa
   await expect(page.locator('body')).toHaveClass(/\bas-settings-open\b/);
   // Point at a keyless local provider so no real host is contacted, and stub its list.
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider');
-    p.value = 'llamacpp';
-    p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
   });
   await page.route('**/v1/models', route => route.fulfill({
     status: 200, contentType: 'application/json',
@@ -1168,10 +1310,10 @@ test('assistenten henter og søker i modellisten fra leverandøren', async ({ pa
   // The inline button in the model field fetches and opens the list.
   await page.evaluate(() => document.getElementById('asModelOpen').click());
   await expect(page.locator('#asModelMenu')).toBeVisible();
-  await expect(page.locator('#asModelList .as-model-row')).toHaveCount(5);
+  await expect(page.locator('#asModelList .as-model-row')).toHaveCount(4);
   await expect(page.locator('#asModel')).toHaveValue('llama-3.2-1b');
-  // Models are grouped by provider: the active one plus each configured preset.
-  await expect(page.locator('#asModelList .as-model-group')).toHaveCount(3);
+  // Models are grouped by provider: the configured default plus the one just added.
+  await expect(page.locator('#asModelList .as-model-group')).toHaveCount(2);
   await expect(page.locator('#asModelList .as-model-group').first()).toHaveText('DeepSeek');
   await expect(page.locator('#asModelList .as-model-row[data-provider="llamacpp"]')).toHaveCount(3);
   // A price the endpoint reports is shown dimmed on the model's next line.
@@ -1194,7 +1336,7 @@ test('assistenten henter og søker i modellisten fra leverandøren', async ({ pa
   await expect(page.locator('#asModelBtnLabel')).toHaveText('qwen2.5-7b');
   await page.evaluate(() => document.getElementById('asModelBtn').click());
   await expect(page.locator('#asModelMenu')).toBeVisible();
-  await expect(page.locator('#asModelList .as-model-row')).toHaveCount(5);
+  await expect(page.locator('#asModelList .as-model-row')).toHaveCount(4);
 });
 
 test('modellisten viser verktøystøtte og setter maks output-tokens fra modellen', async ({ page }) => {
@@ -1204,9 +1346,9 @@ test('modellisten viser verktøystøtte og setter maks output-tokens fra modelle
   await expect(page.locator('body')).toHaveClass(/\bas-settings-open\b/);
   // Point at a keyless local provider and stub its list with tool and context metadata.
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider');
-    p.value = 'llamacpp';
-    p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
   });
   await page.route('**/v1/models', route => route.fulfill({
     status: 200, contentType: 'application/json',
@@ -1843,7 +1985,9 @@ test('assistenten kan ikke lukke eller endre fullskjermlesingen', async ({ page 
   // Give the assistant a keyless local provider before reading covers the panel.
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -1875,7 +2019,9 @@ test('assistenten markerer et avsnitt på tvers av innebygd formatering', async 
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click();
+    document.querySelector('#asProvList [data-kind="llamacpp"]').click();
+    document.getElementById('asProvSave').click();
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());

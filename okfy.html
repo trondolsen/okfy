@@ -211,12 +211,12 @@
   @media (max-width: 760px) { body.as-open .bar, body.as-open:not(.hide-side) .bar { inset-inline-end: 12px; } }
   .as-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
   .as-head .sp { margin-inline-start: auto; }
-  /* One square, centred hit area per toggle so the speaker, microphone and cogwheel
+  /* One square, centred hit area per toggle so the speaker, microphone and settings
      share the same optical size and sit on one line. */
   .as-head .as-cog-btn { border: 0; background: transparent; padding: 0; line-height: 1; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; }
   .as-head .as-cog-btn[aria-pressed="false"] { color: var(--muted); }   /* readable closed state, no box */
   .as-head .as-cog-btn:hover { color: var(--accent); }
-  .as-head .as-cog { width: 18px; height: 18px; display: block; }
+  .as-head .as-sliders { width: 18px; height: 18px; display: block; }
   .as-head .as-speaker { width: 18px; height: 18px; display: block; }
   .as-head .as-mic { width: 18px; height: 18px; display: block; }
   .as-head .as-cog-btn[aria-pressed="true"] { color: var(--accent); }
@@ -614,6 +614,69 @@
   .as-model-row .as-model-meta { display: block; font-size: 11px; line-height: 1.3; color: var(--muted); }
   .as-model-group { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 6px 0 2px; }
   .as-model-group:first-child { margin-top: 0; }
+  /* The provider section: the configured providers, listed like the model list, with an add symbol
+     after the last one. Adding and reconfiguring open the same inline dialog. */
+  .as-prov-row {
+    display: flex; align-items: center; gap: 6px; width: 100%; text-align: start;
+    font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid transparent;
+    border-radius: 8px; background: transparent; color: var(--text); cursor: pointer;
+  }
+  .as-prov-row:hover { border-color: var(--accent); }
+  /* A provider that is already added cannot be added again: it is greyed out and not clickable. */
+  .as-prov-row[disabled] { color: var(--muted); cursor: default; opacity: .6; }
+  .as-prov-row[disabled]:hover { border-color: transparent; }
+  .as-prov-row .as-prov-mark { flex: none; width: 12px; text-align: center; font-size: 11px; color: var(--muted); }
+  .as-prov-row[data-configured="false"] .as-prov-mark { color: var(--accent); }
+  .as-prov-row .as-prov-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* The configured providers: the name and details, with a gearwheel that opens the setup inline in
+     this listing; an add symbol sits after the last row. */
+  .as-provlist { display: block; margin: 0 0 10px; }
+  .as-provrow {
+    display: flex; align-items: center; gap: 6px;
+    border: 1px solid transparent; border-radius: 8px; padding: 2px 4px;
+  }
+  .as-provrow-text { flex: 1 1 auto; min-width: 0; display: block; padding: 4px; }
+  .as-provrow-name { display: block; }
+  .as-provrow-detail { display: block; font-size: 11px; line-height: 1.3; color: var(--muted); }
+  .as-provrow-btn {
+    flex: none; font: inherit; font-size: 19px; line-height: 1; background: transparent; border: 0;
+    color: var(--muted); cursor: pointer; padding: 5px; border-radius: 6px;
+  }
+  /* An unfinished setup's gearwheel is drawn in the accent colour, so the one to complete stands out. */
+  .as-provrow[data-ready="false"] .as-provrow-btn { color: var(--accent); }
+  .as-provrow-btn:hover { color: var(--accent); background: var(--panel-2); }
+  /* The add symbol after the last configured provider. */
+  .as-provaddrow { border: 1px dashed var(--line); }
+  .as-provaddrow:hover { border-color: var(--accent); }
+  .as-provadd {
+    flex: 1 1 auto; display: flex; align-items: center; justify-content: center;
+    font: inherit; font-size: 14px; line-height: 1; padding: 4px; background: transparent;
+    border: 0; border-radius: 8px; color: var(--muted); cursor: pointer;
+  }
+  .as-provadd:hover { color: var(--accent); }
+  /* The provider controls carry the app's own focus ring rather than the browser's. */
+  .as-prov-row:focus-visible, .as-provadd:focus-visible, .as-provrow-btn:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+  /* The setup opens inside the row that opened it — the add row, or a provider's own row — rather
+     than as a card beside it: the row wraps and the setup takes a full line of its own, without a
+     box. While the add setup is open the + is hidden, since the row itself is the control then, and
+     the add row closes on a press outside it. */
+  .as-provrow.open, .as-provaddrow.open { flex-wrap: wrap; }
+  .as-provrow.open { border-color: var(--line); }
+  .as-provaddrow.open .as-provadd { display: none; }
+  .as-provrow.open .as-provpanel, .as-provaddrow.open .as-provpanel {
+    flex: 0 0 100%; margin: 3px 0 1px; border: 0; background: transparent; padding: 0;
+  }
+  .as-provpanel { margin: 4px 0 6px; }
+  .as-provpanel[hidden] { display: none; }
+  #asProvHead { padding: 0 0 6px; }
+  #asProvHead[hidden], #asProvFields[hidden], #asProvButtons[hidden] { display: none; }
+  .as-provset-name { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--text); }
+  .as-provkinds { display: block; max-height: 150px; overflow: auto; margin: 0 0 6px; }
+  .as-provkinds[hidden] { display: none; }
+  .as-provremove { color: var(--muted); }
+  .as-provremove:hover { color: var(--text); }
   #aboutPop .about-note { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
   #aboutPop .about-rev { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
   #aboutPop .about-toggle {
@@ -797,6 +860,30 @@
   .pv-seek::-moz-range-thumb { width: 0; height: 0; border: 0; }
   .pv-seek:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .pv-time { flex: none; color: var(--text); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  /* The volume control: a speaker button that opens a vertical slider above it, so it sits beside
+     the play button without taking room in the transport bar. */
+  .pv-volwrap { position: relative; flex: none; display: inline-flex; }
+  .pv-volbtn {
+    width: 26px; height: 26px; flex: none; display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--text);
+    padding: 0; cursor: pointer;
+  }
+  .pv-volbtn:hover { border-color: var(--accent); color: var(--accent); }
+  .pv-volbtn svg { width: 13px; height: 13px; display: block; }
+  .pv-volpop {
+    position: absolute; bottom: 100%; inset-inline-start: 1px; margin-bottom: 5px;
+    width: 24px; height: 100px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+  }
+  .pv-volpop[hidden] { display: none; }
+  /* The slider is laid out horizontally and rotated, so it keeps the scrubber's own track styling;
+     its visual box is 16 wide and 88 tall, centred inside the popup. */
+  .pv-volrange { flex: none; width: 88px; height: 16px; margin: 0; transform: rotate(-90deg); }
+  /* On a video the control sits over the clip's lower corner, just above the native controls; the
+     caption moves up to clear it. */
+  .pv-volvideo { position: absolute; inset-inline-start: 8px; bottom: 52px; }
+  .pv-mediawrap > .pv-cue { bottom: 88px; }
   /* A WebVTT cue, shown over the spectrogram just above the control bar. */
   .pv-cue {
     position: absolute; inset-inline: 10px; bottom: 46px; pointer-events: none;
@@ -1396,7 +1483,7 @@
     <span data-i18n="as.title">Assistant</span>
     <button id="asSpeakToggle" type="button" class="sp as-cog-btn" aria-pressed="false" aria-label="Audio output" data-i18n-aria-label="as.audioToggle" title="Speak the assistant's reply aloud" data-i18n-title="as.audioOffTitle"><svg class="as-speaker" aria-hidden="true"><use href="#speakerMark"/></svg></button>
     <button id="asMicToggle" type="button" class="as-cog-btn" aria-pressed="false" aria-label="Microphone" data-i18n-aria-label="as.micToggle" title="Listen with the microphone" data-i18n-title="as.micOffTitle"><svg class="as-mic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M6 11a6 6 0 0 0 12 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 17v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-    <button id="asSettingsBtn" type="button" class="as-cog-btn" aria-pressed="false" aria-label="Settings" data-i18n-aria-label="as.settings" title="Settings" data-i18n-title="as.settings"><svg class="as-cog" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 5.8V3M12 18.2v2.8M5.8 12H3M18.2 12h2.8M16.4 7.6 18.4 5.6M7.6 7.6 5.6 5.6M16.4 16.4l2 2M7.6 16.4l-2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+    <button id="asSettingsBtn" type="button" class="as-cog-btn" aria-pressed="false" aria-label="Settings" data-i18n-aria-label="as.settings" title="Settings" data-i18n-title="as.settings"><svg class="as-sliders" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="3" x2="4" y2="21"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="20" y1="3" x2="20" y2="21"/><circle cx="4" cy="9" r="3" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="3" fill="currentColor" stroke="none"/><circle cx="20" cy="7" r="3" fill="currentColor" stroke="none"/></svg></button>
   </div>
   <div id="asMicMenu" class="as-mic-menu" hidden></div>
   <div class="as-warn" id="asWarn">
@@ -1415,36 +1502,42 @@
         <button id="asAckCancel" type="button">Cancel</button>
       </div>
     </div>
-    <h3 class="as-sec as-top" data-i18n="as.secChat">Chat model</h3>
-    <label class="fld"><span data-i18n="as.provider">Provider</span>
-      <select id="asProvider">
-        <option value="deepseek">DeepSeek</option>
-        <option value="mistral">Mistral</option>
-        <option value="azure">Azure OpenAI</option>
-        <option value="llamacpp">llama.cpp (local)</option>
-        <option value="custom" data-i18n="as.custom">Custom (OpenAI-compatible)</option>
-      </select>
-    </label>
-    <label class="fld"><span data-i18n="as.base">Base URL</span><input id="asBase" type="url" dir="ltr" autocomplete="off" spellcheck="false"></label>
-    <h3 class="as-sec" data-i18n="as.secAuth">Authentication</h3>
-    <label class="fld"><span data-i18n="as.auth">Authentication</span>
-      <select id="asAuth">
-        <option value="bearer" data-i18n="as.authBearer">API key (Bearer)</option>
-        <option value="api-key" data-i18n="as.authAzure">Azure API key (api-key)</option>
-        <option value="oauth" data-i18n="as.authOauth">OAuth 2.0 (code + PKCE)</option>
-        <option value="none" data-i18n="as.authNone">None</option>
-      </select>
-    </label>
-    <label class="fld" id="asKeyRow"><span data-i18n="as.key">API key or token</span><input id="asKey" type="password" dir="ltr" autocomplete="off" spellcheck="false"></label>
-    <label class="fld" id="asApiVersionRow"><span data-i18n="as.apiVersion">Azure API version</span><input id="asApiVersion" type="text" dir="ltr" autocomplete="off" spellcheck="false"></label>
-    <div id="asOauth" hidden>
-      <label class="fld"><span data-i18n="as.oauthAuthorize">Authorize endpoint</span><input id="asOauthAuth" type="url" dir="ltr" autocomplete="off" spellcheck="false"></label>
-      <label class="fld"><span data-i18n="as.oauthToken">Token endpoint</span><input id="asOauthToken" type="url" dir="ltr" autocomplete="off" spellcheck="false"></label>
-      <label class="fld"><span data-i18n="as.oauthClient">Client ID</span><input id="asOauthClient" type="text" dir="ltr" autocomplete="off" spellcheck="false"></label>
-      <label class="fld"><span data-i18n="as.oauthScopes">Scopes</span><input id="asOauthScopes" type="text" dir="ltr" autocomplete="off" spellcheck="false"></label>
-      <div class="as-row"><button id="asOauthLogin" type="button" data-i18n="as.oauthLogin">Sign in</button><button id="asOauthSignOut" type="button" data-i18n="as.oauthSignOut">Sign out</button><span id="asOauthStatus" class="meta"></span></div>
+    <h3 class="as-sec as-top" data-i18n="as.secProvider">Provider</h3>
+    <div id="asProvConfigured" class="as-provlist" aria-label="Configured providers" data-i18n-aria-label="as.configuredProviders">
+      <div id="asProvPanel" class="as-provpanel" hidden role="dialog" aria-labelledby="asProvName">
+        <div id="asProvHead" class="as-provset-head"><span id="asProvName" class="as-provset-name"></span></div>
+        <div id="asProvList" class="as-provkinds" role="listbox" aria-label="Providers" data-i18n-aria-label="as.providerList"></div>
+        <div id="asProvFields">
+          <label class="fld"><span data-i18n="as.displayName">Display name</span><input id="asProvDisplay" type="text" dir="auto" autocomplete="off" spellcheck="false"></label>
+          <label class="fld"><span data-i18n="as.base">Base URL</span><input id="asBase" type="url" dir="ltr" autocomplete="off" spellcheck="false"></label>
+          <label class="fld"><span data-i18n="as.auth">Authentication</span>
+            <select id="asAuth">
+              <option value="bearer" data-i18n="as.authBearer">API key (Bearer)</option>
+              <option value="api-key" data-i18n="as.authAzure">Azure API key (api-key)</option>
+              <option value="oauth" data-i18n="as.authOauth">OAuth 2.0 (code + PKCE)</option>
+              <option value="none" data-i18n="as.authNone">None</option>
+            </select>
+          </label>
+          <label class="fld" id="asKeyRow"><span data-i18n="as.key">API key or token</span><input id="asKey" type="password" dir="ltr" autocomplete="off" spellcheck="false"></label>
+          <label class="fld" id="asApiVersionRow"><span data-i18n="as.apiVersion">Azure API version</span><input id="asApiVersion" type="text" dir="ltr" autocomplete="off" spellcheck="false"></label>
+          <div id="asOauth" hidden>
+            <label class="fld"><span data-i18n="as.oauthAuthorize">Authorize endpoint</span><input id="asOauthAuth" type="url" dir="ltr" autocomplete="off" spellcheck="false"></label>
+            <label class="fld"><span data-i18n="as.oauthToken">Token endpoint</span><input id="asOauthToken" type="url" dir="ltr" autocomplete="off" spellcheck="false"></label>
+            <label class="fld"><span data-i18n="as.oauthClient">Client ID</span><input id="asOauthClient" type="text" dir="ltr" autocomplete="off" spellcheck="false"></label>
+            <label class="fld"><span data-i18n="as.oauthScopes">Scopes</span><input id="asOauthScopes" type="text" dir="ltr" autocomplete="off" spellcheck="false"></label>
+            <div class="as-row"><button id="asOauthLogin" type="button" data-i18n="as.oauthLogin">Sign in</button><button id="asOauthSignOut" type="button" data-i18n="as.oauthSignOut">Sign out</button><span id="asOauthStatus" class="meta"></span></div>
+          </div>
+        </div>
+        <div id="asProvButtons" class="as-row">
+          <button id="asProvSave" type="button" data-i18n="as.addProvider">Add</button>
+          <button id="asProvRemove" type="button" class="as-provremove" hidden data-i18n="as.removeProvider">Remove provider</button>
+          <button id="asProvCancel" type="button" data-i18n="as.cancel">Cancel</button>
+        </div>
+      </div>
     </div>
-    <label class="chk"><input id="asPersist" type="checkbox"> <span data-i18n="as.persist">Remember the key in this browser</span></label>
+    <span class="as-hint" data-i18n="as.providerHint">Add the providers you use — each one only once — with the + below, and set each one up from its gearwheel.</span>
+
+    <h3 class="as-sec as-top" data-i18n="as.secChat">Chat model</h3>
     <div class="fld">
       <span id="asModelLabel" data-i18n="as.model">Model or deployment</span>
       <span id="asModelWrap" class="as-model">
@@ -1455,25 +1548,6 @@
     </div>
 
     <h3 class="as-sec as-top" data-i18n="as.secAudio">Audio output model</h3>
-    <label class="fld"><span data-i18n="as.provider">Provider</span>
-      <select id="asAudioProvider">
-        <option value="deepseek">DeepSeek</option>
-        <option value="mistral">Mistral</option>
-        <option value="azure">Azure OpenAI</option>
-        <option value="llamacpp">llama.cpp (local)</option>
-        <option value="custom" data-i18n="as.custom">Custom (OpenAI-compatible)</option>
-      </select>
-    </label>
-    <label class="fld"><span data-i18n="as.base">Base URL</span><input id="asAudioBase" type="url" dir="ltr" autocomplete="off" spellcheck="false"></label>
-    <label class="fld"><span data-i18n="as.auth">Authentication</span>
-      <select id="asAudioAuth">
-        <option value="bearer" data-i18n="as.authBearer">API key (Bearer)</option>
-        <option value="api-key" data-i18n="as.authAzure">Azure API key (api-key)</option>
-        <option value="none" data-i18n="as.authNone">None</option>
-      </select>
-    </label>
-    <label class="fld" id="asAudioKeyRow"><span data-i18n="as.key">API key or token</span><input id="asAudioKey" type="password" dir="ltr" autocomplete="off" spellcheck="false"></label>
-    <label class="fld" id="asAudioApiVersionRow"><span data-i18n="as.apiVersion">Azure API version</span><input id="asAudioApiVersion" type="text" dir="ltr" autocomplete="off" spellcheck="false"></label>
     <div class="fld">
       <span id="asAudioLabel" data-i18n="as.audioModel">Audio output model</span>
       <span id="asAudioWrap" class="as-model">
@@ -1492,25 +1566,6 @@
     </div>
 
     <h3 class="as-sec as-top" data-i18n="as.secAudioIn">Audio input model</h3>
-    <label class="fld"><span data-i18n="as.provider">Provider</span>
-      <select id="asInputProvider">
-        <option value="deepseek">DeepSeek</option>
-        <option value="mistral">Mistral</option>
-        <option value="azure">Azure OpenAI</option>
-        <option value="llamacpp">llama.cpp (local)</option>
-        <option value="custom" data-i18n="as.custom">Custom (OpenAI-compatible)</option>
-      </select>
-    </label>
-    <label class="fld"><span data-i18n="as.base">Base URL</span><input id="asInputBase" type="url" dir="ltr" autocomplete="off" spellcheck="false"></label>
-    <label class="fld"><span data-i18n="as.auth">Authentication</span>
-      <select id="asInputAuth">
-        <option value="bearer" data-i18n="as.authBearer">API key (Bearer)</option>
-        <option value="api-key" data-i18n="as.authAzure">Azure API key (api-key)</option>
-        <option value="none" data-i18n="as.authNone">None</option>
-      </select>
-    </label>
-    <label class="fld" id="asInputKeyRow"><span data-i18n="as.key">API key or token</span><input id="asInputKey" type="password" dir="ltr" autocomplete="off" spellcheck="false"></label>
-    <label class="fld" id="asInputApiVersionRow"><span data-i18n="as.apiVersion">Azure API version</span><input id="asInputApiVersion" type="text" dir="ltr" autocomplete="off" spellcheck="false"></label>
     <div class="fld">
       <span id="asInputLabel" data-i18n="as.audioInModel">Audio input model</span>
       <span id="asInputWrap" class="as-model">
@@ -1521,6 +1576,8 @@
     </div>
     <label class="fld"><span data-i18n="as.inputDevice">Input device</span><select id="asInputDevice"></select><span class="as-hint" data-i18n="as.inputDeviceHint">The microphone to listen with.</span></label>
     <span class="as-hint as-dev-note" id="asInputDeviceNotice" hidden><span data-i18n="as.inputDeviceNotice">Turn on the microphone to list your input devices — the browser only reveals device names after it grants the microphone. Until then only the system default is shown.</span><button id="asInputDeviceNoticeClose" type="button" class="as-warn-close" aria-label="Dismiss" data-i18n-aria-label="as.dismiss" title="Dismiss" data-i18n-title="as.dismiss">×</button></span>
+
+    <label class="chk"><input id="asPersist" type="checkbox"> <span data-i18n="as.persist">Remember the key in this browser</span></label>
 
     <h3 class="as-sec as-top" data-i18n="as.secGeneration">Generation</h3>
     <label class="chk"><input id="asStream" type="checkbox"> <span data-i18n="as.stream">Stream responses</span></label>
@@ -4639,6 +4696,8 @@
     var e = extOf(name);
     return e && AUDIO_EXT[e] ? "audio" : (e && VIDEO_EXT[e] ? "video" : null);
   }
+  // A WebVTT subtitle track, which the preview reads as a transcript rather than as plain text.
+  function vttKind(name) { var e = extOf(name); return e === "vtt" ? e : null; }
   // Scrub grains: while the seek bar is dragged a short window of the clip is played repeatedly, so
   // the read position advances with the pointer. A slow drag moves the window barely (frame repeat:
   // a pitch-preserving stretch); a fast drag moves it far (frame discard), so the grains are placed
@@ -4678,7 +4737,8 @@
   // A small, bounded reader for the common case — cue timings and their text. It ignores cue
   // settings, region/placement and inline tags, and trusts nothing: cue text is shown as plain
   // words, never as markup.
-  var MAX_VTT_BYTES = 512 * 1024;   // a subtitle track is small
+  var MAX_VTT_BYTES = 25 * 1024 * 1024;   // a track is read whole, so its captions cover the clip
+                                          // (the transcript page is bounded separately)
   function vttPathFor(path) {
     var s = String(path == null ? "" : path);
     var slash = s.lastIndexOf("/");
@@ -4728,6 +4788,56 @@
       .replace(/<[^>]*>/g, "")
       .replace(/&lrm;/g, "\u200E").replace(/&rlm;/g, "\u200F").replace(/&nbsp;/g, "\u00A0")
       .replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&");
+  }
+  // The text of the cue covering a position, for a caption that follows the playhead. The cues are
+  // sorted by start time, so the cue is found by binary search: the caption is redrawn on every
+  // frame, and a long track would otherwise cost a scan of every cue each time. A cue that has
+  // already ended — an overlap — steps back to the one that still covers the position.
+  function vttCueAt(cues, t) {
+    if (!cues || !cues.length) return "";
+    var lo = 0, hi = cues.length - 1, at = -1;
+    while (lo <= hi) {
+      var mid = (lo + hi) >> 1;
+      if (cues[mid].start <= t) { at = mid; lo = mid + 1; }
+      else hi = mid - 1;
+    }
+    for (var i = at, steps = 0; i >= 0 && steps < 8; i--, steps++) if (t < cues[i].end) return cues[i].text;
+    return "";
+  }
+  // A cue's time as "m:ss", or "h:mm:ss" past an hour, the way the transcript prints it.
+  function vttStamp(sec) {
+    var s = Math.max(0, Math.floor(Number(sec) || 0));
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return (h ? h + ":" + pad(m) : String(m)) + ":" + pad(s % 60);
+  }
+  // The cue text as literal words for the document renderer: Markdown gives a handful of characters
+  // meaning, and a transcript must read as the words that were spoken rather than become markup the
+  // track never had, so those characters are escaped. A transcript contains them rarely, so this is
+  // invisible until it matters.
+  function vttLiteral(text) {
+    return String(text == null ? "" : text)
+      .replace(/([\\`*_[\]])/g, "\\$1")
+      .replace(/^([ \t]*)([#>|+\-]|\d+\.)/gm, "$1\\$2");
+  }
+  // The track as a readable transcript, written as Markdown so the document preview renders it and
+  // the reader's own page tools (highlight, scroll) work on it. Cue text is reduced to plain words
+  // and then to literal text, so the track's markup is never rendered and the renderer is the only
+  // one that escapes it. A word-level track repeats its line as the highlight moves through it, so
+  // consecutive cues with the same words are shown once, from the first cue's time. Bounded: a
+  // preview shows the head of a very long track.
+  var MAX_VTT_TRANSCRIPT_CUES = 2000, MAX_VTT_TRANSCRIPT_CHARS = 256 * 1024;
+  function vttTranscriptMarkdown(text) {
+    var cues = vttParse(text), out = [], chars = 0, prev = null;
+    for (var i = 0; i < cues.length && out.length < MAX_VTT_TRANSCRIPT_CUES && chars < MAX_VTT_TRANSCRIPT_CHARS; i++) {
+      var words = vttCueText(cues[i].text).replace(/\s*\n\s*/g, " ").trim();
+      if (!words || words === prev) continue;
+      prev = words;
+      var line = "**" + vttStamp(cues[i].start) + "** " + vttLiteral(words);
+      out.push(line);
+      chars += line.length + 2;
+    }
+    return out.join("\n\n");
   }
 
   function extractLinks(body) {
@@ -5024,16 +5134,20 @@
       addBundleFile(out, { path: path, text: "", binary: true, src: file }, budget);
       return;
     }
-    if (typeof file.size !== "number" || !isFinite(file.size) || file.size > MAX_FILE_BYTES) return;
-    if (file.size > MAX_BUNDLE_BYTES - budget.bytes) throw new Error("Bundle exceeds the total byte limit.");
+    if (typeof file.size !== "number" || !isFinite(file.size)) return;
     if (isMarkdownPath(path)) {
+      // Markdown is read whole when the folder opens, so it stays within the single-file cap.
+      if (file.size > MAX_FILE_BYTES) return;
+      if (file.size > MAX_BUNDLE_BYTES - budget.bytes) throw new Error("Bundle exceeds the total byte limit.");
       var bytes = file.stream ? await readBoundedStream(file.stream(), MAX_FILE_BYTES) : null;
       var text = bytes ? new TextDecoder().decode(bytes) : await file.text();
       addBundleFile(out, { path: path, text: text, src: file, bytes: bytes ? bytes.byteLength : file.size }, budget);
       return;
     }
-    // Non-Markdown text files stay lazy: read on demand, like attachments.
-    addBundleFile(out, { path: path, text: "", binary: false, src: file, bytes: file.size, lazy: true }, budget);
+    // A non-Markdown text file stays lazy: nothing is read when the folder opens, and a later
+    // read is bounded per file. Its size is therefore not charged here — only its reference is
+    // kept, which is what lets a large sibling subtitle track be found alongside its media.
+    addBundleFile(out, { path: path, text: "", binary: false, src: file, lazy: true }, budget);
   }
 
   async function fromFileList(fileList) {
@@ -5104,7 +5218,7 @@
   }
 
   // ---------------------------------------------------------------- graph
-  function buildGraph(files) {
+  function buildGraph(files, known) {
     var nodes = [], links = [], hubsOn = false, tagMaxSegs = 1;
     var fileMapLocal = new Map();
     var dirSet = new Set([""]);
@@ -5158,9 +5272,29 @@
       if (pn) { pn.children.push(n); pushGraphLink({ source: pn, target: n, kind: "tree" }, links); }
     });
 
+    // An unloaded node (an attachment or non-Markdown file) shown without reading it until it is
+    // opened; nothing is fetched for it. Referenced ones are seeded from markdown links below,
+    // and a locally opened folder seeds one for each of its files.
+    var placeholderMap = new Map();   // path -> unloaded placeholder node
+    function seedPlaceholder(path, kind, cands) {
+      var ph = placeholderMap.get(path);
+      if (ph) return ph;
+      ph = {
+        id: path, path: path, kind: kind, loaded: false, candidates: (cands || [path]).slice(),
+        type: "", title: "", description: "", tags: [], status: "",
+        fm: {}, body: "", src: null, pdfMeta: null, metaPromise: null,
+        children: [], depth: 0, angle: 0, targetR: 0,
+        x: 0, y: 0, vx: 0, vy: 0, fx: null, fy: null, degree: 0
+      };
+      placeholderMap.set(path, ph);
+      pushGraphNode(ph, nodes);
+      var pn = dirMap.get(dirOf(path));
+      if (pn) { pn.children.push(ph); pushGraphLink({ source: pn, target: ph, kind: "tree" }, links); }
+      return ph;
+    }
+
     // Reference edges from markdown links and .md source resources.
     var seenEdge = new Set();
-    var placeholderMap = new Map();   // path -> unloaded placeholder node (attachment or file)
     files.forEach(function (f) {
       var node = fileMapLocal.get(f.path);
       if (!node || node.kind === "file" || node.kind === "attachment") return; // plaintext/attachment nodes have no links
@@ -5169,21 +5303,7 @@
       // Show an unresolved attachment or non-Markdown file as a visible,
       // unloaded node (nothing is fetched for it), deduplicated across files.
       function addPlaceholder(cands, kind) {
-        var path = cands[0];
-        var ph = placeholderMap.get(path);
-        if (!ph) {
-          ph = {
-            id: path, path: path, kind: kind, loaded: false, candidates: cands.slice(),
-            type: "", title: "", description: "", tags: [], status: "",
-            fm: {}, body: "", src: null, pdfMeta: null, metaPromise: null,
-            children: [], depth: 0, angle: 0, targetR: 0,
-            x: 0, y: 0, vx: 0, vy: 0, fx: null, fy: null, degree: 0
-          };
-          placeholderMap.set(path, ph);
-          pushGraphNode(ph, nodes);
-          var pn = dirMap.get(dirOf(path));
-          if (pn) { pn.children.push(ph); pushGraphLink({ source: pn, target: ph, kind: "tree" }, links); }
-        }
+        var ph = seedPlaceholder(cands[0], kind, cands);
         if (ph === node) return;
         var key = node.id + "\u2192" + ph.id;
         if (!seenEdge.has(key)) { seenEdge.add(key); pushGraphLink({ source: node, target: ph, kind: "ref" }, links); }
@@ -5222,6 +5342,16 @@
         if (c !== node.id && fileKind(c) && node.missing.indexOf(c) < 0) node.missing.push(c);
       });
     });
+
+    // A locally opened folder lists every file; show its non-Markdown files as unloaded
+    // placeholders so they can be opened even when no Markdown references them.
+    if (known) {
+      known.forEach(function (f, path) {
+        if (fileMapLocal.has(path) || placeholderMap.has(path)) return;
+        if (!f.binary && !f.lazy) return;
+        seedPlaceholder(path, f.binary ? "attachment" : "file");
+      });
+    }
 
     // A pair of concepts that link to each other reads as one edge: mark one of the two
     // reference links as a duplicate to skip when drawing, and the kept one as
@@ -6350,6 +6480,7 @@
     embedLoads = new Map();
     if (typeof pvMediaStop === "function") pvMediaStop();   // the player lives in the preview section
     resetMediaUrls();
+    if (typeof pvCaptionsReset === "function") pvCaptionsReset();   // as do the caption notes
     previewRenderId++;
     pvStack = []; pvIndex = -1; pvPushed = false; pvSuppress = false;
     previewPath = null;
@@ -6396,9 +6527,13 @@
   // A served clip is fetched only when it is opened, bounded like every other read, and played
   // from a blob URL of its own bytes, so nothing is loaded from the network at play time. Its
   // budget is separate from the image budget, so a large clip cannot starve a page's images.
-  // A local clip is not read at all: it streams from an object URL the browser reads on demand,
-  // so a clip of any size plays without being held whole in memory.
-  var MAX_MEDIA_BYTES = 32 * 1024 * 1024;
+  var MAX_MEDIA_BYTES = 256 * 1024 * 1024;
+  // A local clip is not read at all: it streams from an object URL the browser reads on demand, so a
+  // clip of any size plays without being held whole in memory. One small enough is read whole as
+  // well, which is what lets it be decoded for the grain scrub; that bound is lower than the served
+  // one because decoding expands the clip — a minute of stereo 44.1 kHz audio is about 21 MB as
+  // 32-bit samples — and a clip at the served bound would be a gigabyte in memory once decoded.
+  var MAX_MEDIA_DECODE_BYTES = 32 * 1024 * 1024;
   var mediaUrlCache = Object.create(null);
   function mediaUrlFor(path, blob) {
     if (!blob || blob.size > MAX_MEDIA_BYTES) return null;
@@ -6428,10 +6563,11 @@
     var src = node && node.src;
     return (src && typeof src !== "string") ? mediaStreamUrl(node.path, src) : null;
   }
-  // A local clip within the media cap is read whole, like a served clip, so it can be decoded and
-  // get the grain scrub; a larger one is not read and streams instead. Bounded by the same cap.
+  // A local clip within the decode bound is read whole, like a served clip, so it can be decoded and
+  // get the grain scrub; a larger one is not read and streams instead, which is what keeps a long
+  // clip from being expanded into memory.
   function localMediaBytes(src) {
-    if (!src || typeof src.size !== "number" || src.size > MAX_MEDIA_BYTES) return null;
+    if (!src || typeof src.size !== "number" || src.size > MAX_MEDIA_DECODE_BYTES) return null;
     return src.arrayBuffer().then(function (buf) {
       return { bytes: new Uint8Array(buf), type: src.type || "" };
     }, function () { return null; });
@@ -6451,6 +6587,29 @@
     if (!res.ok || generation !== bundleGeneration) return null;
     var type = (res.headers.get("content-type") || "application/octet-stream").split(";")[0];
     return { bytes: res.bytes, type: type };
+  }
+  // Whether the preview can read a media node, and why not: a local clip streams from an object URL,
+  // so its size does not matter; a served clip is read whole under the byte limit, so a larger one
+  // has no player here at all. The size comes from the file details the preview already reads, and
+  // the note is the sentence the preview shows, so the reader and the assistant are told the same
+  // thing.
+  function pvMediaReadable(node) {
+    if (!node || !mediaKind(node.path)) return { ok: true };
+    if (node.src && typeof node.src !== "string") return { ok: true, local: true };
+    var size = node.fileInfo && node.fileInfo.size;
+    if (size != null && size > MAX_MEDIA_BYTES) {
+      return { ok: false, size: size, limit: MAX_MEDIA_BYTES,
+        note: "This clip is " + formatBytes(size) + ", over the " + formatBytes(MAX_MEDIA_BYTES) +
+          " limit a served clip is read under, so it cannot play here. Open its folder locally to play it \u2014 a local clip streams and has no size limit." };
+    }
+    return { ok: true };
+  }
+  // Why a media page has no player, in the preview's own words.
+  function mediaReadNote(node) {
+    var read = pvMediaReadable(node);
+    if (read.note) return read.note;
+    return "This clip could not be read: it may be missing, or larger than the " + formatBytes(MAX_MEDIA_BYTES) +
+      " limit a served clip is read under. A clip in a locally opened folder streams and plays at any size.";
   }
   async function resolveEmbedSrc(target, from, generation) {
     var cands = linkCandidates(from || "", target);
@@ -7881,6 +8040,9 @@
     out += rtLine("Image bytes total", formatBytes(MAX_IMAGE_TOTAL_BYTES));
     out += rtLine("Preview images", MAX_PREVIEW_IMAGES + "");
     out += rtLine("Served media bytes", formatBytes(MAX_MEDIA_BYTES));
+    out += rtLine("Local media decode bytes", formatBytes(MAX_MEDIA_DECODE_BYTES));
+    out += rtLine("Subtitle track bytes", formatBytes(MAX_VTT_BYTES));
+    out += rtLine("Transcript cues", MAX_VTT_TRANSCRIPT_CUES + "");
     out += rtLine("Markdown characters", MAX_MARKDOWN_CHARS + "");
     out += rtLine("Rendered characters", MAX_RENDERED_CHARS + "");
     out += rtLine("Markdown depth", MAX_MARKDOWN_DEPTH + "");
@@ -7989,6 +8151,7 @@
       else renderAttachmentPreview(node);
     } else if (node.kind === "file") {
       if (imageKind(node.path)) renderImagePreview(node);
+      else if (vttKind(node.path)) renderVttPreview(node);
       else pvBody.innerHTML = '<pre class="md-pre plain">' + esc(node.body || "") + "</pre>";
     } else {
       var meta = [];
@@ -8097,11 +8260,84 @@
   // speech bubbles use; video is shown in a media element. Both read the clip once, bounded,
   // and play it from a blob URL of its own bytes, so nothing is loaded from the network at play
   // time. The clip is read whole, not streamed.
-  var pvAudio = null, pvAudioSeq = 0;
+  var pvAudio = null, pvAudioSeq = 0, pvScrubBusy = null, pvMediaError = "";
+  // One playback volume, shared by the audio and video previews and remembered across clips and
+  // reloads. The assistant's speech bubbles have their own output and are deliberately not affected.
+  var PV_VOLUME_KEY = "okfy.volume", pvVolume = 1;
+  function pvLoadVolume() {
+    try {
+      var saved = localStorage.getItem(PV_VOLUME_KEY);
+      if (saved != null) { var v = Number(saved); if (isFinite(v)) pvVolume = clamp(v, 0, 1); }
+    } catch (e) {}
+  }
+  // Apply the current volume to whatever is playing: the Web Audio gain the audio paths share, and
+  // the video element's own volume. A player that has not built its chain yet picks it up on play.
+  function pvApplyVolume() {
+    var a = pvAudio;
+    if (a && a.gain) { try { a.gain.gain.value = pvVolume; } catch (e) {} }
+    var v = document.getElementById("pvVideo");
+    if (v) { try { v.volume = pvVolume; } catch (e) {} }
+  }
+  function pvSetVolume(v) {
+    pvVolume = clamp(Number(v) || 0, 0, 1);
+    try { localStorage.setItem(PV_VOLUME_KEY, String(pvVolume)); } catch (e) {}
+    pvApplyVolume();
+    var s = document.getElementById("pvVol");
+    if (s) { s.value = String(Math.round(pvVolume * 100)); pvSeekFill(s); }
+  }
+  // Wire the volume control and the video element that the current preview just rendered.
+  function pvWireVolume() {
+    var s = document.getElementById("pvVol");
+    if (s) {
+      s.value = String(Math.round(pvVolume * 100));
+      pvSeekFill(s);
+      s.addEventListener("input", function () { pvSetVolume(Number(s.value) / 100); });
+    }
+    var btn = document.getElementById("pvVolBtn");
+    if (btn) btn.addEventListener("click", function () { pvVolumeToggle(); });
+    var v = document.getElementById("pvVideo");
+    if (v) {
+      // The video element keeps its own native volume control; keep the slider and the remembered
+      // value in step with it, so either control works and the last setting is what carries over.
+      v.addEventListener("volumechange", function () {
+        if (Math.abs((v.volume || 0) - pvVolume) > 0.001) pvSetVolume(v.volume);
+      });
+    }
+    pvApplyVolume();
+  }
+  // The vertical volume popup. It joins the shared popover list below, so an outside click closes it
+  // like any other popup; each preview renders a fresh one, so the lookups go through the document.
+  function pvVolumeOpen() {
+    var p = document.getElementById("pvVolPop");
+    return !!(p && !p.hidden);
+  }
+  function pvVolumeToggle() {
+    var p = document.getElementById("pvVolPop"), b = document.getElementById("pvVolBtn");
+    if (!p || !b) return;
+    p.hidden = !p.hidden;
+    b.setAttribute("aria-expanded", p.hidden ? "false" : "true");
+  }
+  function pvVolumeClose() {
+    var p = document.getElementById("pvVolPop"), b = document.getElementById("pvVolBtn");
+    if (p) p.hidden = true;
+    if (b) b.setAttribute("aria-expanded", "false");
+  }
+  function pvVolumeHolds(id, node) {
+    var el = document.getElementById(id);
+    return !!(el && node && el.contains(node));
+  }
 
   function renderMediaPreview(node) {
     if (mediaKind(node.path) === "video") renderVideoPreview(node);
     else renderAudioPreview(node);
+  }
+  // A subtitle track is shown as a transcript rather than as raw WebVTT: its cues go through the
+  // document renderer, so the page reads like any other page and the reader's highlight, scroll and
+  // selection tools work on it. A track with no cues at all is shown as it is, so nothing is lost.
+  function renderVttPreview(node) {
+    var transcript = vttTranscriptMarkdown(node.body || "");
+    pvBody.innerHTML = transcript ? renderMarkdown(transcript)
+      : '<pre class="md-pre plain">' + esc(node.body || "") + "</pre>";
   }
   function pvMediaBody(label, inner) {
     return '<div class="md-meta"><span class="chip2">' + esc(label) + "</span></div>" + inner +
@@ -8109,9 +8345,22 @@
   }
   function pvMediaNote(msg) {
     var el = document.getElementById("pvMediaNote");
+    // Remember why a player is not usable, so the assistant's media tool can report it rather than
+    // showing a player that never starts.
+    pvMediaError = msg ? String(msg) : "";
     if (!el) return;
     if (msg) el.textContent = msg;
     else if (el.parentNode) el.parentNode.removeChild(el);
+  }
+  // The volume control both previews render: a speaker button with a vertical slider that pops up
+  // above it, placed next to the transport control. One shape, so the audio and video players match.
+  function pvVolumeHtml(extraClass) {
+    return '<div class="pv-volwrap' + (extraClass ? " " + extraClass : "") + '" id="pvVolWrap">' +
+      '<button type="button" class="pv-volbtn" id="pvVolBtn" aria-expanded="false" aria-controls="pvVolPop" aria-label="Volume" title="Volume"><svg aria-hidden="true"><use href="#speakerMark"/></svg></button>' +
+      '<div class="pv-volpop" id="pvVolPop" hidden>' +
+        '<input type="range" class="pv-seek pv-volrange" id="pvVol" min="0" max="100" step="1" value="100" aria-label="Volume" title="Volume">' +
+      "</div>" +
+    "</div>";
   }
   function pvFmtTime(s) {
     s = Math.max(0, Math.floor(Number(s) || 0));
@@ -8152,9 +8401,11 @@
   }
   async function vttTextFor(node, generation) {
     var want = vttPathFor(node.path).toLowerCase();
-    var known = bundleKnown || fileMap;
     var hit = null, hitPath = null;
-    if (known) known.forEach(function (f, p) { if (!hit && String(p).toLowerCase() === want) { hit = f; hitPath = p; } });
+    [fileMap, bundleKnown].forEach(function (m) {
+      if (!m || hit) return;
+      m.forEach(function (f, p) { if (!hit && String(p).toLowerCase() === want) { hit = f; hitPath = p; } });
+    });
     if (hit) {
       if (typeof hit.text === "string" && hit.text) return hit.text;   // an already-read track
       if (typeof hit.body === "string" && hit.body) return hit.body;
@@ -8179,7 +8430,9 @@
     pvBody.innerHTML = pvMediaBody((ext || "video").toUpperCase(),
       '<div class="pv-mediawrap"><video id="pvVideo" class="pv-video" controls preload="metadata" playsinline></video>' +
       '<div class="pv-cue" id="pvCue" hidden></div>' +
+      pvVolumeHtml("pv-volvideo") +
       '<p class="pv-note" id="pvMediaNote">Loading the video\u2026</p></div>');
+    pvWireVolume();
     peekFileInfo(node).then(function () { if (previewPath === node.path) paintFileSection(node); });
     pvVideoCues(node, renderId, generation);
     // A local clip streams from its own object URL, read on demand, so any size plays without a
@@ -8196,7 +8449,7 @@
     }
     mediaBytesFor(node, generation).then(function (m) {
       if (renderId !== previewRenderId || generation !== bundleGeneration || previewPath !== node.path) return;
-      if (!m) { pvMediaNote("This video could not be read (it may be missing or larger than the limit)."); return; }
+      if (!m) { pvMediaNote(mediaReadNote(node)); return; }
       var url = mediaUrlFor(node.path, new Blob([m.bytes], { type: m.type || "video/mp4" }));
       if (!url) { pvMediaNote("This video could not be played."); return; }
       var v = document.getElementById("pvVideo");
@@ -8215,12 +8468,14 @@
         '<audio id="pvAudioEl" preload="metadata" hidden></audio>' +
         '<div class="pv-cue" id="pvCue" hidden></div>' +
         '<div class="pv-audiobar">' +
+          pvVolumeHtml() +
           '<button type="button" class="pv-play" id="pvPlay" aria-pressed="false" title="Play">\u25b6</button>' +
           '<input type="range" class="pv-seek" id="pvSeek" min="0" max="1000" step="1" value="0" aria-label="Seek and scrub">' +
           '<span class="pv-time" id="pvTime">0:00 / 0:00</span>' +
         "</div>" +
         '<p class="pv-note" id="pvMediaNote">Loading the audio\u2026</p>' +
       "</div>");
+    pvWireVolume();
     peekFileInfo(node).then(function () { if (previewPath === node.path) paintFileSection(node); });
 
     var a = {
@@ -8254,11 +8509,12 @@
       pvSeekFill(seek);
     }
     pvLoadVtt(a, node, renderId, generation);
-    // A local clip within the cap is read whole and decoded, so it gets the grain scrub too; a
-    // larger one streams through a media element on demand (unread), and a served clip is read
-    // bounded and decoded.
+    // A clip within the decode bound is read whole and decoded, so it gets the grain scrub too; a
+    // larger local one streams through a media element on demand (unread), and a larger served one
+    // is read bounded and then played from a blob URL of its own bytes, so a long clip is never
+    // expanded into memory as samples.
     var src = node && node.src;
-    if (src && typeof src !== "string" && typeof src.size === "number" && src.size <= MAX_MEDIA_BYTES) {
+    if (src && typeof src !== "string" && typeof src.size === "number" && src.size <= MAX_MEDIA_DECODE_BYTES) {
       localMediaBytes(src).then(function (m) {
         if (!pvMediaLive(a, renderId, generation, node.path)) return;
         if (!m) { pvMediaNote("This audio could not be read."); return; }
@@ -8270,7 +8526,13 @@
     if (local) { pvAudioStream(a, local, renderId, generation, node); return; }
     mediaBytesFor(node, generation).then(function (m) {
       if (!pvMediaLive(a, renderId, generation, node.path)) return;
-      if (!m) { pvMediaNote("This audio could not be read (it may be missing or larger than the limit)."); return; }
+      if (!m) { pvMediaNote(mediaReadNote(node)); return; }
+      if (m.bytes.byteLength > MAX_MEDIA_DECODE_BYTES) {
+        var url = mediaUrlFor(node.path, new Blob([m.bytes], { type: m.type || "audio/mpeg" }));
+        if (!url) { pvMediaNote("This audio could not be played."); return; }
+        pvAudioStream(a, url, renderId, generation, node);
+        return;
+      }
       pvAudioDecode(a, m.bytes, renderId, generation, node);
     });
   }
@@ -8322,6 +8584,7 @@
     vttTextFor(node, generation).then(function (text) {
       if (text == null || !pvMediaLive(a, renderId, generation, node.path)) return;
       var cues = vttParse(text);
+      pvCaptionNote(node, cues.length);
       if (cues.length) { a.cues = cues; pvCueUpdate(a); }
     }, function () {});
   }
@@ -8329,13 +8592,7 @@
     var el = document.getElementById("pvCue");
     if (!el) return;
     var t = pvAudioPos(), text = "";
-    if (a && a.cues) {
-      for (var i = 0; i < a.cues.length; i++) {
-        var c = a.cues[i];
-        if (c.start > t) break;             // cues are sorted by start time
-        if (t < c.end) text = c.text;
-      }
-    }
+    if (a && a.cues) text = vttCueAt(a.cues, t);
     el.hidden = !text;
     el.textContent = text ? vttCueText(text) : "";
   }
@@ -8345,18 +8602,14 @@
     vttTextFor(node, generation).then(function (text) {
       if (text == null || renderId !== previewRenderId || generation !== bundleGeneration || previewPath !== node.path) return;
       var cues = vttParse(text);
+      pvCaptionNote(node, cues.length);
       if (!cues.length) return;
       var v = document.getElementById("pvVideo");
       if (!v) return;
       var update = function () {
         var el = document.getElementById("pvCue");
         if (!el) return;
-        var t = v.currentTime || 0, cue = "";
-        for (var i = 0; i < cues.length; i++) {
-          var c = cues[i];
-          if (c.start > t) break;             // cues are sorted by start time
-          if (t < c.end) cue = c.text;
-        }
+        var cue = vttCueAt(cues, v.currentTime || 0);
         el.hidden = !cue;
         el.textContent = cue ? vttCueText(cue) : "";
       };
@@ -8372,6 +8625,7 @@
   function pvAudioChain(ctx) {
     var a = pvAudio; if (!a || a.gain) return a;
     a.gain = ctx.createGain();
+    a.gain.gain.value = pvVolume;   // the shared preview volume, remembered across clips
     if (typeof ctx.createAnalyser === "function") {
       a.analyser = ctx.createAnalyser();
       a.analyser.fftSize = 2048;
@@ -8394,6 +8648,7 @@
     if (!ctx || !a.el || typeof ctx.createMediaElementSource !== "function") return null;
     try { a.srcNode = ctx.createMediaElementSource(a.el); } catch (e) { return null; }
     a.gain = ctx.createGain();
+    a.gain.gain.value = pvVolume;   // the shared preview volume, remembered across clips
     if (typeof ctx.createAnalyser === "function") {
       a.analyser = ctx.createAnalyser();
       a.analyser.fftSize = 2048;
@@ -8547,11 +8802,16 @@
   // pitch-preserving time-stretch (each grain still plays at its own rate), while a fast drag skips
   // ahead. The grains are windowed to silence at their edges, so a drag never clicks, and the clip
   // comes to rest where the drag leaves it rather than switching to normal playback.
-  function pvAudioScrubStart() {
-    var a = pvAudio; if (!a) return;
+  // `interactive` marks a pointer drag, which ends on pointerup/cancel; a scrub begun without it is
+  // finished directly by its caller (see pvScrubTo). Returns the player, or null when it cannot
+  // scrub — buffer mode needs the clip decoded, and either mode needs its duration.
+  function pvAudioScrubStart(interactive) {
+    var a = pvAudio; if (!a) return null;
     a.scrubbing = true;
-    window.addEventListener("pointerup", pvAudioScrubEnd);
-    window.addEventListener("pointercancel", pvAudioScrubEnd);
+    if (interactive) {
+      window.addEventListener("pointerup", pvAudioScrubEnd);
+      window.addEventListener("pointercancel", pvAudioScrubEnd);
+    }
     a.scrubStill = 0;
     a.scrubLastMs = 0; a.scrubLastPos = a.offset || 0;
     a.scrubTickAt = 0; a.scrubVel = 0; a.scrubHead = a.offset || 0;
@@ -8560,7 +8820,7 @@
       // A streamed clip cannot be decoded for grains, so the drag plays the element and seeks it —
       // a paused element would seek silently. Its rate follows the drag, its pitch is kept.
       if (!a.scrubTimer) a.scrubTimer = setTimeout(pvAudioScrubTick, 0);
-      return;
+      return a;
     }
     if (!a.buffer) { a.scrubbing = false; return; }
     if (a.playing) { a.offset = pvAudioPos(); a.scrubHead = a.offset; pvAudioStopSource(a); a.playing = false; }
@@ -8570,6 +8830,7 @@
     if (ctx) { if (ctx.state === "suspended") { try { ctx.resume(); } catch (err) {} } pvAudioChain(ctx); }
     if (!a.scrubTimer) a.scrubTimer = setTimeout(pvAudioScrubTick, 0);
     pvAudioLoop();
+    return a;
   }
   // The scrubber is the playhead: grains read from it every tick. While the reader is dragged the
   // head advances at the drag's speed (a pitch-preserving granular stretch); held at rest the head
@@ -8635,30 +8896,108 @@
     if (!pvScrubCurveBuf) pvScrubCurveBuf = asScrubCurve(48);
     return pvScrubCurveBuf;
   }
-  function pvAudioScrubEnd() {
+  // A released pointer ends the drag the usual way: the clip resumes playing from where the drag
+  // left it.
+  function pvAudioScrubEnd() { pvScrubFinish(true); }
+  // End a scrub where the head was left and hand the clip back, playing again unless the caller asks
+  // for it to stay put. Returns the position it landed on, or null when there was no scrub running.
+  function pvScrubFinish(resume) {
     var a = pvAudio;
     window.removeEventListener("pointerup", pvAudioScrubEnd);
     window.removeEventListener("pointercancel", pvAudioScrubEnd);
-    if (!a || !a.scrubbing) return;
+    if (!a || !a.scrubbing) return null;
     a.scrubbing = false;
     if (a.scrubTimer) { clearTimeout(a.scrubTimer); a.scrubTimer = 0; }
     // Read the slider's live value, so the release lands exactly where the pointer left it even
     // if the last timer tick ran a moment before the release.
     var seek = document.getElementById("pvSeek");
     if (seek && a.duration) a.scrubPos = Number(seek.value) / 1000 * a.duration;
+    var pos = clamp(a.scrubPos, 0, a.duration || 0);
+    a.offset = pos;
     if (a.mode === "element") {
-      if (a.el) {
-        try { a.el.playbackRate = 1; a.el.currentTime = clamp(a.scrubPos, 0, a.duration || 0); } catch (e) {}
-      }
+      if (a.el) { try { a.el.playbackRate = 1; a.el.currentTime = pos; } catch (e) {} }
       a.scrubLastMs = 0;
-      pvAudioElPlay(a);   // playback resumes at normal speed, from where the drag left it
-      return;
+      if (resume) pvAudioElPlay(a);   // resumes at normal speed, from where the drag left it
+      else pvAudioElPause(a);
+      return pos;
     }
-    a.offset = clamp(a.scrubPos, 0, a.duration);
-    pvAudioPlay();   // the grains fade out and normal playback takes over from here
+    if (resume) pvAudioPlay();   // the grains fade out and normal playback takes over from here
+    else { pvSetPlaying(false); pvAudioSync(); }
+    return pos;
+  }
+  // Move the audio playhead to a position the way a manual drag does: begin a scrub at the current
+  // position, step the seek bar toward the target so the grains sound, then release. `play` leaves
+  // the clip playing or paused; omitted, the state it had before the move is kept. Resolves with the
+  // position it landed on, or null when there is nothing to scrub.
+  function pvScrubTo(seconds, play) {
+    var a = pvAudio; if (!a || pvScrubBusy) return Promise.resolve(null);
+    var dur = a.duration || 0;
+    var seek = document.getElementById("pvSeek");
+    if (!dur || !seek) return Promise.resolve(null);
+    var target = clamp(Number(seconds) || 0, 0, dur);
+    var start = clamp(Number(pvAudioPos()) || 0, 0, dur);
+    var wasPlaying = !!a.playing;
+    // Start the bar where the head is, so the move reads as a drag from here rather than a jump.
+    seek.value = String(Math.round(start / dur * 1000));
+    pvSeekFill(seek);
+    if (!pvAudioScrubStart(false)) { pvAudioSeekTo(target); return Promise.resolve(target); }
+    pvScrubBusy = a;
+    var steps = 20;
+    return new Promise(function (resolve) {
+      var i = 0;
+      function done() {
+        pvScrubBusy = null;
+        resolve(pvScrubFinish(play == null ? wasPlaying : !!play));
+      }
+      function step() {
+        if (pvAudio !== a) { pvScrubBusy = null; resolve(null); return; }
+        i++;
+        var to = i >= steps ? target : start + (target - start) * (i / steps);
+        seek.value = String(Math.round(to / dur * 1000));
+        pvSeekFill(seek);
+        seek.dispatchEvent(new Event("input", { bubbles: true }));
+        if (i < steps) setTimeout(step, 20);
+        else done();
+      }
+      setTimeout(step, 20);
+    });
+  }
+  // The media player's state, as the viewer's own media tool reports it: what is playing, where the
+  // head is and how long the clip is. Null when the preview holds no media.
+  function pvMediaStatus() {
+    var v = document.getElementById("pvVideo");
+    if (v) {
+      var vs = { kind: "video", path: previewPath || null, playing: !v.paused, position: pvRound(v.currentTime), duration: pvRound(v.duration) };
+      if (pvMediaError) vs.error = pvMediaError;
+      return vs;
+    }
+    var a = pvAudio;
+    if (!a) return null;
+    var as = { kind: "audio", path: a.path || null, playing: !!a.playing, position: pvRound(pvAudioPos()), duration: pvRound(a.duration), cues: a.cues ? a.cues.length : 0 };
+    if (pvMediaError) as.error = pvMediaError;
+    return as;
+  }
+  function pvRound(v) { v = Number(v); return isFinite(v) ? Math.round(v * 100) / 100 : null; }
+  // Press the media player's play/pause control, the same as its button: the audio player through
+  // its own toggle (decoded or streamed), a video through its element. Resolves with the new state,
+  // or null when no media is open.
+  async function pvMediaControl(action) {
+    var v = document.getElementById("pvVideo");
+    if (v) {
+      var want = action === "toggle" ? v.paused : action === "play";
+      try { if (want) await v.play(); else v.pause(); }
+      catch (e) { return { error: "The video could not be played: " + ((e && e.message) || e) }; }
+      return pvMediaStatus();
+    }
+    var st = pvMediaStatus();
+    if (!st) return null;
+    var on = action === "toggle" ? !st.playing : action === "play";
+    if (on !== st.playing) pvAudioToggle();
+    return pvMediaStatus();
   }
   function pvMediaStop() {
     var a = pvAudio; pvAudio = null;
+    pvScrubBusy = null;
     pvSetPlaying(false);
     if (!a) return;
     pvAudioSeq++;
@@ -8686,8 +9025,65 @@
     }
     add("Size", info.size != null ? formatBytes(info.size) : "");
     add("Modified", info.modified ? formatDate(info.modified) : "");
+    // A media page names the subtitle track beside it, so the reader can tell where the captions
+    // come from (and that there are some) without opening anything else.
+    if (mediaKind(node.path)) add("Captions", captionInfo(node.path));
     el.innerHTML = cells.length ? '<dl class="pv-fields">' + cells.join("") + "</dl>"
       : '<p class="pv-note">File details are not available.</p>';
+  }
+  // The subtitle track a media file is associated with, when the folder or bundle holds one or the
+  // viewer has read one for it: the track path, its size when it is known, and its cue count once
+  // the track has been read. Null when the file is not media, or no track is known.
+  var pvCaptions = Object.create(null);
+  function pvCaptionsReset() { pvCaptions = Object.create(null); }
+  function associatedTrack(path) {
+    if (!mediaKind(path)) return null;
+    var track = vttPathFor(path);
+    if (!track || track === path) return null;
+    var file = (fileMap && fileMap.get(track)) || (bundleKnown && bundleKnown.get(track)) || null;
+    var seen = pvCaptions[track] || null;
+    if (!file && !seen) return null;
+    var out = { path: track };
+    if (file) {
+      var size = null;
+      if (typeof file.bytes === "number" && file.bytes) size = file.bytes;
+      else if (file.src && typeof file.src.size === "number") size = file.src.size;
+      if (size != null) out.size = size;
+    }
+    if (seen && seen.cues) out.cues = seen.cues;
+    return out;
+  }
+  // Read a media page's subtitle track now, the same bounded, contained fetch the player makes when
+  // it opens the page, and note what it holds — so a tool can answer whether a clip has captions
+  // even when the bundle never listed the track. Returns the track's path and cue count, or null.
+  async function pvTrackProbe(node) {
+    if (!node || !mediaKind(node.path)) return null;
+    var text = await vttTextFor(node, bundleGeneration);
+    if (text == null) return null;
+    var cues = vttParse(text);
+    pvCaptionNote(node, cues.length);
+    return { path: vttPathFor(node.path), cues: cues.length };
+  }
+  // The track as the file section describes it: its path, its size and its cue count. Empty when
+  // there is no track, so no row is shown.
+  function captionInfo(path) {
+    var track = associatedTrack(path);
+    if (!track) return "";
+    var bits = [];
+    if (track.size != null) bits.push(formatBytes(track.size));
+    if (track.cues) bits.push(track.cues + (track.cues === 1 ? " cue" : " cues"));
+    return track.path + (bits.length ? " (" + bits.join(", ") + ")" : "");
+  }
+  // Note that the open media page carries this track, and refresh the file section to show it.
+  function pvCaptionNote(node, cueCount) {
+    if (!node || !cueCount) return;
+    var track = vttPathFor(node.path);
+    if (!track || track === node.path) return;
+    var rec = pvCaptions[track];
+    if (!rec) rec = pvCaptions[track] = { cues: 0 };
+    if (rec.cues === cueCount) return;
+    rec.cues = cueCount;
+    paintFileSection(node);
   }
 
   function paintPdfMeta(node, meta) {
@@ -9272,6 +9668,15 @@
   });
   popovers.push(statusPop);
 
+  // The preview's volume popup: it has no fixed element (each preview renders a fresh one), so it
+  // joins the closers through lookups rather than a stored node.
+  popovers.push({
+    isOpen: pvVolumeOpen,
+    popEl: { contains: function (n) { return pvVolumeHolds("pvVolPop", n); } },
+    openEl: { contains: function (n) { return pvVolumeHolds("pvVolWrap", n); } },
+    close: pvVolumeClose
+  });
+
   document.addEventListener("mousedown", function (e) {
     popovers.forEach(function (p) {
       if (!p.isOpen()) return;
@@ -9626,7 +10031,7 @@
       allNodes.forEach(function (n) { prev.pos.set(n.id, { x: n.x, y: n.y, vx: n.vx, vy: n.vy, fx: n.fx, fy: n.fy }); });
     }
     try {
-      var graph = buildGraph(files);
+      var graph = buildGraph(files, known);
       if (runtimeOn) injectRuntimeInto(graph);
       if (!preserve) { bundleGeneration++; resetBundleResources(); legendFilter.clear(); }
       bundleBudget = nextBudget;
@@ -9767,8 +10172,9 @@
 
   // Materialize a visible-but-unloaded attachment placeholder. Local files come
   // from the already-read set; server bundles resolve against the bundle root.
-  // No bytes are fetched here — only the preview's metadata request is.
-  function loadAttachmentNode(node) {
+  // No bytes are fetched here — only the preview's metadata request is. `open`
+  // false loads without opening the preview, for a caller that opens it itself.
+  function loadAttachmentNode(node, open) {
     if (!node || node.kind !== "attachment" || node.loaded !== false) return false;
     var cands = (node.candidates && node.candidates.length) ? node.candidates : [node.path];
     var path = null, file = null;
@@ -9793,13 +10199,14 @@
       if (charged) releaseBundleFile(bundleBudget, file);
       return false;
     }
-    if (fileMap && fileMap.has(path)) openPreview(fileMap.get(path));
+    if (open !== false && fileMap && fileMap.has(path)) openPreview(fileMap.get(path));
     return true;
   }
 
   // Materialize a visible-but-unloaded non-Markdown file. Local files are read
-  // from their Blob now; server bundles fetch the text on demand. Then preview.
-  async function loadFileNode(node) {
+  // from their Blob now; server bundles fetch the text on demand. Then preview,
+  // unless the caller loads it only to read it (`open` false).
+  async function loadFileNode(node, open) {
     if (!node || node.kind !== "file" || node.loaded !== false) return false;
     var generation = bundleGeneration;
     var cands = (node.candidates && node.candidates.length) ? node.candidates : [node.path];
@@ -9821,8 +10228,13 @@
     if (!file || generation !== bundleGeneration) return false;
     if (!file.binary && file.lazy) {
       var data = null;
-      try { if (file.src && typeof file.src.stream === "function") data = await readBoundedStream(file.src.stream(), MAX_FILE_BYTES); }
-      catch (e) { return false; }
+      try {
+        // A local Blob is read as a bounded prefix, so a file larger than the single-file
+        // cap still previews (its first bytes, e.g. a long subtitle track) instead of failing.
+        // A served lazy file is fetched whole and bounded by readBoundedStream.
+        if (file.src && typeof file.src.slice === "function") data = new Uint8Array(await file.src.slice(0, MAX_FILE_BYTES).arrayBuffer());
+        else if (file.src && typeof file.src.stream === "function") data = await readBoundedStream(file.src.stream(), MAX_FILE_BYTES);
+      } catch (e) { return false; }
       try { file.text = data ? new TextDecoder().decode(data) : (file.src && file.src.text ? await file.src.text() : ""); }
       catch (e) { return false; }
       if (data) file.bytes = data.byteLength;
@@ -9840,7 +10252,7 @@
       if (!inFiles) releaseBundleFile(bundleBudget, file);
       return false;
     }
-    if (fileMap && fileMap.has(file.path)) openPreview(fileMap.get(file.path));
+    if (open !== false && fileMap && fileMap.has(file.path)) openPreview(fileMap.get(file.path));
     return true;
   }
 
@@ -11629,6 +12041,7 @@
   var AS_LIMITS = {
     inputChars: 8000, toolChars: 12000, iterations: 8, outputTokens: 2048,
     requestMs: 120000, streamBytes: 4 * 1024 * 1024, toolResultShown: 400,
+    findMatches: 20, findChars: 240,
     modelsBytes: 1024 * 1024, modelsShown: 300, inputTokens: 16384,
     maxTokens: 32768, speakChars: 2000, speakBytes: 8 * 1024 * 1024, speakAskTokens: 256,
     rtBufBytes: 4 * 1024 * 1024, rtFrame: 4096, rtEndMs: 20000, rtPreBytes: 16000, rtQueueBytes: 64000,
@@ -11686,6 +12099,16 @@
     "- Ground every claim in tool results and cite the concept paths you used.\n" +
     "- Read concepts with `read_concept`. It returns frontmatter only by default; pass " +
     "`full:true` only when you actually need a concept's body.\n" +
+    "- Read a file or attachment with `read_file`, which loads it on demand — a file the viewer has " +
+    "not read yet still comes back as text, and a `.vtt` subtitle track comes back as the transcript " +
+    "the preview shows. It also names the subtitle track a media file is associated with, so you " +
+    "know a clip has captions before opening it.\n" +
+    "- Look something up with the read tools, never by driving the viewer: `search_concepts` takes " +
+    "the same filter parameters as the panel — a `query` scoped by `field`, and `tags`, `kinds`, " +
+    "`types` and `statuses` include and exclude — so you can find the concepts the panel would " +
+    "show a reader without changing it; `read_concept` and `read_file` take a `query` and return " +
+    "the lines that contain it — with the cue time on a transcript line — so you can find where " +
+    "something is said without opening anything.\n" +
     "- Work within a small tool budget: prefer a couple of well-chosen searches over many, " +
     "follow the most promising results, and answer once you have enough rather than exploring " +
     "every branch.\n" +
@@ -11697,6 +12120,10 @@
     "move the graph, and `open_concept`, `viewer_preview`, `viewer_highlight`, `viewer_scroll` " +
     "and `viewer_selection` drive the open page. Batch several changes into one call; the viewer " +
     "updates as you work, so say what you changed.\n" +
+    "- Drive a media page with `viewer_media`: 'play', 'pause' and 'toggle' press the player's own " +
+    "play/pause control on the audio or the video, and 'scrub' moves the audio playhead to a " +
+    "position with the same audible scrub as dragging the seek bar, so the user hears the move " +
+    "rather than a silent jump. A video plays with the browser's own controls.\n" +
     "- Narrow an existing view by adding to it, never by wiping it: a request to focus on, " +
     "refine, or further filter what is already showing is additive — keep the filters already " +
     "applied and add a search query (which narrows whatever filters are active) or another " +
@@ -11714,6 +12141,15 @@
     "bold, links and code and tolerates reflowed whitespace, so you need not reproduce the " +
     "markup. If neither the request nor the open page says which page is meant, ask rather than " +
     "guessing.\n" +
+    "- The viewer is the **reader's**: every `open_concept`, `viewer_*` and `viewer_media` call " +
+    "changes what they see while you work. Never use them to look something up — opening a page or " +
+    "highlighting a phrase to find it is exactly what a `query` is for — and never leave the view " +
+    "somewhere you only passed through. Change the view only when the answer is to show something, " +
+    "once, as the last thing you do; when a question can be answered in words, answer it in words.\n" +
+    "- A media page plays a clip the viewer can read: a clip in a locally opened folder streams and " +
+    "plays at any size, while a served clip is read whole under a byte limit, so a bigger one has no " +
+    "player there. `read_file` on a media file reports `readable: false` in that case, so do not " +
+    "promise playback you cannot deliver — offer the transcript or the file's details instead.\n" +
     "- Keep track of what you have already done in this conversation: your earlier replies and " +
     "tool results are in the history. Do not repeat an action that already succeeded, and do not " +
     "undo one, unless the user asks — a request to show, list or describe something is read-only. " +
@@ -11745,12 +12181,21 @@
   // MCP-shaped tool definitions. Each has name, description and a JSON Schema
   // inputSchema, matching the Model Context Protocol tool record.
   var AS_TOOLS = [
-    { name: "search_concepts", description: "Search the loaded bundle's concepts by free text over title, description, tags and path.", inputSchema: { type: "object", properties: { query: { type: "string", description: "Text to search for." }, limit: { type: "integer", minimum: 1, maximum: 50, description: "Maximum results (default 10)." } }, required: ["query"], additionalProperties: false } },
-    { name: "read_concept", description: "Peek at one concept by its bundle path, returning only its frontmatter (metadata). Pass full:true to also return the Markdown body when its content is actually needed.", inputSchema: { type: "object", properties: { path: { type: "string", description: "Concept path from the bundle root, for example docs/model/graph-model.md." }, full: { type: "boolean", description: "Also return the Markdown body (default: frontmatter only)." } }, required: ["path"], additionalProperties: false } },
+    { name: "search_concepts", description: "Search the loaded bundle's concepts with the same parameters the filter panel uses to narrow the graph, without changing the panel or the view. 'query' is matched case-insensitively against the chosen 'field' (all fields when omitted); 'tags', 'kinds', 'types' and 'statuses' each take an 'include' and an 'exclude' list, exactly as the panel's facets do. Read-only: use it to find the concepts the panel would show, then read the promising ones.", inputSchema: { type: "object", properties: {
+      query: { type: "string", description: "Text to match against the chosen field; omit to filter by the facets alone." },
+      field: { type: "string", enum: ["", "title", "description", "type", "tags", "path"], description: "Which field the query matches (default: all fields)." },
+      tags: { type: "object", properties: { include: { type: "array", items: { type: "string" }, description: "Tags a concept must carry." }, exclude: { type: "array", items: { type: "string" }, description: "Tags that rule a concept out." } }, additionalProperties: false },
+      kinds: { type: "object", properties: { include: { type: "array", items: { type: "string" }, description: "Node kinds to keep (Concept, Index file, ...)." }, exclude: { type: "array", items: { type: "string" }, description: "Node kinds to drop." } }, additionalProperties: false },
+      types: { type: "object", properties: { include: { type: "array", items: { type: "string" }, description: "Frontmatter types to keep, e.g. Reference." }, exclude: { type: "array", items: { type: "string" }, description: "Frontmatter types to drop." } }, additionalProperties: false },
+      statuses: { type: "object", properties: { include: { type: "array", items: { type: "string" }, description: "Lifecycle statuses to keep." }, exclude: { type: "array", items: { type: "string" }, description: "Lifecycle statuses to drop." } }, additionalProperties: false },
+      limit: { type: "integer", minimum: 1, maximum: 50, description: "Maximum results (default 10)." }
+    }, additionalProperties: false } },
+    { name: "read_concept", description: "Peek at one concept by its bundle path, returning only its frontmatter (metadata). Pass full:true to also return the Markdown body when its content is actually needed. Pass query to instead return the lines of the body that contain that text, so you can find something on a page without opening it.", inputSchema: { type: "object", properties: { path: { type: "string", description: "Concept path from the bundle root, for example docs/model/graph-model.md." }, full: { type: "boolean", description: "Also return the Markdown body (default: frontmatter only)." }, query: { type: "string", description: "Instead of the body, return the lines that contain this text (case-insensitive)." } }, required: ["path"], additionalProperties: false } },
     { name: "list_neighbors", description: "List the concepts a given concept links to and the concepts that link to it.", inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"], additionalProperties: false } },
+    { name: "read_file", description: "Read a file or attachment node by its bundle path (a concept is read with read_concept), loading it on demand when the viewer has not read it yet. A text file returns its text, bounded - a WebVTT subtitle track returns the transcript the preview shows; an image, PDF or media file returns its details, including whether the preview can play it and the subtitle track associated with it. Pass query to instead return the lines that contain that text - with the cue time on a transcript line - which finds something in a file without opening it.", inputSchema: { type: "object", properties: { path: { type: "string", description: "File path from the bundle root, for example media/episode.mp3." }, query: { type: "string", description: "Instead of the text, return the lines that contain this text (case-insensitive)." } }, required: ["path"], additionalProperties: false } },
     { name: "list_facets", description: "List the bundle's kinds, concept types, tags and statuses with counts.", inputSchema: { type: "object", additionalProperties: false } },
     { name: "graph_overview", description: "Summarize the loaded bundle: file, link and concept counts and the top hub concepts.", inputSchema: { type: "object", additionalProperties: false } },
-    { name: "open_concept", description: "Open a concept in the viewer's preview panel.", inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"], additionalProperties: false } },
+    { name: "open_concept", description: "Open a page in the viewer's preview panel: a concept, an index file, or a file or attachment node. A file or attachment the viewer has not read yet is read first, so the page opens with its content. This changes what the reader sees, so open a page to show it rather than to look something up — a `query` reads a page without opening it.", inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"], additionalProperties: false } },
     { name: "list_decks", description: "List the decks and the concept paths each deck holds.", inputSchema: { type: "object", additionalProperties: false } },
     { name: "create_decks", description: "Create one or more decks in a single call, each optionally named and pre-filled with concept paths. The last one created becomes the active deck.", inputSchema: { type: "object", properties: { decks: { type: "array", minItems: 1, items: { type: "object", properties: { name: { type: "string", description: "Deck name (defaults to a generated name)." }, paths: { type: "array", items: { type: "string" }, description: "Concept paths to add to the deck." } }, additionalProperties: false } } }, required: ["decks"], additionalProperties: false } },
     { name: "add_to_decks", description: "Add one or more concepts to decks in a single call. Each item names a deck (or the active deck when omitted) and a concept path.", inputSchema: { type: "object", properties: { items: { type: "array", minItems: 1, items: { type: "object", properties: { deck: { type: "string", description: "Deck name; the active deck when omitted." }, path: { type: "string", description: "Concept path to add." }, sub: { type: "boolean", description: "Add a multi-page guide as a sub-deck." } }, required: ["path"], additionalProperties: false } } }, required: ["items"], additionalProperties: false } },
@@ -11768,7 +12213,8 @@
     { name: "viewer_directory", description: "Move the graph into a directory (or the root), the same as double-clicking it.", inputSchema: { type: "object", properties: { path: { type: "string", description: "Directory path from the bundle root; empty for the root." } }, required: ["path"], additionalProperties: false } },
     { name: "viewer_tag", description: "Filter the graph by a tag and reveal it: 'include' (default) adds the tag to the filter, 'exclude' hides it, 'toggle' flips it. Adds to the current filters rather than replacing them.", inputSchema: { type: "object", properties: { tag: { type: "string" }, mode: { type: "string", enum: ["include", "exclude", "toggle"] } }, required: ["tag"], additionalProperties: false } },
     { name: "viewer_preview", description: "Drive the preview panel: 'history' lists the pages and the current position, 'back'/'forward' step through them, 'close' closes the open page.", inputSchema: { type: "object", properties: { action: { type: "string", enum: ["history", "back", "forward", "close"] } }, required: ["action"], additionalProperties: false } },
-    { name: "viewer_highlight", description: "Highlight text and headings on the open page: 'texts' wraps each string wherever it appears, 'headings' marks headings whose text matches. A 'texts' string may be a phrase, a sentence or a whole paragraph: matching spans bold, links and code and tolerates reflowed whitespace and Markdown markers, so pass the text as it reads rather than copying the markup. Pass scroll:true to also scroll to the first match. Replaces the previous highlights.", inputSchema: { type: "object", properties: { texts: { type: "array", items: { type: "string" } }, headings: { type: "array", items: { type: "string" } }, scroll: { type: "boolean" } }, additionalProperties: false } },
+    { name: "viewer_media", description: "Drive the media on the open preview page. 'read' reports what is open and where it is; 'play', 'pause' and 'toggle' press the player's play/pause control; 'scrub' moves the audio playhead to 'position' the way a manual drag does - the clip plays through the move with the same audible scrub as dragging the seek bar, then releases at the target. 'scrub' is the audio player's: a video plays with the browser's own controls. Pass play:true or play:false to leave the clip playing or paused; by default it keeps the state it had before the move.", inputSchema: { type: "object", properties: { action: { type: "string", enum: ["read", "play", "pause", "toggle", "scrub"] }, position: { type: ["number", "string"], description: "Where to move the playhead: seconds, or \"mm:ss\" / \"h:mm:ss\"." }, play: { type: "boolean", description: "Leave the clip playing (true) or paused (false) after the scrub; omitted, the state before the move is kept." } }, required: ["action"], additionalProperties: false } },
+    { name: "viewer_highlight", description: "Highlight text and headings on the open page: 'texts' wraps each string wherever it appears, 'headings' marks headings whose text matches. A 'texts' string may be a phrase, a sentence or a whole paragraph: matching spans bold, links and code and tolerates reflowed whitespace and Markdown markers, so pass the text as it reads rather than copying the markup. Pass scroll:true to also scroll to the first match. Replaces the previous highlights. This changes what the reader sees, so use it to show a match rather than to look for one.", inputSchema: { type: "object", properties: { texts: { type: "array", items: { type: "string" } }, headings: { type: "array", items: { type: "string" } }, scroll: { type: "boolean" } }, additionalProperties: false } },
     { name: "viewer_scroll", description: "Scroll the open page to a heading, matched by its text (exact first, then by prefix).", inputSchema: { type: "object", properties: { heading: { type: "string" } }, required: ["heading"], additionalProperties: false } },
     { name: "viewer_selection", description: "Read the text the user has selected on the open page.", inputSchema: { type: "object", additionalProperties: false } }
   ];
@@ -11789,18 +12235,100 @@
   var asWarnDismissed = false, asWarnHost = null, asDevNoteDismissed = false;
   var asEls = {};
 
-  function asDefaults() {
+  // A provider's setup — the connection to one service — is shared: every model setup that
+  // selects a provider uses that provider's single setup, so a key entered once serves the
+  // chat, the audio output and the audio input alike. Only the model name belongs to the
+  // model setup itself.
+  function asSetupDefaults(name) {
+    var p = AS_PROVIDERS[name] || AS_PROVIDERS.custom;
     return {
-      provider: "deepseek", base: AS_PROVIDERS.deepseek.base, model: AS_PROVIDERS.deepseek.model,
-      auth: "bearer", key: "", apiVersion: "2024-10-21", persistKey: false, stream: true,
+      name: "", base: p.base || "", auth: p.auth || "bearer", key: "", apiVersion: "2024-10-21",
+      oauth: { authorize: "", token: "", clientId: "", scopes: "", accessToken: "", expiresAt: 0 }
+    };
+  }
+  function asDefaults() {
+    // Providers are added from the Provider section — DeepSeek starts configured, from its preset, so
+    // the assistant works out of the box. A model role keeps the provider its model was picked from;
+    // one that has none yet uses the first configured provider.
+    return {
+      providers: { deepseek: asSetupDefaults("deepseek") },
+      model: AS_PROVIDERS.deepseek.model, modelProvider: "",
+      persistKey: false, stream: true,
       temperature: 0.2, maxTokens: 1024, modelMax: 0, modelMaxFor: "", modelContext: 0, modelContextFor: "", budget: 0, speak: false,
       mic: false, micDevice: "",
-      oauth: { authorize: "", token: "", clientId: "", scopes: "", accessToken: "", expiresAt: 0 },
-      // The audio output model has its own provider setup, independent of the chat one.
-      audio: { provider: "deepseek", base: AS_PROVIDERS.deepseek.base, auth: "bearer", key: "", apiVersion: "2024-10-21", model: "", voice: "" },
-      // The audio input model (microphone transcription) has its own provider setup too.
-      input: { provider: "deepseek", base: AS_PROVIDERS.deepseek.base, auth: "bearer", key: "", apiVersion: "2024-10-21", model: "" }
+      // Each model role names the provider its model came from.
+      audio: { model: "", voice: "", provider: "" },
+      input: { model: "", provider: "" }
     };
+  }
+  // The setup of a configured provider. An unconfigured name yields an empty, throwaway setup, so
+  // reading one never quietly adds it: a provider is added from the Provider section.
+  function asSetup(name) {
+    if (!asCfg.providers) asCfg.providers = {};
+    var s = asCfg.providers[name];
+    if (!s) return asSetupDefaults(name);
+    if (!s.oauth) s.oauth = asSetupDefaults(name).oauth;
+    return s;
+  }
+  // Each model role names the provider its model was picked from, so the chat, the audio output and
+  // the audio input can each draw on a different configured provider. A role with none — nothing
+  // picked yet, or its provider removed — uses the first configured provider.
+  function asRoleProvider(role) {
+    var name = role === "audio" ? asCfg.audio.provider : role === "input" ? asCfg.input.provider : asCfg.modelProvider;
+    if (name && asCfg.providers[name]) return name;
+    var names = Object.keys(asCfg.providers || {});
+    return names.length ? names[0] : "";
+  }
+  function asSetRoleProvider(role, name) {
+    if (role === "audio") asCfg.audio.provider = name;
+    else if (role === "input") asCfg.input.provider = name;
+    else asCfg.modelProvider = name;
+  }
+  function asRoleModel(role) {
+    return role === "audio" ? asCfg.audio.model : role === "input" ? asCfg.input.model : asCfg.model;
+  }
+  // A model setup's effective config: its provider's shared setup plus its own model. The URL
+  // builders, the auth headers and the pickers all take one of these.
+  function asCfgOf(name) {
+    var s = asSetup(name);
+    return { role: "chat", provider: name, base: s.base, auth: s.auth, key: s.key,
+      apiVersion: s.apiVersion, oauth: s.oauth, model: "", voice: "", stream: !!asCfg.stream };
+  }
+  function asCfgFor(role) {
+    var cfg = asCfgOf(asRoleProvider(role));
+    cfg.role = role || "chat";
+    cfg.model = asRoleModel(role);
+    cfg.voice = role === "audio" ? asCfg.audio.voice : "";
+    return cfg;
+  }
+  // Whether a provider's setup is complete enough to make a request: a usable base URL, and the
+  // credential its authentication mode needs. This mirrors the checks a turn and the model listing
+  // make (asPreflight, asFetchModels), so the provider list marks each provider the same way.
+  function asSetupReady(name) {
+    var s = asSetup(name);
+    if (!s.base || !asAllowedUrl(s.base)) return false;
+    if (s.auth === "bearer" || s.auth === "api-key") return !!s.key;
+    if (s.auth === "oauth") return !!(s.oauth && s.oauth.accessToken);
+    return true;   // auth "none": the base URL alone is enough
+  }
+  // Copy the known setup fields of a saved record onto a setup, leaving anything absent as it was.
+  function asMergeSetup(setup, src) {
+    if (!setup || !src || typeof src !== "object") return setup;
+    ["name", "base", "auth", "key", "apiVersion"].forEach(function (k) { if (src[k] != null) setup[k] = src[k]; });
+    if (src.oauth && typeof src.oauth === "object") {
+      if (!setup.oauth) setup.oauth = asSetupDefaults("custom").oauth;
+      Object.keys(setup.oauth).forEach(function (o) { if (src.oauth[o] != null) setup.oauth[o] = src.oauth[o]; });
+    }
+    return setup;
+  }
+  // Whether a setup was actually changed from its preset. An older config seeded every preset, so
+  // only a changed setup — or the active one — counts as a provider the user added.
+  function asSetupTouched(name, s) {
+    var d = asSetupDefaults(name);
+    if (!s) return false;
+    if (s.name || s.base !== d.base || s.auth !== d.auth || s.apiVersion !== d.apiVersion || s.key) return true;
+    var o = s.oauth || {};
+    return !!(o.authorize || o.token || o.clientId || o.scopes || o.accessToken);
   }
   function asLoad() {
     var cfg = asDefaults();
@@ -11808,39 +12336,70 @@
       var raw = localStorage.getItem(AS_STORE);
       if (raw) {
         var saved = JSON.parse(raw);
-        for (var k in cfg) {
-          if (k !== "oauth" && k !== "audio" && k !== "input" && Object.prototype.hasOwnProperty.call(saved, k)) cfg[k] = saved[k];
+        ["model", "persistKey", "stream", "temperature", "maxTokens", "modelMax", "modelMaxFor",
+          "modelContext", "modelContextFor", "budget", "speak", "mic", "micDevice"].forEach(function (k) {
+          if (Object.prototype.hasOwnProperty.call(saved, k)) cfg[k] = saved[k];
+        });
+        if (saved.providers && typeof saved.providers === "object") {
+          // The current shape: one setup per configured provider.
+          cfg.providers = {};
+          Object.keys(saved.providers).forEach(function (name) {
+            if (!AS_PROVIDERS[name]) return;
+            var setup = asMergeSetup(asSetupDefaults(name), saved.providers[name]);
+            if (name === saved.provider || name === saved.modelProvider ||
+              (saved.audio && name === saved.audio.provider) || (saved.input && name === saved.input.provider) ||
+              asSetupTouched(name, setup)) cfg.providers[name] = setup;
+          });
+        } else {
+          // The older shape kept a setup per model role. Fold each into its provider.
+          cfg.providers = {};
+          var fold = function (name, src, oauth) {
+            if (!name || !AS_PROVIDERS[name]) return;
+            var setup = cfg.providers[name] || (cfg.providers[name] = asSetupDefaults(name));
+            asMergeSetup(setup, { base: src.base, auth: src.auth, key: src.key, apiVersion: src.apiVersion, oauth: oauth });
+          };
+          fold(saved.provider, saved, saved.oauth);
+          if (saved.audio) fold(saved.audio.provider, saved.audio);
+          if (saved.input) fold(saved.input.provider, saved.input);
         }
-        if (saved.oauth) for (var o in cfg.oauth) if (saved.oauth[o] != null) cfg.oauth[o] = saved.oauth[o];
-        if (saved.audio) for (var a in cfg.audio) if (saved.audio[a] != null) cfg.audio[a] = saved.audio[a];
-        if (saved.input) for (var n in cfg.input) if (saved.input[n] != null) cfg.input[n] = saved.input[n];
+        if (!Object.keys(cfg.providers).length) cfg.providers.deepseek = asSetupDefaults("deepseek");
+        // The model roles' providers. A config that kept one provider for every role stores it in
+        // `provider`; an older one already named a provider per role, so keep each of those.
+        var shared = saved.provider || "";
+        cfg.modelProvider = saved.modelProvider != null ? saved.modelProvider : shared;
+        if (saved.audio) {
+          if (saved.audio.model != null) cfg.audio.model = saved.audio.model;
+          if (saved.audio.voice != null) cfg.audio.voice = saved.audio.voice;
+          cfg.audio.provider = saved.audio.provider != null ? saved.audio.provider : shared;
+        }
+        if (saved.input) {
+          if (saved.input.model != null) cfg.input.model = saved.input.model;
+          cfg.input.provider = saved.input.provider != null ? saved.input.provider : shared;
+        }
         if (saved.audioModel && !cfg.audio.model) cfg.audio.model = saved.audioModel;   // migrate the older flat field
         if (saved.audio && saved.audio.transcribe && !cfg.input.model) cfg.input.model = saved.audio.transcribe;   // migrate the old transcription field
       }
     } catch (e) {}
-    if (!AS_PROVIDERS[cfg.provider]) cfg.provider = "custom";
-    if (!AS_PROVIDERS[cfg.audio.provider]) cfg.audio.provider = "custom";
-    if (!AS_PROVIDERS[cfg.input.provider]) cfg.input.provider = "custom";
     return cfg;
   }
   function asSave() {
     try {
-      var out = { provider: asCfg.provider, base: asCfg.base, model: asCfg.model, auth: asCfg.auth, apiVersion: asCfg.apiVersion, persistKey: asCfg.persistKey, stream: asCfg.stream, temperature: asCfg.temperature, maxTokens: asCfg.maxTokens, modelMax: asCfg.modelMax, modelMaxFor: asCfg.modelMaxFor, modelContext: asCfg.modelContext, modelContextFor: asCfg.modelContextFor, budget: asCfg.budget, speak: asCfg.speak, micDevice: asCfg.micDevice };
-      if (asCfg.persistKey) out.key = asCfg.key;
-      // OAuth endpoints and client ID are not secrets; the access token is only kept
-      // when the user asked to remember the key.
-      out.oauth = { authorize: asCfg.oauth.authorize, token: asCfg.oauth.token, clientId: asCfg.oauth.clientId, scopes: asCfg.oauth.scopes };
-      if (asCfg.persistKey) { out.oauth.accessToken = asCfg.oauth.accessToken; out.oauth.expiresAt = asCfg.oauth.expiresAt; }
-      // The audio provider carries no OAuth flow; its key follows the same remember flag.
-      if (asCfg.audio) {
-        out.audio = { provider: asCfg.audio.provider, base: asCfg.audio.base, auth: asCfg.audio.auth, apiVersion: asCfg.audio.apiVersion, model: asCfg.audio.model, voice: asCfg.audio.voice };
-        if (asCfg.persistKey) out.audio.key = asCfg.audio.key;
-      }
-      // The audio input provider carries no OAuth flow; its key follows the same remember flag.
-      if (asCfg.input) {
-        out.input = { provider: asCfg.input.provider, base: asCfg.input.base, auth: asCfg.input.auth, apiVersion: asCfg.input.apiVersion, model: asCfg.input.model };
-        if (asCfg.persistKey) out.input.key = asCfg.input.key;
-      }
+      var out = { model: asCfg.model, modelProvider: asCfg.modelProvider, persistKey: asCfg.persistKey, stream: asCfg.stream,
+        temperature: asCfg.temperature, maxTokens: asCfg.maxTokens, modelMax: asCfg.modelMax, modelMaxFor: asCfg.modelMaxFor,
+        modelContext: asCfg.modelContext, modelContextFor: asCfg.modelContextFor, budget: asCfg.budget, speak: asCfg.speak, micDevice: asCfg.micDevice };
+      // One setup per provider, shared by every model that uses it. Endpoints, scopes and client
+      // ID are not secrets; a key and an OAuth access token are kept only when the user asked to
+      // remember the key.
+      out.providers = {};
+      Object.keys(asCfg.providers).forEach(function (name) {
+        var s = asCfg.providers[name], setup = { base: s.base, auth: s.auth, apiVersion: s.apiVersion,
+          oauth: { authorize: s.oauth.authorize, token: s.oauth.token, clientId: s.oauth.clientId, scopes: s.oauth.scopes } };
+        if (s.name) setup.name = s.name;
+        if (asCfg.persistKey) { setup.key = s.key; setup.oauth.accessToken = s.oauth.accessToken; setup.oauth.expiresAt = s.oauth.expiresAt; }
+        out.providers[name] = setup;
+      });
+      out.audio = { model: asCfg.audio.model, voice: asCfg.audio.voice, provider: asCfg.audio.provider };
+      out.input = { model: asCfg.input.model, provider: asCfg.input.provider };
       localStorage.setItem(AS_STORE, JSON.stringify(out));
     } catch (e) {}
   }
@@ -12370,8 +12929,85 @@
     (allNodes || []).forEach(function (n) { if (!hit && n.path && n.path.toLowerCase() === lower) hit = n; });
     return hit;
   }
+  // Find a query in a page's own text, so the model can locate something without changing what the
+  // reader sees. Matching is a plain, case-insensitive substring over the lines of the text: a
+  // transcript line carries the cue time it was rendered with, any other line its number.
+  function asFindLines(text, query) {
+    var q = String(query == null ? "" : query).trim().toLowerCase();
+    if (!q) return [];
+    var lines = String(text == null ? "" : text).split("\n"), out = [];
+    for (var i = 0; i < lines.length && out.length < AS_LIMITS.findMatches; i++) {
+      if (!lines[i] || lines[i].toLowerCase().indexOf(q) < 0) continue;
+      var cue = /^\*\*([0-9:]+)\*\*\s*([\s\S]*)$/.exec(lines[i]);
+      if (cue) out.push({ time: cue[1], text: asCap(cue[2], AS_LIMITS.findChars) });
+      else out.push({ line: i + 1, text: asCap(lines[i], AS_LIMITS.findChars) });
+    }
+    return out;
+  }
+  // The matches a tool reports for a query, with the note a query needs when it found nothing.
+  function asQueryResult(out, text, query) {
+    out.query = String(query);
+    out.matches = asFindLines(text, query);
+    out.matchCount = out.matches.length;
+    if (out.matchCount >= AS_LIMITS.findMatches) out.truncated = true;
+    return out;
+  }
   function asCap(s, n) { s = String(s == null ? "" : s); return s.length > n ? s.slice(0, n) + "…" : s; }
   function asBrief(n) { return { path: n.path, type: n.type || null, title: n.title || null, description: asCap(n.description || "", 200), tags: n.tags || [], status: n.status || null }; }
+  // Read a node the viewer has not loaded yet, the same as clicking it: a local file or attachment
+  // comes from the folder that was opened, a served one from its own URL. The preview is left to the
+  // caller, so opening a page does not push two entries into the preview history. Guarded for the
+  // unit context, where the viewer's loaders do not exist. Returns true when the node is now loaded
+  // (or never needed loading).
+  async function asLoadUnloaded(node) {
+    if (!node || node.loaded !== false) return true;
+    try {
+      if (node.kind === "attachment" && typeof loadAttachmentNode === "function") return !!(await loadAttachmentNode(node, false));
+      if (node.kind === "file" && typeof loadFileNode === "function") return !!(await loadFileNode(node, false));
+    } catch (e) { return false; }
+    return true;
+  }
+  // A file node's text, read on demand. A WebVTT track comes back as the transcript the preview
+  // renders, so the model reads the track the way the reader sees it.
+  async function asFileText(node) {
+    var text = typeof node.body === "string" ? node.body : "";
+    if (!text && await asLoadUnloaded(node)) {
+      var after = asFindNode(node.path);
+      if (after && typeof after.body === "string") text = after.body;
+    }
+    if (text && /\.vtt$/i.test(node.path || "") && typeof vttTranscriptMarkdown === "function") text = vttTranscriptMarkdown(text);
+    return text;
+  }
+  // A bundle entry's size, when it is known without reading it: the bytes already read, or the
+  // native file's own size.
+  function asFileSize(file) {
+    if (!file) return null;
+    if (typeof file.bytes === "number" && file.bytes) return file.bytes;
+    if (file.src && typeof file.src.size === "number") return file.src.size;
+    return null;
+  }
+  // The subtitle track a media file is associated with, as the read tools report it. Guarded for the
+  // unit context, where the viewer's track helpers do not exist.
+  function asAssociated(node) {
+    if (!node || typeof associatedTrack !== "function") return null;
+    try { return associatedTrack(node.path); } catch (e) { return null; }
+  }
+  // The media player on the open preview page, reached through the viewer's own helpers. Null when no
+  // media is open; guarded for the unit context, where the player does not exist.
+  function asMediaReport() {
+    if (typeof pvMediaStatus !== "function") return null;
+    try { return pvMediaStatus(); } catch (e) { return null; }
+  }
+  // Seconds from a number of seconds or a "mm:ss" / "h:mm:ss" clock string, or null.
+  function asSeconds(v) {
+    if (typeof v === "number" && isFinite(v)) return v;
+    var s = String(v == null ? "" : v).trim();
+    if (!s) return null;
+    var m = /^(?:(\d+):)?(\d{1,2}):(\d{1,2}(?:\.\d+)?)$/.exec(s);
+    if (m) return (Number(m[1]) || 0) * 3600 + Number(m[2]) * 60 + Number(m[3]);
+    var n = Number(s);
+    return isFinite(n) ? n : null;
+  }
   function asDeckByName(name) {
     var n = String(name == null ? "" : name).trim().toLowerCase();
     for (var i = 0; i < decks.length; i++) if (decks[i].name.toLowerCase() === n) return decks[i];
@@ -12441,6 +13077,52 @@
     if (spec.clear === true) { inc.clear(); exc.clear(); return; }
     if (Array.isArray(spec.include)) { inc.clear(); spec.include.forEach(asSetAdd(inc)); }
     if (Array.isArray(spec.exclude)) { exc.clear(); spec.exclude.forEach(asSetAdd(exc)); }
+  }
+  function asFillSet(set, values) { (Array.isArray(values) ? values : []).forEach(asSetAdd(set)); return set; }
+  // The filter panel's parameters as a read-only query: the same search query and field, and the
+  // same tag/kind/type/status include and exclude lists, evaluated against a node without touching
+  // the panel or the view. `asFacetSets` maps a facet name to the panel's own sets to change them;
+  // this maps the same names to local sets to search with.
+  function asSearchSpec(args) {
+    args = args || {};
+    var spec = {
+      query: typeof args.query === "string" ? args.query.trim() : "",
+      field: typeof args.field === "string" ? args.field : ""
+    };
+    ["tags", "kinds", "types", "statuses"].forEach(function (facet) {
+      var raw = args[facet] && typeof args[facet] === "object" ? args[facet] : {};
+      spec[facet] = { include: asFillSet(new Set(), raw.include), exclude: asFillSet(new Set(), raw.exclude) };
+    });
+    return spec;
+  }
+  // Whether a node passes the spec, by the same rule the panel applies in matchesQuery and
+  // matchesAttrFilters: the query matches the chosen field, and each facet's include must match
+  // the node while its exclude must not.
+  function asNodeInSpec(n, spec) {
+    if (spec.query && fieldText(n, spec.field).toLowerCase().indexOf(spec.query.toLowerCase()) < 0) return false;
+    var kind = kindLabel(n);
+    if (spec.kinds.include.size && !spec.kinds.include.has(kind)) return false;
+    if (spec.kinds.exclude.size && spec.kinds.exclude.has(kind)) return false;
+    var type = n.type || "(untyped)";
+    if (spec.types.include.size && !spec.types.include.has(type)) return false;
+    if (spec.types.exclude.size && spec.types.exclude.has(type)) return false;
+    var status = n.status || "stable";
+    if (spec.statuses.include.size && !spec.statuses.include.has(status)) return false;
+    if (spec.statuses.exclude.size && spec.statuses.exclude.has(status)) return false;
+    var tags = Array.isArray(n.tags) ? n.tags : [];
+    if (spec.tags.include.size && !tagHitAny(tags, spec.tags.include)) return false;
+    if (spec.tags.exclude.size && tagHitAny(tags, spec.tags.exclude)) return false;
+    return true;
+  }
+  // The spec echoed back in a search result, so the model sees what it searched with.
+  function asSpecEcho(spec) {
+    return {
+      query: spec.query, field: spec.field,
+      tags: asFacet(spec.tags.include, spec.tags.exclude),
+      kinds: asFacet(spec.kinds.include, spec.kinds.exclude),
+      types: asFacet(spec.types.include, spec.types.exclude),
+      statuses: asFacet(spec.statuses.include, spec.statuses.exclude)
+    };
   }
   function asRenderPops() {
     if (typeof tagPop !== "undefined" && tagPop && tagPop.render) tagPop.render();
@@ -12688,20 +13370,62 @@
   async function asExecTool(name, args) {
     args = args || {};
     if (name === "search_concepts") {
-      var q = String(args.query || "").toLowerCase();
+      var spec = asSearchSpec(args);
       var limit = Math.max(1, Math.min(50, parseInt(args.limit, 10) || 10));
-      var res = asConceptNodes().filter(function (n) {
-        if (!q) return true;
-        return (n.title + " " + n.description + " " + (n.tags || []).join(" ") + " " + n.path).toLowerCase().indexOf(q) >= 0;
-      }).slice(0, limit).map(asBrief);
-      return JSON.stringify({ query: args.query || "", count: res.length, results: res });
+      var res = asConceptNodes().filter(function (n) { return asNodeInSpec(n, spec); }).slice(0, limit).map(asBrief);
+      return JSON.stringify({ filter: asSpecEcho(spec), count: res.length, results: res });
     }
     if (name === "read_concept") {
       var node = asFindNode(args.path);
       if (!node) return JSON.stringify({ error: "No such concept: " + args.path });
+      if (typeof args.query === "string" && args.query.trim()) return JSON.stringify(asQueryResult({ path: node.path, chars: (node.body || "").length }, node.body || "", args.query));
       var out = { path: node.path, frontmatter: node.fm || {}, bodyChars: (node.body || "").length };
       if (args.full) out.body = asCap(node.body || "", AS_LIMITS.toolChars);
       return JSON.stringify(out);
+    }
+    if (name === "read_file") {
+      var rf = asFindNode(args.path);
+      if (!rf) return JSON.stringify({ error: "No such file: " + args.path });
+      if (rf.kind === "concept" || rf.kind === "index") return JSON.stringify({ error: rf.path + " is a concept; read it with read_concept." });
+      var rfOk = await asLoadUnloaded(rf);
+      var rfNode = asFindNode(rf.path) || rf;
+      var rfInfo = {};
+      if (typeof peekFileInfo === "function") { try { rfInfo = (await peekFileInfo(rfNode)) || {}; } catch (e) { rfInfo = rfNode.fileInfo || {}; } }
+      var rfOut = { path: rfNode.path, kind: rfNode.kind || null };
+      if (rfInfo.size != null) rfOut.size = rfInfo.size;
+      else { var rfSize = asFileSize(rfNode); if (rfSize != null) rfOut.size = rfSize; }
+      if (rfInfo.modified) rfOut.modified = rfInfo.modified;
+      if (!rfOk) rfOut.note = "The file could not be read; it may be missing, or beyond the limits.";
+      var rfMedia = typeof mediaKind === "function" ? mediaKind(rfNode.path) : null;
+      if (rfMedia) rfOut.media = rfMedia;
+      // Whether the preview can play it at all: a local clip streams at any size, a served one is
+      // read whole under a byte limit, so a larger clip has no player (the viewer says so too).
+      if (rfMedia && typeof pvMediaReadable === "function") {
+        var rfRead = {};
+        try { rfRead = pvMediaReadable(rfNode) || {}; } catch (e) { rfRead = {}; }
+        if (rfRead.ok === false) {
+          rfOut.readable = false;
+          if (rfRead.note) rfOut.note = rfRead.note;
+        }
+      }
+      var rfAssoc = asAssociated(rfNode);
+      if (!rfAssoc && rfMedia && typeof pvTrackProbe === "function") {
+        // Nothing is known about a track yet: look for one beside the clip, as opening it would.
+        try { await pvTrackProbe(rfNode); } catch (e) {}
+        rfAssoc = asAssociated(rfNode);
+      }
+      if (rfAssoc) rfOut.associated = [rfAssoc];
+      var rfText = rfOk ? await asFileText(rfNode) : "";
+      if (typeof args.query === "string" && args.query.trim()) {
+        if (rfText) rfOut.chars = rfText.length;
+        return JSON.stringify(asQueryResult(rfOut, rfText, args.query));
+      }
+      if (rfText) {
+        rfOut.chars = rfText.length;
+        rfOut.text = asCap(rfText, AS_LIMITS.toolChars);
+        if (rfText.length > AS_LIMITS.toolChars) rfOut.truncated = true;
+      }
+      return JSON.stringify(rfOut);
     }
     if (name === "list_neighbors") {
       var nd = asFindNode(args.path);
@@ -12728,14 +13452,22 @@
     }
     if (name === "open_concept") {
       var on = asFindNode(args.path);
-      if (!on) return JSON.stringify({ error: "No such concept: " + args.path });
+      if (!on) return JSON.stringify({ error: "No such page: " + args.path });
       // The full-page reading view is the user's: while it is open only a decked page may be
       // shown (it scrolls the stream); another page would leave reading, so it is refused.
       if (asReading() && !(typeof deckHas === "function" && deckHas(on.path))) {
         return JSON.stringify({ error: "The full-page reading view is open; only the user can close it, so " + on.path + " was not opened." });
       }
+      // A file or attachment the viewer has not read yet is read first (a concept is always
+      // loaded), so the page opens with its content rather than empty.
+      var onLoaded = false;
+      if (on.loaded === false) {
+        if (!await asLoadUnloaded(on)) return JSON.stringify({ opened: false, path: on.path, error: "The file could not be read: " + on.path });
+        on = asFindNode(on.path) || on;
+        onLoaded = true;
+      }
       try { openPreview(on); } catch (e) {}
-      return JSON.stringify({ opened: on.path });
+      return JSON.stringify({ opened: on.path, kind: on.kind || null, loaded: onLoaded });
     }
     if (name === "list_decks") {
       return JSON.stringify({
@@ -12879,6 +13611,26 @@
       if (pa === "close") { var wasOpen = asPreviewOpen(); if (wasOpen) closePreview(); return JSON.stringify({ closed: wasOpen }); }
       return JSON.stringify({ error: "Unknown viewer_preview action: " + pa });
     }
+    if (name === "viewer_media") {
+      var vma = String(args.action || "read");
+      var mst = asMediaReport();
+      if (vma === "read") return JSON.stringify(mst || { open: false, note: "No media page is open in the preview." });
+      if (!mst) return JSON.stringify({ error: "No media page is open in the preview; open one first with open_concept." });
+      if (vma === "play" || vma === "pause" || vma === "toggle") {
+        if (typeof pvMediaControl !== "function") return JSON.stringify({ error: "The media player is not available." });
+        return JSON.stringify((await pvMediaControl(vma)) || { error: "The media player is not available." });
+      }
+      if (vma === "scrub") {
+        if (mst.kind !== "audio") return JSON.stringify({ error: "The scrubber belongs to the audio player; a video plays with the browser's own controls." });
+        var secs = asSeconds(args.position);
+        if (secs == null) return JSON.stringify({ error: "Provide 'position' as seconds or as \"mm:ss\"." });
+        if (typeof pvScrubTo !== "function") return JSON.stringify({ error: "The audio player is not available." });
+        var landed = await pvScrubTo(secs, typeof args.play === "boolean" ? args.play : null);
+        if (landed == null) return JSON.stringify({ error: "The clip is not ready to scrub; try again once it has finished loading." });
+        return JSON.stringify({ scrubbedTo: Math.round(landed * 100) / 100, state: asMediaReport() });
+      }
+      return JSON.stringify({ error: "Unknown viewer_media action: " + vma });
+    }
     if (name === "viewer_highlight") return JSON.stringify(asPreviewHighlight(args));
     if (name === "viewer_scroll") {
       var hitHeading = asScrollToHeading(args.heading);
@@ -12992,7 +13744,7 @@
       max_tokens: Math.min(asMaxTokensCeiling(), AS_LIMITS.compactTokens),
       stream: false
     };
-    var acc = await asRequest(asCfg, body, null);
+    var acc = await asRequest(asCfgFor("chat"), body, null);
     asAddUsage(acc.usage, acc, true);   // a side request: counted, but not a per-request reading
     return (acc.content || "").trim();
   }
@@ -13553,7 +14305,7 @@
     var gen = asSpeechGen;   // a stop while the audio is fetched abandons this clip
     var say = String(text == null ? "" : text).trim().slice(0, AS_LIMITS.speakChars);
     if (!say) return JSON.stringify({ error: "Nothing to speak: 'text' is empty." });
-    var cfg = asCfg.audio;
+    var cfg = asCfgFor("audio");
     var u;
     try { u = asAllowedUrl(asSpeechUrl(cfg)); } catch (e) { return JSON.stringify({ error: e && e.message ? e.message : String(e) }); }
     if (!u) return JSON.stringify({ error: "The audio base URL must be https, or http on localhost." });
@@ -13685,7 +14437,7 @@
   // The provider's voices as picker rows: the voice's name (or id) and the languages it
   // speaks, so the Voice field can offer what the provider supplies.
   function asVoiceRows(q) {
-    var cfg = asCfg.audio;
+    var cfg = asCfgFor("audio");
     var items = asVoicesCache && asVoicesCache.key === asVoicesKey(cfg) ? asVoicesCache.items : [];
     var rows = [];
     items.forEach(function (v) {
@@ -13729,7 +14481,7 @@
   // part of the cache key, so changing it re-decides. A voice set in Settings always wins.
   async function asResolveSpeech() {
     if (!asSpeakAvailable()) return null;
-    var cfg = asCfg.audio;
+    var cfg = asCfgFor("audio");
     var key = String(cfg.provider || "") + "|" + String(cfg.base || "") + "|" + String(cfg.model || "") + "|" + String(cfg.voice || "") + "|" + asLangBase(asUiLang());
     if (asSpeechPlan && asSpeechPlan.key === key) return asSpeechPlan;
     var voices = await asVoiceList(cfg);
@@ -13889,7 +14641,7 @@
     if (name === "AbortError") return t("as.errMicAbort", "the request was aborted.");
     return (e && e.message) ? e.message : String(e);
   }
-  function asMicConfigured() { return !!(asCfg && asCfg.input && asCfg.input.base && asCfg.input.model); }
+  function asMicConfigured() { return !!(asCfg && asCfg.input && asCfgFor("input").base && asCfg.input.model); }
   function asMicOn() { return !!(asCfg && asCfg.mic); }
 
   function asStartMicCapture() {
@@ -14057,7 +14809,7 @@
   function asMicRtBegin() {
     var gen = (asMicSeq += 1);
     asMicRt = { gen: gen, ws: null, ready: false, ending: false, ended: false, endSent: false, done: false, text: "", bufs: [], bufBytes: 0, queue: [], queueBytes: 0, draining: false, drainTimer: 0, timer: 0 };
-    var cfg = asCfg.input, url;
+    var cfg = asCfgFor("input"), url;
     try { url = asRtUrl(cfg); } catch (e) { asMicRtFail(gen, e); return; }
     // A token minted ahead of time removes a round trip from the critical path; it is used once.
     var ahead = asMicTok; asMicTok = null;
@@ -14078,7 +14830,7 @@
   // round trip when the user starts speaking. A token is used once, for one connection.
   function asMicPrewarm() {
     if (!asMicOn() || !asMicConfigured() || asMicTok) return;
-    asMicRtToken(asCfg.input).then(function (t) { if (asMicOn() && !asMicTok) asMicTok = t; }, function () {});
+    asMicRtToken(asCfgFor("input")).then(function (t) { if (asMicOn() && !asMicTok) asMicTok = t; }, function () {});
   }
   // The provider's key is exchanged for a short-lived realtime token, which the socket then
   // carries. A token is minted for each session, close to when it connects, because the
@@ -14441,16 +15193,14 @@
       "The API key and access token are never shown.\n";
     out += asStatLine("Status", asBusy ? "busy" : (asCfg ? "idle" : "not configured"));
     if (asCfg) {
-      out += asStatLine("Provider", asCfg.provider || "(none)");
+      var chat = asCfgFor("chat");
+      out += asStatLine("Provider", asRoleProvider("chat") || "(none)");
       out += asStatLine("Model", asCfg.model || "(none)");
       out += asStatLine("Audio output", asCfg.speak ? "on" : "off");
       out += asStatLine("Microphone", asCfg.mic ? "on" : "off");
-      if (asCfg.audio && asCfg.audio.model) {
-        out += asStatLine("Audio provider", asCfg.audio.provider || "(none)");
-        out += asStatLine("Audio output model", asCfg.audio.model);
-      }
-      out += asStatLine("Base URL", asStatUrl(asCfg.base));
-      out += asStatLine("Authentication", asCfg.auth || "(none)");
+      if (asCfg.audio && asCfg.audio.model) out += asStatLine("Audio output model", asCfg.audio.model);
+      out += asStatLine("Base URL", asStatUrl(chat.base));
+      out += asStatLine("Authentication", chat.auth || "(none)");
       out += asStatLine("Streaming", asCfg.stream ? "on" : "off");
       out += asStatLine("Temperature", asCfg.temperature);
       out += asStatLine("Max output tokens", asCfg.maxTokens);
@@ -14458,8 +15208,8 @@
       if (asCfg.modelContext) out += asStatLine("Model context length", asCfg.modelContext);
       if (asCompaction.count) out += asStatLine("Context compactions", asCompaction.count);
       if (asCfg.budget) out += asStatLine("Session token budget", asCfg.budget);
-      if (asCfg.auth === "oauth") out += asStatLine("OAuth session", asCfg.oauth && asCfg.oauth.accessToken ? "signed in" : "not signed in");
-      else out += asStatLine("API key", asCfg.key ? "set" : "not set");
+      if (chat.auth === "oauth") out += asStatLine("OAuth session", chat.oauth && chat.oauth.accessToken ? "signed in" : "not signed in");
+      else out += asStatLine("API key", chat.key ? "set" : "not set");
     }
     out += "\n## Tokens\n\n";
     out += asStatLine("Input tokens", asTokens.input);
@@ -14594,7 +15344,7 @@
       stream: false
     };
     var acc;
-    try { acc = await asRequest(asCfg, body, null); } catch (e) { return; }   // the answer stands; never fail the turn here
+    try { acc = await asRequest(asCfgFor("chat"), body, null); } catch (e) { return; }   // the answer stands; never fail the turn here
     asAddUsage(acc.usage, acc);
     var call = null, calls = acc.tool_calls || [];
     for (var j = 0; j < calls.length; j++) if (calls[j].function && calls[j].function.name === "speak") { call = calls[j]; break; }
@@ -14639,7 +15389,7 @@
         // Ask OpenAI-compatible streamers to include token usage in the final chunk.
         if (asCfg.stream) body.stream_options = { include_usage: true };
         var live = asLiveStart();
-        var acc = await asRequest(asCfg, body, function (d) { asLiveAppend(live, d); });
+        var acc = await asRequest(asCfgFor("chat"), body, function (d) { asLiveAppend(live, d); });
         asAddUsage(acc.usage, acc);
         var msg = { role: "assistant", content: acc.content || "" };
         if (acc.tool_calls && acc.tool_calls.length) {
@@ -14704,7 +15454,7 @@
     };
     if (asCfg.stream) body.stream_options = { include_usage: true };
     var live = asLiveStart();
-    var acc = await asRequest(asCfg, body, function (d) { asLiveAppend(live, d); });
+    var acc = await asRequest(asCfgFor("chat"), body, function (d) { asLiveAppend(live, d); });
     asAddUsage(acc.usage, acc);
     asMessages.push({ role: "assistant", content: acc.content || "" });
     return !!(acc.content && acc.content.trim());
@@ -14714,9 +15464,10 @@
   // base URL, the session budget, and no turn already in flight. Shared by typing and voice.
   function asPreflight() {
     if (asBusy) return false;
-    if ((asCfg.auth === "bearer" || asCfg.auth === "api-key") && !asCfg.key) { asError(t("as.errNoKey", "Enter an API key in Settings.")); return false; }
-    if (asCfg.auth === "oauth" && !asCfg.oauth.accessToken) { asError(t("as.errNoToken", "Sign in or paste an access token first.")); return false; }
-    if (!asAllowedUrl(asCfg.base)) { asError(t("as.errBadUrl", "The base URL must be https, or http on localhost.")); return false; }
+    var c = asCfgFor("chat");
+    if ((c.auth === "bearer" || c.auth === "api-key") && !c.key) { asError(t("as.errNoKey", "Enter an API key in Settings.")); return false; }
+    if (c.auth === "oauth" && !c.oauth.accessToken) { asError(t("as.errNoToken", "Sign in or paste an access token first.")); return false; }
+    if (!asAllowedUrl(c.base)) { asError(t("as.errBadUrl", "The base URL must be https, or http on localhost.")); return false; }
     if (asBudgetExceeded()) { asError(t("as.errBudget", "The session token budget is reached. Raise or clear it from the budget control to continue.")); return false; }
     return true;
   }
@@ -14743,7 +15494,7 @@
   // the bound is kept only for the model it was computed for, so a persisted bound
   // survives a reload while switching to an unknown model drops it.
   function asSyncModelMax() {
-    var e = asModelEntry(asCfg.provider, asCfg.model);
+    var e = asModelEntry(asRoleProvider("chat"), asCfg.model);
     if (e) {
       asCfg.modelMax = e.maxOutput || 0; asCfg.modelMaxFor = asCfg.model;
       asCfg.modelContext = e.context || 0; asCfg.modelContextFor = asCfg.model;
@@ -14781,149 +15532,112 @@
   }
   function asReadForm() {
     var e = asEls;
-    if (e.provider) asCfg.provider = e.provider.value;
-    if (e.base) asCfg.base = e.base.value.trim();
     if (e.model) asCfg.model = e.model.value.trim();
+    if (e.audioModel) asCfg.audio.model = e.audioModel.value.trim();
+    if (e.inputModel) asCfg.input.model = e.inputModel.value.trim();
+    if (e.audioVoice) asCfg.audio.voice = asVoiceId(e.audioVoice.value);
     asSyncModelMax();
-    if (e.auth) asCfg.auth = e.auth.value;
-    if (e.key) asCfg.key = e.key.value;
-    if (e.apiVersion) asCfg.apiVersion = e.apiVersion.value.trim();
-    if (e.oauthAuth) asCfg.oauth.authorize = e.oauthAuth.value.trim();
-    if (e.oauthToken) asCfg.oauth.token = e.oauthToken.value.trim();
-    if (e.oauthClient) asCfg.oauth.clientId = e.oauthClient.value.trim();
-    if (e.oauthScopes) asCfg.oauth.scopes = e.oauthScopes.value.trim();
     if (e.persist) asCfg.persistKey = !!e.persist.checked;
     if (e.stream) asCfg.stream = !!e.stream.checked;
     if (e.temp) asCfg.temperature = Math.max(0, Math.min(2, Number(e.temp.value) || 0));
     if (e.maxTokens) asCfg.maxTokens = Math.max(1, Math.min(asMaxTokensCeiling(), parseInt(e.maxTokens.value, 10) || AS_LIMITS.outputTokens));
-    asFormVisibility();
     asRenderModelBtn();
     asRenderMaxTokens();
+    asRenderMic();
   }
   function asWriteForm() {
     var e = asEls;
-    if (e.provider) e.provider.value = asCfg.provider;
-    if (e.base) e.base.value = asCfg.base;
     if (e.model) e.model.value = asCfg.model;
-    if (e.auth) e.auth.value = asCfg.auth;
-    if (e.key) e.key.value = asCfg.key;
-    if (e.apiVersion) e.apiVersion.value = asCfg.apiVersion;
-    if (e.oauthAuth) e.oauthAuth.value = asCfg.oauth.authorize;
-    if (e.oauthToken) e.oauthToken.value = asCfg.oauth.token;
-    if (e.oauthClient) e.oauthClient.value = asCfg.oauth.clientId;
-    if (e.oauthScopes) e.oauthScopes.value = asCfg.oauth.scopes;
+    if (e.audioModel) e.audioModel.value = asCfg.audio.model;
+    if (e.inputModel) e.inputModel.value = asCfg.input.model;
+    if (e.audioVoice) e.audioVoice.value = asCfg.audio.voice ? asVoiceLabel(asCfg.audio.voice) : "";
     if (e.persist) e.persist.checked = !!asCfg.persistKey;
     if (e.stream) e.stream.checked = !!asCfg.stream;
     if (e.temp) e.temp.value = asCfg.temperature;
     if (e.maxTokens) e.maxTokens.value = asCfg.maxTokens;
-    if (e.audioProvider) e.audioProvider.value = asCfg.audio.provider;
-    if (e.audioBase) e.audioBase.value = asCfg.audio.base;
-    if (e.audioAuth) e.audioAuth.value = asCfg.audio.auth;
-    if (e.audioKey) e.audioKey.value = asCfg.audio.key;
-    if (e.audioApiVersion) e.audioApiVersion.value = asCfg.audio.apiVersion;
-    if (e.audioVoice) e.audioVoice.value = asCfg.audio.voice ? asVoiceLabel(asCfg.audio.voice) : "";
-    if (e.audioModel) e.audioModel.value = asCfg.audio.model;
-    if (e.inputProvider) e.inputProvider.value = asCfg.input.provider;
-    if (e.inputBase) e.inputBase.value = asCfg.input.base;
-    if (e.inputAuth) e.inputAuth.value = asCfg.input.auth;
-    if (e.inputKey) e.inputKey.value = asCfg.input.key;
-    if (e.inputApiVersion) e.inputApiVersion.value = asCfg.input.apiVersion;
-    if (e.inputModel) e.inputModel.value = asCfg.input.model;
-    asFormVisibility();
-    asOauthStatus();
     asRenderModelBtn();
     asRenderMaxTokens();
+    renderProvList();
+    renderProvConfigured();
   }
-  // Read the audio output model's own provider setup into asCfg.audio.
-  function asReadAudioForm() {
+  // The inline provider setup, opened from the listing's gearwheel (a configured provider's name) or
+  // from the add symbol ("" until a kind is picked). In add mode the field values are staged in
+  // asProvDraft, so Cancel leaves the configuration untouched and Add commits them.
+  var asProvOpen = false;
+  var asProvEdit = "";
+  var asProvDraft = null;
+  function asProvDialogOpen() { return asProvOpen; }
+  // Adding a new provider, as opposed to reconfiguring a configured one.
+  function asProvAddMode() { return asProvOpen && !asCfg.providers[asProvEdit]; }
+  // The setup the dialog's fields read and write: the configured provider's setup, or the draft.
+  function asProvTarget() { return asCfg.providers[asProvEdit] || asProvDraft; }
+  // Fold the dialog's current field values into the setup it shows, but only while the dialog is
+  // open: a closed dialog's fields are stale. An unfinished draft is harmless, so it is read too.
+  function asReadProvFormIfOpen() { if (asProvDialogOpen() && asProvTarget()) asReadProvForm(); }
+  function asReadProvForm() {
+    var s = asProvTarget();
+    if (!s) return;
     var e = asEls;
-    if (e.audioProvider) asCfg.audio.provider = e.audioProvider.value;
-    if (e.audioBase) asCfg.audio.base = e.audioBase.value.trim();
-    if (e.audioAuth) asCfg.audio.auth = e.audioAuth.value;
-    if (e.audioKey) asCfg.audio.key = e.audioKey.value;
-    if (e.audioApiVersion) asCfg.audio.apiVersion = e.audioApiVersion.value.trim();
-    if (e.audioVoice) asCfg.audio.voice = asVoiceId(e.audioVoice.value);
-    if (e.audioModel) asCfg.audio.model = e.audioModel.value.trim();
-    asAudioFormVisibility();
+    if (e.provDisplay) s.name = e.provDisplay.value.trim();
+    if (e.base) s.base = e.base.value.trim();
+    if (e.auth) s.auth = e.auth.value;
+    if (e.key) s.key = e.key.value;
+    if (e.apiVersion) s.apiVersion = e.apiVersion.value.trim();
+    if (e.oauthAuth) s.oauth.authorize = e.oauthAuth.value.trim();
+    if (e.oauthToken) s.oauth.token = e.oauthToken.value.trim();
+    if (e.oauthClient) s.oauth.clientId = e.oauthClient.value.trim();
+    if (e.oauthScopes) s.oauth.scopes = e.oauthScopes.value.trim();
+    asProvFormVisibility();
   }
-  // Read the audio input model's own provider setup into asCfg.input.
-  function asReadInputForm() {
-    var e = asEls;
-    if (e.inputProvider) asCfg.input.provider = e.inputProvider.value;
-    if (e.inputBase) asCfg.input.base = e.inputBase.value.trim();
-    if (e.inputAuth) asCfg.input.auth = e.inputAuth.value;
-    if (e.inputKey) asCfg.input.key = e.inputKey.value;
-    if (e.inputApiVersion) asCfg.input.apiVersion = e.inputApiVersion.value.trim();
-    if (e.inputModel) asCfg.input.model = e.inputModel.value.trim();
-    asInputFormVisibility();
-    asRenderMic();
+  function asWriteProvForm() {
+    var e = asEls, s = asProvTarget();
+    if (!s) return;
+    if (e.provDisplay) e.provDisplay.value = s.name || "";
+    if (e.provName) e.provName.textContent = asProvEdit ? asProviderLabel(asProvEdit) : "";
+    if (e.base) e.base.value = s.base;
+    if (e.auth) e.auth.value = s.auth;
+    if (e.key) e.key.value = s.key;
+    if (e.apiVersion) e.apiVersion.value = s.apiVersion;
+    if (e.oauthAuth) e.oauthAuth.value = s.oauth.authorize;
+    if (e.oauthToken) e.oauthToken.value = s.oauth.token;
+    if (e.oauthClient) e.oauthClient.value = s.oauth.clientId;
+    if (e.oauthScopes) e.oauthScopes.value = s.oauth.scopes;
+    asProvFormVisibility();
+    asOauthStatus();
   }
-  function asFormVisibility() {
-    var e = asEls;
-    if (e.apiVersionRow) e.apiVersionRow.hidden = asCfg.provider !== "azure";
-    if (e.oauthBox) e.oauthBox.hidden = asCfg.auth !== "oauth";
-    if (e.keyRow) e.keyRow.hidden = asCfg.auth === "oauth" || asCfg.auth === "none";
-    asAudioFormVisibility();
-    asInputFormVisibility();
-  }
-  function asAudioFormVisibility() {
-    var e = asEls, a = asCfg && asCfg.audio;
-    if (e.audioApiVersionRow) e.audioApiVersionRow.hidden = !a || a.provider !== "azure";
-    if (e.audioKeyRow) e.audioKeyRow.hidden = !a || a.auth === "none";
-  }
-  function asInputFormVisibility() {
-    var e = asEls, a = asCfg && asCfg.input;
-    if (e.inputApiVersionRow) e.inputApiVersionRow.hidden = !a || a.provider !== "azure";
-    if (e.inputKeyRow) e.inputKeyRow.hidden = !a || a.auth === "none";
+  function asProvFormVisibility() {
+    var e = asEls, s = asProvTarget();
+    if (!s) return;
+    if (e.apiVersionRow) e.apiVersionRow.hidden = asProvEdit !== "azure";
+    if (e.oauthBox) e.oauthBox.hidden = s.auth !== "oauth";
+    if (e.keyRow) e.keyRow.hidden = s.auth === "oauth" || s.auth === "none";
   }
   function asOauthStatus() {
     if (!asEls.oauthStatus) return;
-    if (!asCfg.oauth.accessToken) { asEls.oauthStatus.textContent = ""; return; }
+    var s = asProvTarget();
+    var o = (s && s.oauth) || {};
+    if (!o.accessToken) { asEls.oauthStatus.textContent = ""; return; }
     var txt = t("as.signedIn", "signed in");
-    if (asCfg.oauth.expiresAt) txt += " · " + t("as.expires", "expires") + " " + new Date(asCfg.oauth.expiresAt).toLocaleString();
+    if (o.expiresAt) txt += " · " + t("as.expires", "expires") + " " + new Date(o.expiresAt).toLocaleString();
     asEls.oauthStatus.textContent = txt;
   }
-  function asPickProvider(name) {
-    var p = AS_PROVIDERS[name] || AS_PROVIDERS.custom;
-    asCfg.provider = name;
-    if (name !== "custom") { asCfg.base = p.base; asCfg.model = p.model; asCfg.auth = p.auth; }
-    // Keep the models already listed for other providers; the picker groups by provider.
+  // A newly added provider takes over every model role that has none of its own — so a fresh install
+  // works, and the provider just added can be used straight away; the model is cleared with the
+  // provider it belonged to. Afterwards a role's provider changes only when one of its models is
+  // picked in the model listing.
+  function asAdoptProvider(name) {
+    if (!AS_PROVIDERS[name] || !asCfg.providers[name]) return;   // only a configured provider can be used
+    if (!asCfg.modelProvider || !asCfg.providers[asCfg.modelProvider]) { asCfg.modelProvider = name; asCfg.model = ""; }
+    if (!asCfg.audio.provider || !asCfg.providers[asCfg.audio.provider]) { asCfg.audio.provider = name; asCfg.audio.model = ""; }
+    if (!asCfg.input.provider || !asCfg.providers[asCfg.input.provider]) { asCfg.input.provider = name; asCfg.input.model = ""; }
     asModelError = "";
-    closeModelMenu();
     asSyncModelMax();
-    asWriteForm(); asSave(); asWarn();
-  }
-  // The audio output model has its own provider; switching it rebases that setup only.
-  function asPickAudioProvider(name) {
-    var p = AS_PROVIDERS[name] || AS_PROVIDERS.custom;
-    asCfg.audio.provider = name;
-    if (name !== "custom") {
-      asCfg.audio.base = p.base;
-      asCfg.audio.model = "";   // the model belongs to the provider it was listed from
-      asCfg.audio.auth = p.auth === "oauth" ? "bearer" : p.auth;   // the audio setup has no OAuth flow
-    }
-    asModelError = "";
-    closeModelMenu();
-    asWriteForm(); asSave();
-  }
-  // The audio input model has its own provider; switching it rebases that setup only.
-  function asPickInputProvider(name) {
-    var p = AS_PROVIDERS[name] || AS_PROVIDERS.custom;
-    asCfg.input.provider = name;
-    if (name !== "custom") {
-      asCfg.input.base = p.base;
-      asCfg.input.model = "";   // the model belongs to the provider it was listed from
-      asCfg.input.auth = p.auth === "oauth" ? "bearer" : p.auth;   // the input setup has no OAuth flow
-    }
-    asModelError = "";
-    closeModelMenu();
-    asWriteForm(); asSave();
-    asRenderMic();
+    asWriteForm(); asSave(); asWarn(); asRenderMic();
   }
   function asWarn() {
     if (!asEls.warn) return;
     var host = "";
-    try { host = new URL(asCfg.base).host; } catch (e) {}
+    try { host = new URL(asCfgFor("chat").base).host; } catch (e) {}
     // A dismissed notice stays hidden for the same host — including across a reload,
     // since the dismissed host is remembered — and a new host re-warns.
     if (host !== asWarnHost) { asWarnHost = host; asWarnDismissed = host !== "" && asWarnDismissedHost() === host; }
@@ -14959,30 +15673,26 @@
   // before a question is asked, so it runs only when the user opens the picker, and it
   // obeys the same host controls as a chat.
   function asModelMenuOpen() { return !!(asEls.modelMenu && !asEls.modelMenu.hidden); }
-  // The display name of a provider, taken from the settings select so it follows the language.
+  // The display name of a provider, as the settings once listed them.
+  var AS_PROVIDER_LABELS = { deepseek: "DeepSeek", mistral: "Mistral", azure: "Azure OpenAI", llamacpp: "llama.cpp (local)", custom: "" };
   function asProviderLabel(name) {
-    var sel = asEls.provider;
-    if (sel && sel.options) {
-      for (var i = 0; i < sel.options.length; i++) if (sel.options[i].value === name) return sel.options[i].textContent;
-    }
-    return name;
+    if (name === "custom") return t("as.custom", "Custom (OpenAI-compatible)");
+    return AS_PROVIDER_LABELS[name] || name;
   }
-  // The picker groups models by provider. A group holds what we know for a provider this
-  // session — the list fetched from it, plus a configured preset's default model — so the
-  // user can jump between configured providers and their models in one place.
+  // The picker groups models by provider, across every configured provider: each provider's
+  // models fetched this session, plus a configured preset's default model. Choosing a model from a
+  // group makes that provider the provider of the field being filled.
   function asModelGroups(q) {
     var groups = [];
     var audio = asModelPickTarget === "audio";
     var input = asModelPickTarget === "input";
     if (asModelPickTarget === "voice") {
-      // The voice picker offers the audio provider's own voices, a single group.
+      // The voice picker offers the audio role's provider's own voices, a single group.
       var rows = asVoiceRows(q);
-      if (rows.length) groups.push({ provider: asCfg.audio.provider, models: rows });
+      if (rows.length) groups.push({ provider: asRoleProvider("audio"), models: rows });
       return groups;
     }
-    Object.keys(AS_PROVIDERS).forEach(function (name) {
-      if (audio && name !== asCfg.audio.provider) return;   // an audio model comes from the audio provider
-      if (input && name !== asCfg.input.provider) return;   // an input model comes from the input provider
+    Object.keys(asCfg.providers).forEach(function (name) {
       var preset = AS_PROVIDERS[name] || {};
       var models = (asModelCache[name] || []).slice();
       if (audio) {
@@ -15031,8 +15741,8 @@
           b.className = "as-model-row";
           b.setAttribute("role", "option");
           var selected = voice ? m.id === asCfg.audio.voice : (asModelPickTarget === "audio" ? m.id === asCfg.audio.model : (asModelPickTarget === "input" ? m.id === asCfg.input.model : m.id === asCfg.model));
-          // The owning provider is the one whose setup this field belongs to, not always the chat one.
-          var owner = voice || asModelPickTarget === "audio" ? asCfg.audio.provider : (asModelPickTarget === "input" ? asCfg.input.provider : asCfg.provider);
+          // The field's provider owns the selected model; the rest are other configured providers.
+          var owner = asRoleProvider(voice || asModelPickTarget === "audio" ? "audio" : (asModelPickTarget === "input" ? "input" : "chat"));
           b.setAttribute("aria-selected", (g.provider === owner && selected) ? "true" : "false");
           b.setAttribute("data-id", m.id);
           b.setAttribute("data-provider", g.provider);
@@ -15105,6 +15815,226 @@
     openModelMenu(anchor, target);
     asFetchModels();
   }
+
+  // --- the provider section: the configured providers, listed like the model list, with an add
+  // symbol after the last one. Adding and reconfiguring open the same inline dialog, which holds the
+  // configurable options; a provider kind can be added once, and the setup is shared by the chat,
+  // the audio output and the audio input alike.
+  function asConfigured() { return Object.keys(asCfg.providers || {}); }
+  // The display name of a configured provider: the name the user gave it, or the provider's own.
+  function asProvLabel(name) {
+    var s = asCfg.providers[name];
+    return (s && s.name) || asProviderLabel(name);
+  }
+  // The possible providers, shown in the dialog when adding. One already added is greyed out and
+  // cannot be picked — each provider can be configured once. In gear mode the kind is fixed to the
+  // provider being reconfigured, so every kind is disabled.
+  function renderProvList() {
+    var list = asEls.provList;
+    if (!list) return;
+    list.textContent = "";
+    var editing = !!asCfg.providers[asProvEdit];
+    Object.keys(AS_PROVIDERS).forEach(function (name) {
+      var added = !!asCfg.providers[name];
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "as-prov-row";
+      b.setAttribute("role", "option");
+      b.setAttribute("data-kind", name);
+      b.setAttribute("data-configured", added ? "true" : "false");
+      b.setAttribute("aria-selected", name === asProvEdit ? "true" : "false");
+      b.disabled = editing || added;
+      var mark = document.createElement("span");
+      mark.className = "as-prov-mark";
+      mark.setAttribute("aria-hidden", "true");
+      mark.textContent = added ? "\u2713" : "\uFF0B";
+      b.appendChild(mark);
+      var label = document.createElement("span");
+      label.className = "as-prov-name";
+      label.textContent = asProviderLabel(name);
+      b.appendChild(label);
+      b.title = added ? t("as.providerAlreadyAdded", "Already added") : asProviderLabel(name);
+      list.appendChild(b);
+    });
+  }
+  // One configured provider's important details, shown dimmed under its name.
+  function asProvDetail(name) {
+    var s = asCfg.providers[name] || {}, bits = [];
+    if (s.base) { try { bits.push(new URL(s.base).host); } catch (e) { bits.push(s.base); } }
+    if (s.auth === "none") bits.push(t("as.authNone", "None"));
+    else if (s.auth === "oauth") bits.push(t("as.authOauth", "OAuth 2.0 (code + PKCE)"));
+    else bits.push(s.auth === "api-key" ? t("as.authAzure", "Azure API key (api-key)") : t("as.authBearer", "API key (Bearer)"));
+    if (s.auth === "oauth") bits.push(s.oauth && s.oauth.accessToken ? t("as.tokenSet", "token set") : t("as.tokenUnset", "no token"));
+    else if (s.auth !== "none") bits.push(s.key ? t("as.keySet", "key set") : t("as.keyUnset", "no key"));
+    return bits.join(" \u00b7 ");
+  }
+  // The configured providers: the display name and the important details, with a gearwheel that
+  // opens its setup inline in this listing. A row itself is inert; only the gearwheel and the add
+  // symbol below act.
+  function renderProvConfigured() {
+    var list = asEls.provConfigured;
+    if (!list) return;
+    list.textContent = "";
+    asConfigured().forEach(function (name) {
+      var row = document.createElement("div");
+      row.className = "as-provrow";
+      row.setAttribute("data-provider", name);
+      row.setAttribute("data-ready", asSetupReady(name) ? "true" : "false");
+      var text = document.createElement("span");
+      text.className = "as-provrow-text";
+      var nm = document.createElement("span");
+      nm.className = "as-provrow-name";
+      nm.textContent = asProvLabel(name);
+      text.appendChild(nm);
+      var detail = document.createElement("span");
+      detail.className = "as-provrow-detail";
+      detail.textContent = asProvDetail(name);
+      text.appendChild(detail);
+      row.appendChild(text);
+      var gear = document.createElement("button");
+      gear.type = "button";
+      gear.className = "as-provrow-btn";
+      gear.setAttribute("data-act", "configure");
+      gear.setAttribute("aria-label", t("as.configureProvider", "Configure") + " " + asProvLabel(name));
+      gear.title = t("as.configureProvider", "Configure");
+      gear.textContent = "\u2699";
+      row.appendChild(gear);
+      list.appendChild(row);
+    });
+    // The add symbol, after the last configured provider.
+    var addRow = document.createElement("div");
+    addRow.className = "as-provrow as-provaddrow";
+    var add = document.createElement("button");
+    add.type = "button";
+    add.id = "asProvider";
+    add.className = "as-provadd";
+    add.setAttribute("data-act", "add");
+    add.setAttribute("aria-label", t("as.addProvider", "Add provider"));
+    add.title = t("as.addProvider", "Add provider");
+    add.textContent = "\uFF0B";
+    addRow.appendChild(add);
+    list.appendChild(addRow);
+    asPlaceProvPanel();
+  }
+  // The setup lives inside the row that opened it — the add row when adding, otherwise that
+  // provider's row — so it reads as part of the row rather than a card beside it. One element is
+  // moved from row to row; the row holding it carries `open`, which wraps it and, for the add row,
+  // hides the + that has done its job.
+  function asPlaceProvPanel() {
+    var panel = asEls.provPanel;
+    if (!panel) return;
+    var list = asEls.provConfigured, row = null;
+    if (asProvOpen && list) {
+      row = asCfg.providers[asProvEdit]
+        ? list.querySelector('[data-provider="' + asProvEdit + '"]')
+        : list.querySelector(".as-provaddrow");
+    }
+    var from = panel.parentNode;
+    if (from && from !== row && from.classList) from.classList.remove("open");
+    if (!row) {
+      if (from) from.removeChild(panel);
+      panel.hidden = !asProvOpen;
+      return;
+    }
+    row.classList.add("open");
+    row.appendChild(panel);
+    panel.hidden = false;
+  }
+  // Set an element's text and the i18n key that owns it, so a later language switch keeps it.
+  function asSetLabel(el, key, fallback) {
+    if (!el) return;
+    var text = t(key, fallback);
+    el.setAttribute("data-i18n", key);
+    el.setAttribute("data-i18n-default", text);
+    el.textContent = text;
+  }
+  // Open the setup for a provider being added (name "") or reconfigured (name set), inside its row.
+  // Both show the same options; adding stages them in a draft and commits them on Add, and only
+  // adding starts from the provider kind list.
+  function asProvOpenDialog(name) {
+    if (name && !asCfg.providers[name]) return;
+    asProvOpen = true;
+    asProvEdit = name || "";
+    asProvDraft = name ? null : asSetupDefaults("custom");
+    asPlaceProvPanel();
+    renderProvList();
+    asWriteProvForm();
+    asProvSyncDialog();
+    var focus = name ? asEls.provDisplay : (asEls.provList && asEls.provList.querySelector(".as-prov-row:not([disabled])"));
+    if (focus) focus.focus();
+  }
+  // Pick the kind of provider being added: its options, seeded from the preset into the draft, take
+  // the place of the kind list in the same row. Add commits the draft.
+  function asProvPickKind(name) {
+    if (!AS_PROVIDERS[name] || asCfg.providers[name]) return;   // no such kind, or already added
+    if (!asProvAddMode()) return;                               // the kind list belongs to adding
+    asProvEdit = name;
+    asProvDraft = asSetupDefaults(name);
+    asWriteProvForm();
+    asProvSyncDialog();
+    if (asEls.provDisplay) asEls.provDisplay.focus();
+  }
+  // The setup's controls follow its step: the kind list while a provider is being picked, then the
+  // options — with Add, or Update and Remove for a configured provider. The picking step keeps no
+  // buttons at all, so the row is the only control there.
+  function asProvSyncDialog() {
+    var editing = !!asCfg.providers[asProvEdit];
+    if (asEls.provHead) asEls.provHead.hidden = !asProvEdit;
+    if (asEls.provList) asEls.provList.hidden = !!asProvEdit;
+    if (asEls.provFields) asEls.provFields.hidden = !asProvEdit;
+    if (asEls.provButtons) asEls.provButtons.hidden = !asProvEdit;
+    if (asEls.provSave) asSetLabel(asEls.provSave, editing ? "as.updateProvider" : "as.addProvider", editing ? "Update" : "Add");
+    if (asEls.provRemove) asEls.provRemove.hidden = !editing;
+  }
+  // Add commits the draft and lets the roles without a provider adopt it; Update folds the edits into the
+  // provider's shared setup. Either way the dialog closes and the listing is refreshed.
+  function asProvSave() {
+    var name = asProvEdit;
+    if (!name || !AS_PROVIDERS[name]) return;
+    asReadProvForm();
+    if (!asCfg.providers[name]) {
+      asCfg.providers[name] = asProvDraft || asSetupDefaults(name);
+      asProvDraft = null;
+      asProvCloseDialog();
+      asAdoptProvider(name);   // the roles with no provider of their own take it, then write and save
+    } else {
+      asProvCloseDialog();
+      asWriteForm(); asSave(); asWarn(); asRenderMic();
+    }
+    renderProvList(); renderProvConfigured();
+  }
+  // The gearwheel opens the setup for a configured provider, or closes it when it is already open
+  // for that provider.
+  function asProvConfigure(name) {
+    if (!asCfg.providers[name]) return;
+    if (asProvOpen && asProvEdit === name) { asProvCloseDialog(); return; }
+    asProvOpenDialog(name);
+  }
+  function asProvCloseDialog() {
+    asProvOpen = false;
+    asProvEdit = "";
+    asProvDraft = null;
+    asPlaceProvPanel();   // detaches the setup and clears the row's open state
+  }
+  // Remove the provider the dialog is showing. A model role that used it falls back to another
+  // configured provider, or to none.
+  function asProvRemove() {
+    var name = asProvEdit;
+    if (!name || !asCfg.providers[name]) return;
+    delete asCfg.providers[name];
+    ["chat", "audio", "input"].forEach(function (role) {
+      if (role === "audio" ? asCfg.audio.provider === name : role === "input" ? asCfg.input.provider === name : asCfg.modelProvider === name) {
+        asSetRoleProvider(role, "");
+        if (role === "audio") asCfg.audio.model = "";
+        else if (role === "input") asCfg.input.model = "";
+        else asCfg.model = "";
+      }
+    });
+    asSyncModelMax();
+    asProvCloseDialog();
+    asWriteForm(); asSave(); asWarn(); asRenderMic();
+    renderProvList(); renderProvConfigured();
+  }
   // The chip below the chat input shows the model the next question will use.
   function asRenderModelBtn() {
     if (!asEls.modelBtnLabel) return;
@@ -15124,30 +16054,26 @@
       return;
     }
     if (asModelPickTarget === "audio") {
-      // The audio picker sets the audio provider's model; it never switches the chat provider.
+      // The audio picker sets the audio role's model and its provider.
       asCfg.audio.model = id;
+      if (provider) asCfg.audio.provider = provider;
       if (asEls.audioModel) asEls.audioModel.value = id;
       asSave();
       closeModelMenu();
       return;
     }
     if (asModelPickTarget === "input") {
-      // The input picker sets the audio input provider's model; the microphone needs one.
+      // The input picker sets the audio input role's model and its provider; the microphone needs one.
       asCfg.input.model = id;
+      if (provider) asCfg.input.provider = provider;
       if (asEls.inputModel) asEls.inputModel.value = id;
       asSave();
       asRenderMic();
       closeModelMenu();
       return;
     }
-    if (provider && provider !== asCfg.provider) {
-      // Choosing a model from another group switches the active provider to it.
-      var p = AS_PROVIDERS[provider] || AS_PROVIDERS.custom;
-      asCfg.provider = provider;
-      asCfg.base = p.base;
-      asCfg.auth = p.auth;
-      asModelError = "";
-    }
+    // The chat model's provider comes from the group it was chosen in.
+    if (provider) asCfg.modelProvider = provider;
     asCfg.model = id;
     if (asEls.model) asEls.model.value = id;
     // Selecting a model adopts its reported maximum: the max-output-tokens setting is
@@ -15157,65 +16083,92 @@
     asWriteForm(); asSave(); asWarn();
     closeModelMenu();
   }
-  // Fetch the active picker target's provider models. Bounded, and it only fills an
-  // empty model field, so opening the picker never overwrites a typed name.
-  async function asFetchModels() {
-    if (asModelsBusy) return;
-    if (asModelPickTarget === "voice") { await asFetchVoices(); return; }
-    var audio = asModelPickTarget === "audio";
-    var input = asModelPickTarget === "input";
-    if (audio) asReadAudioForm(); else if (input) asReadInputForm(); else asReadForm();
-    var cfg = audio ? asCfg.audio : (input ? asCfg.input : asCfg);
-    asModelError = "";
+  // Why a provider's model list cannot be requested, or "" when it can.
+  function asListNote(cfg) {
+    if ((cfg.auth === "bearer" || cfg.auth === "api-key") && !cfg.key) return t("as.errNoKey", "Enter an API key in Settings.");
+    if (cfg.auth === "oauth" && !(cfg.oauth && cfg.oauth.accessToken)) return t("as.errNoToken", "Sign in or paste an access token first.");
     var u = null;
-    if ((cfg.auth === "bearer" || cfg.auth === "api-key") && !cfg.key) asModelError = t("as.errNoKey", "Enter an API key in Settings.");
-    else if (cfg.auth === "oauth" && !(cfg.oauth && cfg.oauth.accessToken)) asModelError = t("as.errNoToken", "Sign in or paste an access token first.");
-    else {
-      try { u = asAllowedUrl(asModelsUrl(cfg)); } catch (e) { asModelError = e && e.message ? e.message : String(e); }
-      if (!asModelError && !u) asModelError = t("as.errBadUrl", "The base URL must be https, or http on localhost.");
-    }
-    if (asModelError) { asModelCache[cfg.provider] = []; renderModelList(); return; }
+    try { u = asAllowedUrl(asModelsUrl(cfg)); } catch (e) { return e && e.message ? e.message : String(e); }
+    if (!u) return t("as.errBadUrl", "The base URL must be https, or http on localhost.");
+    return "";
+  }
+  // Fetch and cache one provider's model list. Returns true when it was listed. The request is
+  // bounded, and carries that provider's own credentials to its own host.
+  async function asFetchProviderModels(name) {
+    var cfg = asCfgOf(name), u = null;
+    try { u = asAllowedUrl(asModelsUrl(cfg)); } catch (e) { u = null; }
+    if (!u) { asModelCache[name] = []; return false; }
     var headers = { "Accept": "application/json" };
     var auth = asAuthHeaders(cfg);
     for (var k in auth) headers[k] = auth[k];
-    asModelsBusy = true;
-    renderModelList();
     var controller = new AbortController();
     var timer = setTimeout(function () { controller.abort(); }, AS_LIMITS.requestMs);
     try {
       var res = await fetch(u.href, { method: "GET", headers: headers, credentials: "omit", redirect: "error", referrerPolicy: "no-referrer", signal: controller.signal });
       if (!res.ok) throw await asHttpError(res);
-      asModelCache[cfg.provider] = asModels(await asBoundedJson(res, AS_LIMITS.modelsBytes));
-      var mine = asModelCache[cfg.provider];
-      if (audio || input) {
-        // The audio/input field is left as chosen; the list only offers capable models.
-      } else if (mine.length && !asCfg.model) {
-        // Adopt the first listed chat model that supports tool calling, with its maximum.
-        var first = null;
-        for (var i = 0; i < mine.length; i++) if (mine[i].chatTools !== false) { first = mine[i]; break; }
-        if (first) {
-          asCfg.model = first.id;
-          if (asEls.model) asEls.model.value = first.id;
-          asSyncModelMax();
-          if (asCfg.modelMax > 0) asCfg.maxTokens = asCfg.modelMax;
-          asWriteForm();
-          asSave();
-        }
-      } else {
-        // A fresh list updates the bound for the current model; keep the value within it.
-        asSyncModelMax();
-        if (asCfg.maxTokens > asMaxTokensCeiling()) {
-          asCfg.maxTokens = asMaxTokensCeiling();
-          if (asEls.maxTokens) asEls.maxTokens.value = asCfg.maxTokens;
-          asSave();
-        }
-        asRenderMaxTokens();
-      }
+      asModelCache[name] = asModels(await asBoundedJson(res, AS_LIMITS.modelsBytes));
+      return true;
     } catch (err) {
-      asModelCache[cfg.provider] = [];
+      asModelCache[name] = [];
       asModelError = err && err.name === "AbortError" ? t("as.errAborted", "Request cancelled or timed out.") : (err && err.message ? err.message : String(err));
+      return false;
     } finally {
-      clearTimeout(timer); asModelsBusy = false;
+      clearTimeout(timer);
+    }
+  }
+  // With the model field empty, adopt the first listed chat model that supports tool calling, from
+  // the field's own provider when it has one, with the model's maximum.
+  function asAdoptFirstChatModel(listed) {
+    var owner = asRoleProvider("chat");
+    var order = listed.indexOf(owner) >= 0 ? [owner].concat(listed.filter(function (x) { return x !== owner; })) : listed;
+    for (var j = 0; j < order.length; j++) {
+      var mine = asModelCache[order[j]] || [];
+      for (var i = 0; i < mine.length; i++) {
+        if (mine[i].chatTools === false) continue;
+        asCfg.model = mine[i].id; asCfg.modelProvider = order[j];
+        if (asEls.model) asEls.model.value = mine[i].id;
+        asSyncModelMax();
+        if (asCfg.modelMax > 0) asCfg.maxTokens = asCfg.modelMax;
+        asWriteForm(); asSave();
+        return;
+      }
+    }
+  }
+  // Fetch the model list of every configured provider that can be reached, so the picker offers all
+  // of them and a model can be picked from any; a provider that is not set up is simply not listed.
+  // Bounded, and it only fills an empty model field, so opening the picker never overwrites a typed name.
+  async function asFetchModels() {
+    if (asModelsBusy) return;
+    if (asModelPickTarget === "voice") { await asFetchVoices(); return; }
+    var audio = asModelPickTarget === "audio";
+    var input = asModelPickTarget === "input";
+    asReadProvFormIfOpen();   // an open provider setup holds values the list should use
+    asModelError = "";
+    var reachable = asConfigured().filter(function (name) { return asSetupReady(name); });
+    if (!reachable.length) {
+      // Nothing to list: the field's own provider says why it cannot be reached.
+      asModelError = asListNote(asCfgFor(audio ? "audio" : (input ? "input" : "chat")));
+      renderModelList();
+      return;
+    }
+    asModelsBusy = true;
+    renderModelList();
+    var listed = [];
+    for (var i = 0; i < reachable.length; i++) {
+      if (await asFetchProviderModels(reachable[i])) listed.push(reachable[i]);
+    }
+    asModelsBusy = false;
+    if (!audio && !input && !asCfg.model) {
+      asAdoptFirstChatModel(listed);
+    } else {
+      // A fresh list updates the bound for the current model; keep the value within it.
+      asSyncModelMax();
+      if (asCfg.maxTokens > asMaxTokensCeiling()) {
+        asCfg.maxTokens = asMaxTokensCeiling();
+        if (asEls.maxTokens) asEls.maxTokens.value = asCfg.maxTokens;
+        asSave();
+      }
+      asRenderMaxTokens();
     }
     renderModelList();
   }
@@ -15224,8 +16177,8 @@
   // endpoint simply returns none, which the empty note explains.
   async function asFetchVoices() {
     if (asModelsBusy) return;
-    asReadAudioForm();
-    var cfg = asCfg.audio;
+    asReadProvFormIfOpen();
+    var cfg = asCfgFor("audio");
     asModelError = "";
     if ((cfg.auth === "bearer" || cfg.auth === "api-key") && !cfg.key) asModelError = t("as.errNoKey", "Enter an API key in Settings.");
     if (asModelError) { renderModelList(); return; }
@@ -15249,16 +16202,20 @@
   }
   function asRedirectUri() { return location.origin + location.pathname; }
   async function asOAuthStart() {
-    asReadForm(); asSave();
-    if (!asCfg.oauth.authorize || !asCfg.oauth.token || !asCfg.oauth.clientId) { asError(t("as.errOauthCfg", "Fill in the authorize endpoint, token endpoint and client ID.")); return; }
+    asReadProvForm(); asSave();
+    var s = asProvTarget();
+    if (!s) return;
+    var o = s.oauth;
+    if (!o.authorize || !o.token || !o.clientId) { asError(t("as.errOauthCfg", "Fill in the authorize endpoint, token endpoint and client ID.")); return; }
     if (!(window.crypto && crypto.subtle && crypto.getRandomValues)) { asError(t("as.errNoSubtle", "Sign-in needs a secure (https) context.")); return; }
     var verifier = asRandom(), state = asRandom(), challenge = await asChallenge(verifier);
-    try { sessionStorage.setItem("okfy.as.pkce", JSON.stringify({ verifier: verifier, state: state })); } catch (e) {}
-    var u = new URL(asCfg.oauth.authorize);
+    // The provider the sign-in belongs to is carried through the redirect, since the popup is gone by then.
+    try { sessionStorage.setItem("okfy.as.pkce", JSON.stringify({ verifier: verifier, state: state, provider: asProvEdit })); } catch (e) {}
+    var u = new URL(o.authorize);
     u.searchParams.set("response_type", "code");
-    u.searchParams.set("client_id", asCfg.oauth.clientId);
+    u.searchParams.set("client_id", o.clientId);
     u.searchParams.set("redirect_uri", asRedirectUri());
-    if (asCfg.oauth.scopes) u.searchParams.set("scope", asCfg.oauth.scopes);
+    if (o.scopes) u.searchParams.set("scope", o.scopes);
     u.searchParams.set("state", state);
     u.searchParams.set("code_challenge", challenge);
     u.searchParams.set("code_challenge_method", "S256");
@@ -15290,24 +16247,28 @@
     if (oerr) { asError("OAuth: " + oerr + (params.get("error_description") ? " — " + params.get("error_description") : "")); return true; }
     if (!rec || rec.state !== state) { asError(t("as.errOauthState", "The sign-in response did not match this session.")); return true; }
     try {
+      var setup = asSetup(rec && rec.provider != null ? rec.provider : "custom");
       var form = new URLSearchParams();
       form.set("grant_type", "authorization_code");
       form.set("code", code);
       form.set("redirect_uri", asRedirectUri());
-      form.set("client_id", asCfg.oauth.clientId);
+      form.set("client_id", setup.oauth.clientId);
       form.set("code_verifier", rec.verifier);
-      var res = await fetch(asCfg.oauth.token, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json" }, body: form.toString(), credentials: "omit", redirect: "error", referrerPolicy: "no-referrer" });
+      var res = await fetch(setup.oauth.token, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json" }, body: form.toString(), credentials: "omit", redirect: "error", referrerPolicy: "no-referrer" });
       var tok = await res.json();
       if (!res.ok || !tok.access_token) throw new Error((tok && (tok.error_description || tok.error)) || ("HTTP " + res.status));
-      asCfg.oauth.accessToken = tok.access_token;
-      asCfg.oauth.expiresAt = asJwtExp(tok.access_token) || (tok.expires_in ? Date.now() + tok.expires_in * 1000 : 0);
-      asSave(); asWriteForm(); asWarn();
+      setup.oauth.accessToken = tok.access_token;
+      setup.oauth.expiresAt = asJwtExp(tok.access_token) || (tok.expires_in ? Date.now() + tok.expires_in * 1000 : 0);
+      asSave(); asWarn();
       asMessages.push({ role: "assistant", content: t("as.oauthOk", "Signed in.") });
     } catch (e) { asError("OAuth token exchange failed: " + (e && e.message ? e.message : e)); }
     return true;
   }
   function asOAuthSignOut() {
-    asCfg.oauth.accessToken = ""; asCfg.oauth.expiresAt = 0;
+    var s = asProvTarget();
+    if (!s) return;
+    var o = s.oauth;
+    o.accessToken = ""; o.expiresAt = 0;
     try { sessionStorage.removeItem("okfy.as.pkce"); } catch (e) {}
     asSave(); asOauthStatus();
   }
@@ -15480,7 +16441,17 @@
     asEls.micToggle = document.getElementById("asMicToggle");
     asEls.micMenu = document.getElementById("asMicMenu");
     asEls.speaking = document.getElementById("asSpeaking");
-    asEls.provider = document.getElementById("asProvider");
+    asEls.provConfigured = document.getElementById("asProvConfigured");
+    asEls.provPanel = document.getElementById("asProvPanel");
+    asEls.provList = document.getElementById("asProvList");
+    asEls.provName = document.getElementById("asProvName");
+    asEls.provHead = document.getElementById("asProvHead");
+    asEls.provFields = document.getElementById("asProvFields");
+    asEls.provButtons = document.getElementById("asProvButtons");
+    asEls.provDisplay = document.getElementById("asProvDisplay");
+    asEls.provSave = document.getElementById("asProvSave");
+    asEls.provRemove = document.getElementById("asProvRemove");
+    asEls.provCancel = document.getElementById("asProvCancel");
     asEls.base = document.getElementById("asBase");
     asEls.model = document.getElementById("asModel");
     asEls.modelOpen = document.getElementById("asModelOpen");
@@ -15493,23 +16464,9 @@
     asEls.audioModel = document.getElementById("asAudioModel");
     asEls.audioOpen = document.getElementById("asAudioOpen");
     asEls.audioWrap = document.getElementById("asAudioWrap");
-    asEls.audioProvider = document.getElementById("asAudioProvider");
-    asEls.audioBase = document.getElementById("asAudioBase");
-    asEls.audioAuth = document.getElementById("asAudioAuth");
-    asEls.audioKey = document.getElementById("asAudioKey");
-    asEls.audioKeyRow = document.getElementById("asAudioKeyRow");
-    asEls.audioApiVersion = document.getElementById("asAudioApiVersion");
-    asEls.audioApiVersionRow = document.getElementById("asAudioApiVersionRow");
     asEls.audioVoice = document.getElementById("asAudioVoice");
     asEls.voiceOpen = document.getElementById("asVoiceOpen");
     asEls.voiceWrap = document.getElementById("asVoiceWrap");
-    asEls.inputProvider = document.getElementById("asInputProvider");
-    asEls.inputBase = document.getElementById("asInputBase");
-    asEls.inputAuth = document.getElementById("asInputAuth");
-    asEls.inputKey = document.getElementById("asInputKey");
-    asEls.inputKeyRow = document.getElementById("asInputKeyRow");
-    asEls.inputApiVersion = document.getElementById("asInputApiVersion");
-    asEls.inputApiVersionRow = document.getElementById("asInputApiVersionRow");
     asEls.inputModel = document.getElementById("asInputModel");
     asEls.inputOpen = document.getElementById("asInputOpen");
     asEls.inputWrap = document.getElementById("asInputWrap");
@@ -15581,9 +16538,24 @@
     if (asEls.send) asEls.send.addEventListener("click", asSend);
     if (asEls.stop) asEls.stop.addEventListener("click", asStop);
     if (asEls.input) asEls.input.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); asSend(); } });
-    if (asEls.provider) asEls.provider.addEventListener("change", function () { asPickProvider(asEls.provider.value); });
-    if (asEls.audioProvider) asEls.audioProvider.addEventListener("change", function () { asPickAudioProvider(asEls.audioProvider.value); });
-    if (asEls.inputProvider) asEls.inputProvider.addEventListener("change", function () { asPickInputProvider(asEls.inputProvider.value); });
+    // Picking a provider kind in the add setup seeds its options; a kind already added is disabled.
+    if (asEls.provList) asEls.provList.addEventListener("click", function (e) {
+      var row = e.target && e.target.closest ? e.target.closest("[data-kind]") : null;
+      if (row && !row.disabled) asProvPickKind(row.getAttribute("data-kind"));
+    });
+    // The configured listing: the gearwheel opens a provider's setup inline, and the trailing add
+    // symbol opens it for a new provider. A row itself does nothing.
+    if (asEls.provConfigured) asEls.provConfigured.addEventListener("click", function (e) {
+      var target = e.target && e.target.closest ? e.target.closest("[data-act]") : null;
+      if (!target) return;
+      var act = target.getAttribute("data-act");
+      if (act === "add") { asProvOpenDialog(""); return; }
+      var row = target.closest("[data-provider]");
+      if (row && act === "configure") asProvConfigure(row.getAttribute("data-provider"));
+    });
+    if (asEls.provSave) asEls.provSave.addEventListener("click", asProvSave);
+    if (asEls.provRemove) asEls.provRemove.addEventListener("click", asProvRemove);
+    if (asEls.provCancel) asEls.provCancel.addEventListener("click", function () { asProvCloseDialog(); renderProvConfigured(); });
     if (asEls.inputOpen) asEls.inputOpen.addEventListener("click", function () { asToggleModelPicker(asEls.inputWrap, "input"); });
     if (asEls.inputDevice) asEls.inputDevice.addEventListener("change", function () { asMicPickDevice(asEls.inputDevice.value); });
     if (asEls.modelOpen) asEls.modelOpen.addEventListener("click", function () { asToggleModelPicker(asEls.modelWrap); });
@@ -15611,18 +16583,21 @@
       openEl: { contains: function (n) { return !!(asEls.budget && asEls.budget.contains(n)); } } });
     popovers.push({ isOpen: asModelMenuOpen, popEl: asEls.modelMenu, close: closeModelMenu,
       openEl: { contains: function (n) { return !!((asEls.modelWrap && asEls.modelWrap.contains(n)) || (asEls.modelBtn && asEls.modelBtn.contains(n)) || (asEls.audioWrap && asEls.audioWrap.contains(n)) || (asEls.audioOpen && asEls.audioOpen.contains(n)) || (asEls.voiceWrap && asEls.voiceWrap.contains(n)) || (asEls.voiceOpen && asEls.voiceOpen.contains(n)) || (asEls.inputWrap && asEls.inputWrap.contains(n)) || (asEls.inputOpen && asEls.inputOpen.contains(n))); } } });
+    // Only the add setup closes on a press outside it: the gearwheel's setup is a panel the user
+    // opened deliberately and keeps its Cancel.
+    popovers.push({ isOpen: asProvAddMode, popEl: asEls.provPanel,
+      openEl: { contains: function (n) { var l = asEls.provConfigured, r = l && l.querySelector(".as-provaddrow"); return !!(r && r.contains(n)); } },
+      close: asProvCloseDialog });
     window.addEventListener("resize", function () { if (asModelMenuOpen()) positionModelMenu(); if (asBudgetPopOpen()) positionBudgetPop(); });
-    ["base", "model", "auth", "key", "apiVersion", "oauthAuth", "oauthToken", "oauthClient", "oauthScopes", "persist", "stream", "temp", "maxTokens"].forEach(function (k) {
+    // The dialog's shared provider setup: editing it writes the provider's one setup.
+    ["provDisplay", "base", "auth", "key", "apiVersion", "oauthAuth", "oauthToken", "oauthClient", "oauthScopes"].forEach(function (k) {
       var el = asEls[k];
-      if (el) el.addEventListener("change", function () { asReadForm(); asSave(); asWarn(); asOauthStatus(); });
+      if (el) el.addEventListener("change", function () { asReadProvForm(); asSave(); asWarn(); asOauthStatus(); renderProvConfigured(); });
     });
-    ["audioBase", "audioModel", "audioAuth", "audioKey", "audioApiVersion", "audioVoice"].forEach(function (k) {
+    // The model setups and the shared generation settings, read straight from the settings pane.
+    ["model", "audioModel", "inputModel", "audioVoice", "persist", "stream", "temp", "maxTokens"].forEach(function (k) {
       var el = asEls[k];
-      if (el) el.addEventListener("change", function () { asReadAudioForm(); asSave(); });
-    });
-    ["inputBase", "inputModel", "inputAuth", "inputKey", "inputApiVersion"].forEach(function (k) {
-      var el = asEls[k];
-      if (el) el.addEventListener("change", function () { asReadInputForm(); asSave(); });
+      if (el) el.addEventListener("change", function () { asReadForm(); asSave(); asWarn(); });
     });
     if (asEls.oauthLogin) asEls.oauthLogin.addEventListener("click", asOAuthStart);
     if (asEls.oauthSignOut) asEls.oauthSignOut.addEventListener("click", asOAuthSignOut);
@@ -15849,6 +16824,7 @@
 
   resize();
   view.x = W / 2; view.y = H / 2;
+  pvLoadVolume();   // the audio and video previews share one remembered volume
   initMascot();
   initDeck();
   initAssistant();

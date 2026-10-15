@@ -1437,3 +1437,82 @@ test('vttPathFor finds the sibling track, and vttParse reads cue timings and tex
   // A file without the WEBVTT signature yields no cues.
   assert.deepEqual(Array.from(api.vttParse('not vtt')), []);
 });
+
+test('vttTranscriptMarkdown writes the track as a bounded transcript of its cues', t => {
+  const { api } = harness(t);
+  const track = [
+    'WEBVTT', '',
+    '00:00:00.000 --> 00:00:02.000', 'Hello <b>world</b>', '',
+    // A word-level track repeats its line as the highlight moves: shown once, from the first cue.
+    '00:00:02.000 --> 00:00:04.000', 'Hello <u>world</u>', '',
+    '00:01:05.000 --> 00:01:07.000', 'Second &amp; line', '',
+    // Markdown's own specials are escaped, so a track cannot introduce markup it never had.
+    '00:01:30.000 --> 00:01:32.000', '# 3 * 4 [note]', '',
+    '01:02:03.000 --> 01:02:05.000', 'An hour in'
+  ].join('\n');
+  assert.equal(api.vttTranscriptMarkdown(track), [
+    '**0:00** Hello world',
+    '**1:05** Second & line',
+    '**1:30** \\# 3 \\* 4 \\[note\\]',
+    '**1:02:03** An hour in'
+  ].join('\n\n'));
+  // A file that is not a WebVTT track yields nothing, so the preview can show it as it is instead.
+  assert.equal(api.vttTranscriptMarkdown('not a track'), '');
+  // The transcript is bounded, so a very long track cannot fill the preview.
+  let long = 'WEBVTT';
+  for (let i = 0; i < api.MAX_VTT_TRANSCRIPT_CUES + 500; i++) {
+    long += `\n\n00:00:${String(i % 60).padStart(2, '0')}.000 --> 00:00:${String(i % 60).padStart(2, '0')}.500\nLine ${i}`;
+  }
+  assert.equal(api.vttTranscriptMarkdown(long).split('\n\n').length, api.MAX_VTT_TRANSCRIPT_CUES);
+});
+
+test('vttCueAt finds the cue covering a position by binary search', t => {
+  const { api } = harness(t);
+  const cues = [
+    { start: 0, end: 1, text: 'first' },
+    { start: 2, end: 4, text: 'second' },
+    { start: 4, end: 6, text: 'third' },
+    { start: 8, end: 9, text: 'fourth' }
+  ];
+  // No cues at all, a null track, and a position outside every cue all yield nothing.
+  assert.equal(api.vttCueAt([], 1), '');
+  assert.equal(api.vttCueAt(null, 0), '');
+  assert.equal(api.vttCueAt(cues, -1), '');
+  assert.equal(api.vttCueAt(cues, 10), '');
+  // A cue covers [start, end): its own start is inside, its end is outside and hands over to the
+  // next cue, and the gap between cues is empty.
+  assert.equal(api.vttCueAt(cues, 0), 'first');
+  assert.equal(api.vttCueAt(cues, 3.5), 'second');
+  assert.equal(api.vttCueAt(cues, 4), 'third');
+  assert.equal(api.vttCueAt(cues, 6), '');
+  // The raw cue text is returned; resolving tags and entities stays with the caller.
+  assert.equal(api.vttCueAt([{ start: 0, end: 1, text: 'a <b>c</b>' }], 0.5), 'a <b>c</b>');
+});
+
+test('vttCueAt steps back through an overlap to the cue still covering the position', t => {
+  const { api } = harness(t);
+  // A long cue with a shorter one nested inside it: past the short cue's end, the long one resumes.
+  const nested = [
+    { start: 0, end: 10, text: 'long' },
+    { start: 2, end: 4, text: 'short' }
+  ];
+  assert.equal(api.vttCueAt(nested, 3), 'short');
+  assert.equal(api.vttCueAt(nested, 5), 'long');
+  // The step back is bounded, so a pile of already-ended cues cannot turn the lookup into a scan.
+  const pile = [{ start: 0, end: 100, text: 'cover' }];
+  for (let i = 1; i <= 12; i++) pile.push({ start: i, end: i, text: `ended${i}` });
+  assert.equal(api.vttCueAt(pile, 12.5), '');
+});
+
+test('localMediaBytes reads a local clip only up to the decode bound', async t => {
+  const { api } = harness(t, { MAX_MEDIA_DECODE_BYTES: 8 });
+  // At the bound the clip is read whole, as bytes ready to decode.
+  const read = await api.localMediaBytes(new Blob(['12345678'], { type: 'audio/wav' }));
+  assert.equal(read.bytes.byteLength, 8);
+  assert.equal(read.type, 'audio/wav');
+  // One byte over the bound is refused unread, so a large clip streams instead of being expanded.
+  assert.equal(await api.localMediaBytes(new Blob(['123456789'])), null);
+  // A source without a numeric size is not a local clip, and neither is a missing one.
+  assert.equal(await api.localMediaBytes({ type: 'audio/wav' }), null);
+  assert.equal(await api.localMediaBytes(null), null);
+});

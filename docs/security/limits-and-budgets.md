@@ -21,7 +21,7 @@ The tool enforces these caps while loading and rendering a bundle:[^review]
 
 | Area | Limit |
 | --- | --- |
-| Text file | 512 KiB before full buffering |
+| Text file | 512 KiB before full buffering; a non-Markdown text file in a local folder is listed even when larger, and opening it reads a bounded prefix |
 | Bundle | 2 000 files and 32 MiB of text bytes |
 | Directory listing / graph node | 8 000 |
 | Local directory depth | 12; deeper trees are rejected |
@@ -33,16 +33,16 @@ The tool enforces these caps while loading and rendering a bundle:[^review]
 | Crawling / new expansion attempts | at most 2 000 URLs per crawl and 2 000 expansion attempts per bundle |
 | Markdown preview | 512 Ki characters in, 2 Mi characters of HTML out, nesting 24 and bounded search work |
 | Images | 8 MiB per image, 16 MiB cache including reservations, 64 images per preview |
-| Media (audio and video) | 32 MiB per **served** clip, read once, bounded, and never streamed; a **local** clip is streamed from an object URL on demand and is not size-limited |
-| Subtitle track (WebVTT) | 512 KiB per sibling `.vtt`, read on demand and shown as plain text |
+| Media (audio and video) | 256 MiB per **served** clip, read once and bounded, and never streamed from the network; a served clip over the 32 MiB **decode** bound is played from a blob of its own bytes rather than decoded. A **local** clip streams from an object URL on demand and is not size-limited |
+| Subtitle track (WebVTT) | 25 MiB per sibling `.vtt`, read on demand, whole, and shown as plain text; the transcript the track's own page renders is bounded to 2 000 cues and 256 Ki characters |
 | Local PDF | whole files up to 16 MiB; otherwise 2 MiB windows from the start and end |
 | HTTP PDF | 512 KiB per start and end response, whether or not the server honours Range |
 | PDF decompression | 8 MiB of object-stream text including delimiters; at most 200 streams attempted |
-| Assistant | 8 000 input characters, 8 tool steps per question, 12 000 characters per tool result, 4 MiB of streamed reply, 120-second request timeout; the replayed history keeps the most recent 8 tool results in full and shortens older tool-call reasoning to 2 000 characters; when the prompt nears the context length the older conversation is summarized into a compacted recap that replaces the dropped turns, the summary reply capped at 800 tokens; the realtime transcription send queue is capped at 64 000 bytes and paced at the audio's own rate |
+| Assistant | 8 000 input characters, 8 tool steps per question, 12 000 characters per tool result, 20 matches and 240 characters per match for a text query, 4 MiB of streamed reply, 120-second request timeout; the replayed history keeps the most recent 8 tool results in full and shortens older tool-call reasoning to 2 000 characters; when the prompt nears the context length the older conversation is summarized into a compacted recap that replaces the dropped turns, the summary reply capped at 800 tokens; the realtime transcription send queue is capped at 64 000 bytes and paced at the audio's own rate |
 
 # What the limits do and do not guarantee
 
-The bounds limit raw content and the records held in the structures above. They are **not** a guarantee of a specific maximum heap or CPU use in the browser, and the image limits bound compressed bytes, not decoded pixels.[^review]
+The bounds limit raw content and the records held in the structures above. They are **not** a guarantee of a specific maximum heap or CPU use in the browser, and the image limits bound compressed bytes, not decoded pixels. Audio is the same: a clip read whole and decoded expands in memory as 32-bit samples — about 21 MB per minute of stereo 44.1 kHz audio — which is why the decode bound (32 MiB) is lower than the read bound for a served clip (256 MiB). A clip over the decode bound is played streamed instead of decoded, so a long clip is never expanded as samples.[^review]
 
 # Behaviour
 

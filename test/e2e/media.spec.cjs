@@ -24,7 +24,8 @@ async function installLabelHook(page) {
   });
 }
 
-// A minimal 16-bit PCM WAV, long enough to read a duration from and to scrub across.
+// A 16-bit PCM WAV: its header, then its samples. Pass hz 0 for silence, which leaves the samples at
+// zero, so a long clip can be built without a per-sample loop (and a decoder reads it as silence).
 function wavBytes(seconds = 2, rate = 16000, hz = 440) {
   const n = Math.round(seconds * rate);
   const b = Buffer.alloc(44 + n * 2);
@@ -32,7 +33,7 @@ function wavBytes(seconds = 2, rate = 16000, hz = 440) {
   b.write('fmt ', 12); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22);
   b.writeUInt32LE(rate, 24); b.writeUInt32LE(rate * 2, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34);
   b.write('data', 36); b.writeUInt32LE(n * 2, 40);
-  for (let i = 0; i < n; i++) b.writeInt16LE(Math.round(Math.sin(2 * Math.PI * hz * i / rate) * 12000), 44 + i * 2);
+  for (let i = 0; i < n && hz; i++) b.writeInt16LE(Math.round(Math.sin(2 * Math.PI * hz * i / rate) * 12000), 44 + i * 2);
   return b;
 }
 
@@ -58,6 +59,61 @@ async function openNode(page, label) {
   }
   return false;
 }
+
+// A folder with no Markdown makes a tiny, tall graph, which the viewer frames to the full height;
+// the toolbar then overlays its top node. Zoom out a little so every node is clear of the toolbar
+// before clicking one.
+async function zoomOut(page) {
+  const canvas = await page.locator('#c').boundingBox();
+  await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
+  await page.mouse.wheel(0, 300);
+  await page.waitForTimeout(400);
+}
+
+// A served clip is read whole under the byte limit, so a bigger one has no player at all. The
+// preview says why, with the numbers and the way out, rather than looking like a broken player. The
+// bound is far larger than a test can hand over the wire, so the clip's size is declared in the
+// response headers: the read is refused on the declared length, before any body is read.
+test('en servert mediefil over grensen sier hvorfor den ikke kan spilles', async ({ page }) => {
+  await page.route('**/media/tone.wav', route => route.fulfill({
+    status: 200, contentType: 'audio/wav',
+    headers: { 'content-length': String(260 * 1024 * 1024) },
+    body: Buffer.alloc(64)
+  }));
+  await openBundle(page);
+  expect(await openNode(page, 'tone.wav')).toBe(true);
+
+  // The note names the size, the limit it is read under and the way to play it; the file details
+  // show the size the note was built from.
+  await expect(page.locator('#pvMediaNote')).toContainText('over the 256 MB limit');
+  await expect(page.locator('#pvMediaNote')).toContainText('locally');
+  await expect(page.locator('#pvFile')).toContainText('260 MB');
+  // Nothing plays: the player never becomes ready.
+  await expect(page.locator('#pvPlay')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#pvTime')).toHaveText('0:00 / 0:00');
+});
+
+// A served clip past the decode bound is still read — bounded by its own, far larger, cap — but not
+// decoded: it plays from a blob URL of its bytes, so a long clip is never expanded into samples.
+test('en stor servert lydfil spilles fra en blob uten å dekodes', async ({ page }) => {
+  const clip = wavBytes(1400, 16000, 0);   // ~43 MiB and 23 minutes: over the decode bound only
+  expect(clip.length).toBeGreaterThan(32 * 1024 * 1024);
+  expect(clip.length).toBeLessThan(256 * 1024 * 1024);
+  await page.route('**/media/tone.wav', route => route.fulfill({ status: 200, contentType: 'audio/wav', body: clip }));
+  await openBundle(page);
+  expect(await openNode(page, 'tone.wav')).toBe(true);
+
+  // It takes the streamed path — the media element, fed from a blob of the clip's own bytes.
+  await expect(page.locator('#pvAudioEl')).toHaveAttribute('src', /^blob:/);
+  await expect(page.locator('#pvMediaNote')).toHaveCount(0, { timeout: 20000 });
+  await expect(page.locator('#pvTime')).toHaveText('0:00 / 23:20');
+  await expect(page.locator('#pvFile')).toContainText('43 MB');
+  // And it plays through the shared analyser, so the spectrogram runs.
+  await page.locator('#pvPlay').click();
+  await expect(page.locator('#pvPlay')).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(async () => Number(await page.inputValue('#pvSeek'))).toBeGreaterThan(0);
+  await page.locator('#pvPlay').click();
+});
 
 test('lydfilen spilles av med spektrogram, og skrubbing skjuler korn', async ({ page }) => {
   await page.route('**/media/tone.wav', route => route.fulfill({ status: 200, contentType: 'audio/wav', body: wavBytes() }));
@@ -127,6 +183,11 @@ test('en søsken-WebVTT vises som undertekst på lyden', async ({ page }) => {
   await expect(page.locator('#pvCue')).toHaveText('Hello');
   await page.evaluate(() => { const s = document.getElementById('pvSeek'); s.value = '750'; s.dispatchEvent(new Event('input', { bubbles: true })); });
   await expect(page.locator('#pvCue')).toHaveText('World');
+
+  // The audio page's file details name the track the captions come from, once it has been read.
+  await expect(page.locator('#pvFile')).toContainText('Captions');
+  await expect(page.locator('#pvFile')).toContainText('tone.vtt');
+  await expect(page.locator('#pvFile')).toContainText('2 cues');
 });
 
 test('en søsken-WebVTT vises som undertekst på videoen', async ({ page }) => {
@@ -140,13 +201,15 @@ test('en søsken-WebVTT vises som undertekst på videoen', async ({ page }) => {
 
   // The sibling track shows over the video: the first cue at the start, the next when seeked into it.
   await expect(page.locator('#pvCue')).toHaveText('Hei');
+  // The video page's file details name the track too.
+  await expect(page.locator('#pvFile')).toContainText('Captions');
   await page.evaluate(() => { const v = document.getElementById('pvVideo'); v.currentTime = 1.5; v.dispatchEvent(new Event('timeupdate')); });
   await expect(page.locator('#pvCue')).toHaveText('Verden');
 });
 
+// A local clip is not read whole: it streams from an object URL the browser reads on demand, so its
+// size does not matter. This one is well over the served-clip cap (32 MiB).
 test('en lokal lydfil strømmes fra en objekt-URL, også over filgrensen', async ({ page }) => {
-  // A local clip is not read whole: it streams from an object URL the browser reads on demand,
-  // so its size does not matter. This one is well over the served-clip cap (32 MiB).
   await installLabelHook(page);
   await page.goto(explorer);
   // The viewer auto-loads a bundle from its own folder on startup; let that finish first, or its
@@ -242,4 +305,263 @@ test('en liten lokal lydfil dekodes og skrubbes med korn', async ({ page }) => {
   await expect.poll(async () => Number(await page.inputValue('#pvSeek'))).toBeGreaterThan(0);
   await page.locator('#pvPlay').click();
   await expect(page.locator('#pvPlay')).toHaveAttribute('aria-pressed', 'false');
+});
+
+// The tool results the assistant sends back to the provider, as the mocked server sees them.
+function toolResult(body, name) {
+  const messages = (body && body.messages) || [];
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'tool' && messages[i].name === name) return JSON.parse(messages[i].content);
+  }
+  return null;
+}
+
+// The assistant's file and media tools, driven through the real viewer: the provider is mocked, so
+// the page itself runs the tool calls (open an unloaded file, read it with its caption track, and
+// drive the player).
+test('assistenten åpner, leser og styrer mediefilen', async ({ page }) => {
+  await page.route('**/media/tone.wav', route => route.fulfill({ status: 200, contentType: 'audio/wav', body: wavBytes(10) }));
+  await page.route('**/media/tone.vtt', route => route.fulfill({
+    status: 200, contentType: 'text/vtt',
+    body: 'WEBVTT\n\n00:00:00.000 --> 00:00:05.000\nHei\n\n00:00:05.000 --> 00:00:10.000\nVerden\n'
+  }));
+  // The assistant's settings are gated behind the acknowledgement of what enabling a model means.
+  await page.addInitScript(() => { try { localStorage.setItem('okfy.assistant.ack', '1'); } catch (e) {} });
+  // Count the seek bar's own writes, so a stepped scrub is told apart from a silent jump.
+  await page.addInitScript(() => {
+    window.pvSeekWrites = 0;
+    const watch = () => new MutationObserver(records => {
+      for (const record of records) if (record.target && record.target.id === 'pvSeek') window.pvSeekWrites++;
+    }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['style'] });
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watch); else watch();
+  });
+  await openBundle(page);
+  await page.evaluate(() => document.getElementById('asSettingsBtn').click());
+  await page.evaluate(() => {
+    document.getElementById('asProvider').click(); document.querySelector('#asProvList [data-kind="llamacpp"]').click(); document.getElementById('asProvSave').click();
+    const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
+  });
+  await page.evaluate(() => document.getElementById('asSettingsBtn').click());
+
+  let turn = 0, releaseScrub;
+  const scrubGate = new Promise(resolve => { releaseScrub = resolve; });
+  const requests = [];
+  const call = (id, name, args) => ({ id, type: 'function', function: { name, arguments: JSON.stringify(args) } });
+  await page.route('**/v1/chat/completions', async route => {
+    turn++;
+    requests.push(JSON.parse(route.request().postData() || '{}'));
+    let message;
+    if (turn === 1) message = { role: 'assistant', content: '', tool_calls: [
+      call('c1', 'open_concept', { path: 'tone.wav' }),
+      call('c2', 'read_file', { path: 'tone.wav' })
+    ] };
+    else if (turn === 2) message = { role: 'assistant', content: '', tool_calls: [call('c3', 'viewer_media', { action: 'read' })] };
+    else if (turn === 3) {
+      await scrubGate;   // wait until the clip has decoded, so the scrub has something to read
+      message = { role: 'assistant', content: '', tool_calls: [call('c4', 'viewer_media', { action: 'scrub', position: '6' })] };
+    } else if (turn === 4) message = { role: 'assistant', content: '', tool_calls: [call('c5', 'viewer_media', { action: 'play' })] };
+    else if (turn === 5) message = { role: 'assistant', content: '', tool_calls: [call('c6', 'viewer_media', { action: 'pause' })] };
+    else message = { role: 'assistant', content: 'Spilt av.' };
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ choices: [{ message }] }) });
+  });
+
+  await page.evaluate(() => { document.getElementById('asInput').value = 'Spill av lyden'; document.getElementById('asSend').click(); });
+
+  // open_concept read the unloaded clip and opened it; the player decodes it.
+  await expect(page.locator('#pvPath')).toHaveText('tone.wav');
+  await expect(page.locator('#pvMediaNote')).toHaveCount(0, { timeout: 10000 });
+  await expect(page.locator('#pvTime')).toHaveText('0:00 / 0:10');
+  // read_file reported the clip and the subtitle track beside it, which the page then showed too.
+  await expect.poll(async () => (toolResult(requests[1], 'read_file') || {}).media).toBe('audio');
+  const read = toolResult(requests[1], 'read_file');
+  expect(read.associated[0].path).toBe('tone.vtt');
+  await expect(page.locator('#pvFile')).toContainText('tone.vtt');
+
+  // The scrub moves the head through the seek bar, drawing it a step at a time rather than jumping.
+  const before = await page.evaluate(() => window.pvSeekWrites);
+  releaseScrub();
+  await expect.poll(async () => Number(await page.inputValue('#pvSeek'))).toBeGreaterThan(590);
+  expect(await page.evaluate(() => window.pvSeekWrites) - before).toBeGreaterThan(8);
+  await expect.poll(async () => toolResult(requests[3], 'viewer_media')).toMatchObject({ scrubbedTo: 6 });
+
+  // Play and pause press the player's own control.
+  await expect.poll(async () => toolResult(requests[4], 'viewer_media')).toMatchObject({ playing: true });
+  await expect.poll(async () => toolResult(requests[5], 'viewer_media')).toMatchObject({ playing: false });
+});
+
+// A served clip over the byte limit has no player at all, and the assistant is told why rather than
+// finding a player that never starts (its media tool reports the player's own failure).
+test('assistenten får beskjed når en servert mediefil ikke kan spilles', async ({ page }) => {
+  await page.route('**/media/clip.mp4', route => route.fulfill({
+    status: 200, contentType: 'video/mp4',
+    headers: { 'content-length': String(260 * 1024 * 1024) },
+    body: Buffer.alloc(64)
+  }));
+  await page.addInitScript(() => { try { localStorage.setItem('okfy.assistant.ack', '1'); } catch (e) {} });
+  await openBundle(page);
+  await page.evaluate(() => document.getElementById('asSettingsBtn').click());
+  await page.evaluate(() => {
+    document.getElementById('asProvider').click(); document.querySelector('#asProvList [data-kind="llamacpp"]').click(); document.getElementById('asProvSave').click();
+    const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
+  });
+  await page.evaluate(() => document.getElementById('asSettingsBtn').click());
+
+  let turn = 0, releaseRead;
+  const noteSeen = new Promise(resolve => { releaseRead = resolve; });
+  const requests = [];
+  await page.route('**/v1/chat/completions', async route => {
+    turn++;
+    requests.push(JSON.parse(route.request().postData() || '{}'));
+    let message;
+    if (turn === 1) message = { role: 'assistant', content: '', tool_calls: [
+      { id: 'c1', type: 'function', function: { name: 'open_concept', arguments: JSON.stringify({ path: 'clip.mp4' }) } }
+    ] };
+    else if (turn === 2) {
+      await noteSeen;   // wait until the preview has said why it cannot play the clip
+      message = { role: 'assistant', content: '', tool_calls: [
+        { id: 'c2', type: 'function', function: { name: 'viewer_media', arguments: JSON.stringify({ action: 'read' }) } }
+      ] };
+    } else message = { role: 'assistant', content: 'Greit.' };
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ choices: [{ message }] }) });
+  });
+
+  await page.evaluate(() => { document.getElementById('asInput').value = 'spill klippet'; document.getElementById('asSend').click(); });
+  await expect(page.locator('#pvPath')).toHaveText('clip.mp4');
+  await expect(page.locator('#pvMediaNote')).toContainText('over the 256 MB limit');
+  releaseRead();
+  // The tool reports the same reason, so the model can say it rather than offering a dead player.
+  // (Each request carries the replies to the previous round, so this one arrives in the third.)
+  await expect.poll(async () => ((toolResult(requests[2], 'viewer_media') || {}).error || '')).toContain('256 MB');
+  await expect.poll(async () => ((toolResult(requests[2], 'viewer_media') || {}).error || '')).toContain('locally');
+});
+
+// A locally opened folder with no Markdown at all: nothing references the media file, so both it and
+// its sibling track must still be listed as nodes. Otherwise the folder builds an empty graph and
+// neither the clip nor its captions can be reached.
+test('en lokal mappe uten Markdown viser mediefilen og søsken-WebVTT', async ({ page }) => {
+  await installLabelHook(page);
+  await page.goto(explorer);
+  // The viewer auto-loads a bundle from its own folder on startup; let that finish first, or its
+  // load would replace the folder we drop.
+  await expect(page.locator('#stats')).toContainText('files');
+  await page.keyboard.press('Escape');
+  const startup = await page.locator('#stats').textContent();
+  await page.evaluate((base64) => {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], 'tone.wav', { type: 'audio/wav' }));
+    dt.items.add(new File(['WEBVTT\n\n00:00:00.000 --> 00:10:00.000\nUten Markdown\n'], 'tone.vtt', { type: 'text/vtt' }));
+    window.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+  }, wavBytes().toString('base64'));
+  await expect(page.locator('#stats')).not.toHaveText(startup);
+  await page.keyboard.press('Escape');
+  await zoomOut(page);
+
+  // The clip opens and its sibling track shows as a caption.
+  expect(await openNode(page, 'tone.wav')).toBe(true);
+  await expect(page.locator('#pvMediaNote')).toHaveCount(0, { timeout: 10000 });
+  await expect(page.locator('#pvCue')).toHaveText('Uten Markdown');
+  // The file details name the track beside it, from the folder itself and then once it is read.
+  await expect(page.locator('#pvFile')).toContainText('Captions');
+  await expect(page.locator('#pvFile')).toContainText('tone.vtt');
+  await expect(page.locator('#pvFile')).toContainText('1 cue');
+
+  // The track is itself a file node, and it opens as a transcript: the cues rendered like a page,
+  // not the raw WebVTT file.
+  await page.keyboard.press('Escape');
+  expect(await openNode(page, 'tone.vtt')).toBe(true);
+  await expect(page.locator('#pvBody')).toContainText('Uten Markdown');
+  await expect(page.locator('#pvBody')).toContainText('0:00');
+  await expect(page.locator('#pvBody pre')).toHaveCount(0);
+});
+
+test('en WebVTT større enn filgrensen blir likevel funnet som undertekst', async ({ page }) => {
+  await installLabelHook(page);
+  await page.goto(explorer);
+  await expect(page.locator('#stats')).toContainText('files');
+  await page.keyboard.press('Escape');
+  const startup = await page.locator('#stats').textContent();
+  // Over the viewer's single-file cap (512 KiB): a track is only ever read as a bounded prefix, so
+  // its size must not keep it out of the folder listing. The bulk is comments, so the one real cue
+  // stays whole inside the prefix.
+  const track = 'WEBVTT\n\n00:00:00.000 --> 00:10:00.000\nStor undertekst\n' + `\nNOTE ${'x'.repeat(2000)}\n`.repeat(300);
+  expect(track.length).toBeGreaterThan(512 * 1024);
+  await page.evaluate(({ base64, track }) => {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], 'tone.wav', { type: 'audio/wav' }));
+    dt.items.add(new File([track], 'tone.vtt', { type: 'text/vtt' }));
+    window.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+  }, { base64: wavBytes().toString('base64'), track });
+  await expect(page.locator('#stats')).not.toHaveText(startup);
+  await page.keyboard.press('Escape');
+  await zoomOut(page);
+
+  expect(await openNode(page, 'tone.wav')).toBe(true);
+  await expect(page.locator('#pvMediaNote')).toHaveCount(0, { timeout: 10000 });
+  await expect(page.locator('#pvCue')).toHaveText('Stor undertekst');
+});
+
+// One volume, shared by the audio and the video preview and remembered for the next clip, behind a
+// speaker button that sits next to the transport control and opens a vertical slider. The
+// assistant's speech bubbles have their own output and get no such control.
+test('volumet justeres på lyd og video og huskes til neste mediefil', async ({ page }) => {
+  await page.route('**/media/tone.wav', route => route.fulfill({ status: 200, contentType: 'audio/wav', body: wavBytes() }));
+  await page.route('**/media/clip.mp4', route => route.fulfill({ status: 200, contentType: 'video/mp4', body: Buffer.from([0, 0, 0, 24, 102, 116, 121, 112, 105, 115, 111, 109]) }));
+  await openBundle(page);
+
+  // The audio player's volume button sits to the left of the play button, and its slider is a popup.
+  expect(await openNode(page, 'tone.wav')).toBe(true);
+  const play = await page.locator('#pvPlay').boundingBox();
+  const button = await page.locator('#pvVolBtn').boundingBox();
+  expect(button.x + button.width).toBeLessThanOrEqual(play.x);
+  await expect(page.locator('#pvVolPop')).toBeHidden();
+  // It belongs to the preview player, not to the chat bubbles.
+  await expect(page.locator('#assistant input[type="range"]')).toHaveCount(0);
+
+  // Opening it shows a vertical slider at full volume.
+  await page.locator('#pvVolBtn').click();
+  await expect(page.locator('#pvVolPop')).toBeVisible();
+  await expect(page.locator('#pvVolBtn')).toHaveAttribute('aria-expanded', 'true');
+  const range = await page.locator('#pvVol').boundingBox();
+  expect(range.height).toBeGreaterThan(range.width);
+  await expect(page.locator('#pvVol')).toHaveValue('100');
+  // A click outside the popup closes it again.
+  await page.locator('#pvSpec').click();
+  await expect(page.locator('#pvVolPop')).toBeHidden();
+
+  // Lowering it is remembered, in the player and for the next clip.
+  await page.locator('#pvVolBtn').click();
+  await page.evaluate(() => { const s = document.getElementById('pvVol'); s.value = '30'; s.dispatchEvent(new Event('input', { bubbles: true })); });
+  await expect(page.locator('#pvVol')).toHaveValue('30');
+  expect(await page.evaluate(() => localStorage.getItem('okfy.volume'))).toBe('0.3');
+
+  // The video player's control sits over the clip's lower-left, and starts at the remembered level.
+  await page.keyboard.press('Escape');
+  expect(await openNode(page, 'clip.mp4')).toBe(true);
+  const video = await page.locator('.pv-mediawrap').boundingBox();
+  const videoButton = await page.locator('#pvVolBtn').boundingBox();
+  expect(videoButton.x).toBeLessThan(video.x + video.width / 2);
+  await page.locator('#pvVolBtn').click();
+  await expect(page.locator('#pvVolPop')).toBeVisible();
+  await expect(page.locator('#pvVol')).toHaveValue('30');
+  await expect.poll(async () => page.evaluate(() => document.getElementById('pvVideo').volume)).toBeCloseTo(0.3, 2);
+
+  // The video's own native control stays in step, and its level is what carries over.
+  await page.evaluate(() => { document.getElementById('pvVideo').volume = 0.8; });
+  await expect(page.locator('#pvVol')).toHaveValue('80');
+  expect(await page.evaluate(() => localStorage.getItem('okfy.volume'))).toBe('0.8');
+
+  // The remembered volume survives a reload.
+  await page.reload();
+  await expect(page.locator('#stats')).toContainText('files');
+  await page.keyboard.press('Escape');
+  expect(await openNode(page, 'clip.mp4')).toBe(true);
+  await page.locator('#pvVolBtn').click();
+  await expect(page.locator('#pvVol')).toHaveValue('80');
+  await expect.poll(async () => page.evaluate(() => document.getElementById('pvVideo').volume)).toBeCloseTo(0.8, 2);
 });

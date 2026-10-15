@@ -165,8 +165,7 @@ test('mikrofonen lytter, strømmer transkripsjonen og sender spørsmålet', asyn
   // the provider reports as realtime transcription, not the batch-only one.
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
-    const ip = document.getElementById('asInputProvider'); ip.value = 'llamacpp'; ip.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click(); document.querySelector('#asProvList [data-kind="llamacpp"]').click(); document.getElementById('asProvSave').click();
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });
   await page.evaluate(() => document.getElementById('asInputOpen').click());
@@ -258,7 +257,6 @@ test('en feilende sanntidsøkt stopper mikrofonen og viser årsaken', async ({ p
   // Configure the audio input provider and type the realtime model by hand.
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const ip = document.getElementById('asInputProvider'); ip.value = 'llamacpp'; ip.dispatchEvent(new Event('change'));
     const im = document.getElementById('asInputModel');
     im.value = 'voxtral-mini-transcribe-realtime-2602'; im.dispatchEvent(new Event('change'));
   });
@@ -296,7 +294,6 @@ test('en overbelastet transkripsjonstjeneste forklares kort', async ({ page }) =
   // Configure the audio input provider and type the realtime model by hand.
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const ip = document.getElementById('asInputProvider'); ip.value = 'llamacpp'; ip.dispatchEvent(new Event('change'));
     const im = document.getElementById('asInputModel');
     im.value = 'voxtral-mini-transcribe-realtime-2602'; im.dispatchEvent(new Event('change'));
   });
@@ -331,11 +328,9 @@ test('brukeren kan avbryte assistentens tale med stemmen', async ({ page }) => {
 
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
-    const a = document.getElementById('asAudioProvider'); a.value = 'llamacpp'; a.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click(); document.querySelector('#asProvList [data-kind="llamacpp"]').click(); document.getElementById('asProvSave').click();
     const m = document.getElementById('asAudioModel'); m.value = 'tts'; m.dispatchEvent(new Event('change'));
     const v = document.getElementById('asAudioVoice'); v.value = 'v1'; v.dispatchEvent(new Event('change'));
-    const ip = document.getElementById('asInputProvider'); ip.value = 'llamacpp'; ip.dispatchEvent(new Event('change'));
     const im = document.getElementById('asInputModel'); im.value = 'voxtral-mini-transcribe-realtime-2602'; im.dispatchEvent(new Event('change'));
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });
@@ -390,8 +385,7 @@ test('et spørsmål talt mens assistenten er opptatt, stilles når turen er ferd
   // Configure the chat and the audio input provider; the microphone needs a realtime model.
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
-    const ip = document.getElementById('asInputProvider'); ip.value = 'llamacpp'; ip.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click(); document.querySelector('#asProvList [data-kind="llamacpp"]').click(); document.getElementById('asProvSave').click();
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });
   await page.evaluate(() => document.getElementById('asInputOpen').click());
@@ -439,11 +433,9 @@ test('en brukerboble som åpnes mens assistenten snakker bryter ikke verktøykal
   await page.keyboard.press('Escape');
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
-    const a = document.getElementById('asAudioProvider'); a.value = 'llamacpp'; a.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click(); document.querySelector('#asProvList [data-kind="llamacpp"]').click(); document.getElementById('asProvSave').click();
     const m = document.getElementById('asAudioModel'); m.value = 'tts'; m.dispatchEvent(new Event('change'));
     const v = document.getElementById('asAudioVoice'); v.value = 'v1'; v.dispatchEvent(new Event('change'));
-    const ip = document.getElementById('asInputProvider'); ip.value = 'llamacpp'; ip.dispatchEvent(new Event('change'));
     const im = document.getElementById('asInputModel'); im.value = 'voxtral-mini-transcribe-realtime-2602'; im.dispatchEvent(new Event('change'));
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });
@@ -507,8 +499,7 @@ test('innstillingene viser bare navngitte inndataenheter og ber om mikrofonen el
 
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await page.evaluate(() => {
-    const p = document.getElementById('asProvider'); p.value = 'llamacpp'; p.dispatchEvent(new Event('change'));
-    const ip = document.getElementById('asInputProvider'); ip.value = 'llamacpp'; ip.dispatchEvent(new Event('change'));
+    document.getElementById('asProvider').click(); document.querySelector('#asProvList [data-kind="llamacpp"]').click(); document.getElementById('asProvSave').click();
     const im = document.getElementById('asInputModel'); im.value = 'voxtral-mini-transcribe-realtime-2602'; im.dispatchEvent(new Event('change'));
     const s = document.getElementById('asStream'); s.checked = false; s.dispatchEvent(new Event('change'));
   });

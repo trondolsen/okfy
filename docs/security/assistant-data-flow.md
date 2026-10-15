@@ -44,12 +44,12 @@ The tool's guiding [local processing](../principles/local-processing.md) princip
 
 - Your prompt and the running conversation.
 - The system prompt: the viewer's own instructions for working inside okfy, exposed as the generated `.runtime/AGENTS.md`.[^source]
-- When you open the model picker, a request to the provider's model-listing endpoint (`GET /models`, or Azure's `/openai/models`), carrying the same credentials.[^source]
+- When you open a model picker, one request per **configured provider that is set up**, to each of their model-listing endpoints (`GET /models`, or Azure's `/openai/models`), carrying that provider's own credentials.[^source]
 - The output of the tools the agent calls: concept titles, descriptions, tags, paths, frontmatter and body text, and link lists. Only concepts the tools actually return are sent; images, PDFs and other attachments are never sent.
-- Your API key or OAuth access token, in the request header to the provider.
+- Your API key or OAuth access token, in the request header to the provider the request is for; each model role draws on the provider its model was picked from.
 - When you use the microphone, the audio you speak, streamed to the provider's realtime transcription WebSocket; the key is first exchanged for a short-lived realtime token that the socket carries, so the key itself is not sent over the socket.
 
-No other host is contacted. Bundle requests keep their same-origin, no-credentials, no-redirect bounds — the assistant uses its own client and does not change those path.[^source]
+No host other than the configured providers is contacted. Bundle requests keep their same-origin, no-credentials, no-redirect bounds — the assistant uses its own client and does not change those path.[^source]
 
 # Why the CSP allows it
 

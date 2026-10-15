@@ -26,6 +26,30 @@ const assistantSource = source.slice(section('assistant'), section('init'));
 function makeContext() {
   const opened = [];
   const decks = [{ name: 'Deck 1', items: [] }];
+  // The panel's filter helpers a concept search reuses, mirroring the viewer's own.
+  const kindLabel = n => n.kind === 'dir' ? 'Directory'
+    : n.kind === 'index' ? 'Index file'
+    : n.kind === 'file' ? 'File'
+    : n.kind === 'attachment' ? 'Attachment'
+    : n.kind === 'tag' ? 'Tag'
+    : 'Concept';
+  const fieldText = (n, field) => {
+    const label = n.title || n.path.split('/').pop();
+    const tags = (n.tags || []).join(' ');
+    switch (field) {
+      case 'title': return label;
+      case 'description': return n.description || '';
+      case 'type': return n.type || '';
+      case 'tags': return tags;
+      case 'path': return n.path || '';
+      default: return [label, n.type || '', n.description || '', tags, n.path || ''].join(' ');
+    }
+  };
+  const tagInSet = (t, set) => {
+    let hit = false;
+    set.forEach(s => { if (!hit && (t === s || t.indexOf(s + '/') === 0)) hit = true; });
+    return hit;
+  };
   const context = vm.createContext({
     URL, URLSearchParams, TextEncoder, TextDecoder, AbortController, AbortSignal, Blob,
     atob: value => Buffer.from(value, 'base64').toString('binary'),
@@ -81,6 +105,8 @@ function makeContext() {
     presentTypes: () => ['Reference', 'Guide'],
     presentStatuses: () => ['stable', 'draft'],
     groupOf: n => (n && n.kind === 'dir' ? 'Directories' : 'Concepts'),
+    kindLabel, fieldText,
+    tagHitAny: (tags, set) => tags.some(t => tagInSet(t, set)),
     renderChips: () => {}, renderKindChips: () => {}, renderTypeChips: () => {}, renderStatusChips: () => {},
     updateFilterSummary: () => {}, updateView: () => {}, buildLegend: () => {},
     setShowTags: on => { context.showTags = !!on; },
@@ -259,7 +285,7 @@ test('asMaxTokensCeiling bounds the setting by the selected model', () => {
 
 test('asSyncModelMax adopts the listing maximum and drops it for an unknown model', () => {
   const { context } = makeContext();
-  context.asCfg = { provider: 'mistral', model: 'large', modelMax: 0, modelMaxFor: '' };
+  context.asCfg = { modelProvider: 'mistral', providers: { mistral: {} }, model: 'large', modelMax: 0, modelMaxFor: '' };
   context.asModelCache = { mistral: [{ id: 'large', cost: '', tools: true, maxOutput: 131072 }] };
   context.asSyncModelMax();
   assert.equal(context.asCfg.modelMax, 131072);
@@ -284,13 +310,19 @@ test('asReadForm caps max output tokens at the selected model maximum', () => {
 
 test('asModelGroups groups fetched models by provider and includes configured presets', () => {
   const { context } = makeContext();
-  context.asCfg = { provider: 'llamacpp' };
+  // Only the configured providers are listed, so three of them are added here.
+  context.asCfg = {
+    provider: 'llamacpp',
+    providers: { deepseek: { base: 'https://api.deepseek.com', auth: 'bearer', key: '', apiVersion: '2024-10-21', oauth: {} },
+      mistral: { base: 'https://api.mistral.ai/v1', auth: 'bearer', key: '', apiVersion: '2024-10-21', oauth: {} },
+      llamacpp: { base: 'http://localhost:9931/v1', auth: 'none', key: '', apiVersion: '2024-10-21', oauth: {} } }
+  };
   context.asModelCache = {
     llamacpp: [{ id: 'qwen2.5-7b', cost: '' }, { id: 'llama-3.2-1b', cost: '' }],
     deepseek: [{ id: 'deepseek-chat', cost: '' }]
   };
   const shape = q => Array.from(context.asModelGroups(q)).map(g => ({ provider: g.provider, ids: Array.from(g.models).map(m => m.id) }));
-  // AS_PROVIDERS order; only configured providers (base set) or already-listed ones appear.
+  // The configured providers in their order; a preset's default model joins its fetched list.
   assert.deepEqual(shape(''), [
     { provider: 'deepseek', ids: ['deepseek-flash', 'deepseek-chat'] },   // preset merged with the fetched list
     { provider: 'mistral', ids: ['mistral-large-latest'] },               // configured preset default
@@ -465,6 +497,34 @@ test('search_concepts matches title, description, tags and path', async () => {
   const out = JSON.parse(await context.asExecTool('search_concepts', { query: 'refer' }));
   assert.equal(out.count, 1);
   assert.equal(out.results[0].path, 'docs/ref.md');
+});
+
+test('search_concepts takes the same filter parameters as the panel', async () => {
+  const { context } = makeContext();
+  Object.assign(context, graph());
+  // No parameters match every concept, and the applied filter is echoed back.
+  const all = JSON.parse(await context.asExecTool('search_concepts', {}));
+  assert.equal(all.count, 2);
+  assert.deepEqual(all.filter, { query: '', field: '',
+    tags: { include: [], exclude: [] }, kinds: { include: [], exclude: [] },
+    types: { include: [], exclude: [] }, statuses: { include: [], exclude: [] } });
+  // A tag facet includes and excludes the way the panel's tag facet does.
+  assert.deepEqual(JSON.parse(await context.asExecTool('search_concepts', { tags: { include: ['start'] } })).results.map(r => r.path), ['docs/guide.md']);
+  assert.deepEqual(JSON.parse(await context.asExecTool('search_concepts', { tags: { exclude: ['start'] } })).results.map(r => r.path), ['docs/ref.md']);
+  // The query is scoped by field, exactly as the panel's search is.
+  assert.deepEqual(JSON.parse(await context.asExecTool('search_concepts', { query: 'task', field: 'description' })).results.map(r => r.path), ['docs/guide.md']);
+  assert.equal(JSON.parse(await context.asExecTool('search_concepts', { query: 'task', field: 'title' })).count, 0);
+  // The type and kind facets narrow the same way, and combine with the query.
+  const ref = JSON.parse(await context.asExecTool('search_concepts', { types: { include: ['Reference'] }, kinds: { include: ['Concept'] } }));
+  assert.deepEqual(ref.results.map(r => r.path), ['docs/ref.md']);
+  assert.equal(JSON.parse(await context.asExecTool('search_concepts', { kinds: { include: ['Index file'] } })).count, 0);
+  assert.equal(JSON.parse(await context.asExecTool('search_concepts', { query: 'guide', types: { exclude: ['Guide'] } })).count, 0);
+  // It is read-only: the panel's own state is untouched whatever it searches by.
+  await context.asExecTool('search_concepts', { query: 'guide', tagInclude: ['start'], kinds: { include: ['Concept'] } });
+  assert.equal(context.query, '');
+  assert.equal(context.searchField, '');
+  assert.equal(context.tagInclude.size, 0);
+  assert.equal(context.kindInclude.size, 0);
 });
 
 test('read_concept peeks frontmatter by default and returns the body only when asked', async () => {
@@ -645,9 +705,9 @@ test('asStats renders the assistant session statistics page without leaking secr
   assert.match(md, /No tool calls yet\./);
 
   context.asCfg = {
-    provider: 'deepseek', model: 'deepseek-flash', base: 'https://user:pass@api.deepseek.com/v1',
-    auth: 'bearer', key: 'sk-secret', stream: true, temperature: 0.2, maxTokens: 1024, oauth: {},
-    audio: { provider: 'deepseek', model: '', base: '', auth: 'bearer' }
+    provider: 'deepseek', model: 'deepseek-flash', stream: true, temperature: 0.2, maxTokens: 1024,
+    providers: { deepseek: { base: 'https://user:pass@api.deepseek.com/v1', auth: 'bearer', key: 'sk-secret', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { provider: 'deepseek', model: '' }
   };
   context.asTokens.input = 1300;
   context.asTokens.output = 400;
@@ -676,8 +736,8 @@ test('asStats renders the assistant session statistics page without leaking secr
   assert.doesNotMatch(md, /user:pass/);   // nor are base-URL credentials
 
   // OAuth shows the session state instead of an API key.
-  context.asCfg.auth = 'oauth';
-  context.asCfg.oauth = { accessToken: 'secret-token-value' };
+  context.asCfg.providers.deepseek.auth = 'oauth';
+  context.asCfg.providers.deepseek.oauth = { accessToken: 'secret-token-value' };
   md = context.asStats();
   assert.match(md, /- OAuth session: `signed in`/);
   assert.doesNotMatch(md, /- API key:/);
@@ -882,7 +942,8 @@ test('asDismissWarn remembers the host so the notice stays dismissed across a re
   };
   const warn = { hidden: false }, text = { innerHTML: '', textContent: '' };
   context.asEls = { warn, warnText: text };
-  context.asCfg = { base: 'https://api.deepseek.com' };
+  // One shared setup per provider: the deepseek setup carries the base URL the notice names.
+  context.asCfg = { provider: 'deepseek', providers: { deepseek: { base: 'https://api.deepseek.com', auth: 'bearer', key: '', apiVersion: '2024-10-21', oauth: {} } } };
   context.asWarn();
   assert.equal(warn.hidden, false);                 // not dismissed yet
   context.asDismissWarn();                          // remember this host
@@ -891,10 +952,151 @@ test('asDismissWarn remembers the host so the notice stays dismissed across a re
   context.asWarnHost = null;                        // simulate a fresh load
   context.asWarn();
   assert.equal(warn.hidden, true);                 // the same host stays dismissed
-  context.asCfg.base = 'https://api.mistral.ai/v1'; // a different host warns again
+  context.asCfg.providers.deepseek.base = 'https://api.mistral.ai/v1'; // a different host warns again
   context.asWarn();
   assert.equal(warn.hidden, false);
   assert.match(text.innerHTML, /api\.mistral\.ai/);
+});
+
+test('each model role resolves to its own provider, falling back to the first configured', () => {
+  const { context } = makeContext();
+  context.asCfg = {
+    model: 'm', stream: false,
+    providers: {
+      mistral: { base: 'https://api.mistral.ai/v1', auth: 'bearer', key: 'k', apiVersion: '2024-10-21', oauth: {} },
+      llamacpp: { base: 'http://localhost:9931/v1', auth: 'none', key: '', apiVersion: '2024-10-21', oauth: {} }
+    },
+    audio: { model: 'tts', voice: 'vx' }, input: { model: 'rt' }
+  };
+  var chat = context.asCfgFor('chat'), audio = context.asCfgFor('audio'), input = context.asCfgFor('input');
+  // Nothing assigned yet: every role falls back to the first configured provider.
+  assert.equal(chat.provider, 'mistral');
+  assert.equal(audio.provider, 'mistral');
+  assert.equal(input.provider, 'mistral');
+  assert.equal(chat.key, 'k');
+  assert.equal(input.base, 'https://api.mistral.ai/v1');
+  // A role keeps the provider its model was picked from, with that provider's own setup.
+  context.asCfg.audio.provider = 'llamacpp';
+  audio = context.asCfgFor('audio');
+  assert.equal(audio.provider, 'llamacpp');
+  assert.equal(audio.base, 'http://localhost:9931/v1');
+  assert.equal(audio.key, '');   // the local server needs no credential
+  assert.equal(chat.provider, 'mistral');   // and the chat role is untouched
+  // The model names and the voice belong to their own role, not the provider.
+  assert.equal(chat.model, 'm');
+  assert.equal(audio.model, 'tts');
+  assert.equal(audio.voice, 'vx');
+  assert.equal(input.model, 'rt');
+});
+
+test('asLoad keeps each role\'s provider and folds an older per-role setup into one per provider', () => {
+  const { context } = makeContext();
+  const store = new Map();
+  context.localStorage = { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
+  store.set('okfy.assistant', JSON.stringify({
+    provider: 'llamacpp', model: 'chat-model', base: 'http://localhost:9931/v1', auth: 'none', key: '', apiVersion: '2024-10-21',
+    oauth: {},
+    audio: { provider: 'llamacpp', model: 'tts', voice: 'v', base: 'http://localhost:9931/v1', auth: 'none', apiVersion: '2024-10-21' },
+    input: { provider: 'mistral', model: 'rt', base: 'https://api.mistral.ai/v1', auth: 'bearer', key: 'mk', apiVersion: '2024-10-21' }
+  }));
+  const cfg = context.asLoad();
+  assert.equal(cfg.model, 'chat-model');
+  assert.equal(cfg.audio.model, 'tts');
+  assert.equal(cfg.audio.voice, 'v');
+  assert.equal(cfg.input.model, 'rt');
+  // An older per-role config keeps the provider each role named.
+  assert.equal(cfg.modelProvider, 'llamacpp');
+  assert.equal(cfg.audio.provider, 'llamacpp');
+  assert.equal(cfg.input.provider, 'mistral');
+  // The chat and audio roles shared a provider, so it holds one setup; the input provider its own.
+  assert.equal(cfg.providers.llamacpp.base, 'http://localhost:9931/v1');
+  assert.equal(cfg.providers.mistral.base, 'https://api.mistral.ai/v1');
+  assert.equal(cfg.providers.mistral.key, 'mk');
+  // A config that kept one provider for every role migrates it to each role.
+  store.set('okfy.assistant', JSON.stringify({
+    provider: 'deepseek', model: 'm',
+    providers: { deepseek: { base: 'https://api.deepseek.com', auth: 'bearer', key: 'sk', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { model: 'tts' }, input: { model: 'rt' }
+  }));
+  const shared = context.asLoad();
+  assert.equal(shared.modelProvider, 'deepseek');
+  assert.equal(shared.audio.provider, 'deepseek');
+  assert.equal(shared.input.provider, 'deepseek');
+});
+
+test('asSave keeps one shared setup per provider and a key only when remembered', () => {
+  const { context } = makeContext();
+  const store = new Map();
+  context.localStorage = { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
+  context.asCfg = {
+    provider: 'deepseek', model: 'm', persistKey: false,
+    providers: { deepseek: { base: 'https://api.deepseek.com', auth: 'bearer', key: 'sk-x', apiVersion: '2024-10-21', oauth: { authorize: 'a', token: 't', clientId: 'c', scopes: 's', accessToken: 'tok', expiresAt: 5 } } },
+    audio: { provider: 'deepseek', model: 'tts', voice: 'v' }, input: { provider: 'deepseek', model: '' }
+  };
+  context.asSave();
+  const saved = JSON.parse(store.get('okfy.assistant'));
+  assert.equal(saved.providers.deepseek.base, 'https://api.deepseek.com');
+  assert.equal(saved.providers.deepseek.key, undefined);              // not remembered
+  assert.equal(saved.providers.deepseek.oauth.accessToken, undefined);
+  assert.equal(saved.providers.deepseek.oauth.clientId, 'c');         // endpoints and client ID are not secrets
+  assert.equal(saved.audio.voice, 'v');
+  // With the key remembered it is stored once, on the shared setup.
+  context.asCfg.persistKey = true;
+  context.asSave();
+  const kept = JSON.parse(store.get('okfy.assistant'));
+  assert.equal(kept.providers.deepseek.key, 'sk-x');
+  assert.equal(kept.providers.deepseek.oauth.accessToken, 'tok');
+});
+
+test('a provider display name is saved, restores the provider and labels the listing', () => {
+  const { context } = makeContext();
+  const store = new Map();
+  context.localStorage = { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
+  context.asCfg = {
+    provider: 'deepseek', model: 'm', persistKey: false,
+    providers: {
+      deepseek: { name: '', base: 'https://api.deepseek.com', auth: 'bearer', key: '', apiVersion: '2024-10-21', oauth: {} },
+      mistral: { name: 'Work key', base: 'https://api.mistral.ai/v1', auth: 'bearer', key: '', apiVersion: '2024-10-21', oauth: {} },
+      llamacpp: { name: '', base: 'http://localhost:9931/v1', auth: 'none', key: '', apiVersion: '2024-10-21', oauth: {} }
+    },
+    audio: { model: '' }, input: { model: '' }
+  };
+  context.asSave();
+  const saved = JSON.parse(store.get('okfy.assistant'));
+  assert.equal(saved.providers.mistral.name, 'Work key');
+  assert.equal(saved.providers.llamacpp.name, undefined);   // an unnamed provider keeps the record lean
+  // A display name alone marks a provider as one the user added, so it survives a reload even when
+  // it is not the active one; an untouched and unnamed preset is dropped.
+  const cfg = context.asLoad();
+  assert.equal(cfg.providers.mistral.name, 'Work key');
+  assert.equal(cfg.providers.llamacpp, undefined);
+  // The listing shows the display name, falling back to the provider's own label.
+  context.asCfg = cfg;
+  assert.equal(context.asProvLabel('mistral'), 'Work key');
+  assert.equal(context.asProvLabel('deepseek'), 'DeepSeek');
+});
+
+test('asSetupReady reports whether a provider is configured enough to make a request', () => {
+  const { context } = makeContext();
+  context.asCfg = {
+    provider: 'deepseek',
+    providers: {
+      deepseek: { base: 'https://api.deepseek.com', auth: 'bearer', key: '', apiVersion: '2024-10-21', oauth: {} },
+      llamacpp: { base: 'http://localhost:9931/v1', auth: 'none', key: '', apiVersion: '2024-10-21', oauth: {} },
+      custom: { base: '', auth: 'bearer', key: 'sk', apiVersion: '2024-10-21', oauth: {} }
+    },
+    audio: { provider: 'deepseek', model: '' }, input: { provider: 'deepseek', model: '' }
+  };
+  assert.equal(context.asSetupReady('deepseek'), false);   // a bearer provider with no key
+  assert.equal(context.asSetupReady('llamacpp'), true);    // no credential is needed
+  assert.equal(context.asSetupReady('custom'), false);     // a key but no base URL
+  context.asCfg.providers.deepseek.key = 'sk';
+  assert.equal(context.asSetupReady('deepseek'), true);
+  // OAuth needs a signed-in token rather than a key.
+  context.asCfg.providers.azure = { base: 'https://r.openai.azure.com', auth: 'oauth', key: '', apiVersion: '2024-10-21', oauth: { accessToken: '' } };
+  assert.equal(context.asSetupReady('azure'), false);
+  context.asCfg.providers.azure.oauth.accessToken = 'tok';
+  assert.equal(context.asSetupReady('azure'), true);
 });
 
 test('asBudgetExceeded compares the session total against the budget', () => {
@@ -953,9 +1155,13 @@ test('asModels marks only models that report audio output', () => {
   assert.equal(rows[6].audioOut, false);
 });
 
-test("the audio picker lists only the audio provider's audio-output models", () => {
+test("the audio picker lists each configured provider's audio-output models", () => {
   const { context } = makeContext();
-  context.asCfg = { provider: 'deepseek', model: 'deepseek-flash', audio: { provider: 'llamacpp', model: '' } };
+  context.asCfg = { model: '', audio: { model: '' },
+    providers: {
+      llamacpp: { base: 'http://localhost:9931/v1', auth: 'none', key: '', apiVersion: '2024-10-21', oauth: {} },
+      deepseek: { base: 'https://api.deepseek.com', auth: 'bearer', key: '', apiVersion: '2024-10-21', oauth: {} }
+    } };
   context.asModelCache = {
     llamacpp: [
       { id: 'text-only', cost: '', audioOut: false },
@@ -965,14 +1171,18 @@ test("the audio picker lists only the audio provider's audio-output models", () 
   };
   const shape = () => Array.from(context.asModelGroups('')).map(g => ({ provider: g.provider, ids: Array.from(g.models).map(m => m.id) }));
   context.asModelPickTarget = 'audio';
-  assert.deepEqual(shape(), [{ provider: 'llamacpp', ids: ['speaks'] }]);   // the audio provider, audio-capable only
+  // Every configured provider is offered, audio-capable models only.
+  assert.deepEqual(shape(), [
+    { provider: 'llamacpp', ids: ['speaks'] },
+    { provider: 'deepseek', ids: ['deepseek-audio'] }
+  ]);
   context.asModelPickTarget = null;
-  assert.deepEqual(Array.from(context.asModelGroups('')).map(g => g.provider), ['deepseek', 'mistral', 'llamacpp']);   // the chat picker still groups every provider
+  assert.deepEqual(Array.from(context.asModelGroups('')).map(g => g.provider), ['llamacpp', 'deepseek']);
 });
 
 test('the chat picker keeps only chat models that support tool calling', () => {
   const { context } = makeContext();
-  context.asCfg = { provider: 'llamacpp', model: '', audio: { provider: 'deepseek' } };
+  context.asCfg = { model: '', providers: { llamacpp: { base: 'http://localhost:9931/v1', auth: 'none', key: '', apiVersion: '2024-10-21', oauth: {} } } };
   context.asModelCache = {
     llamacpp: [
       { id: 'chat-tools', cost: '', chatTools: true },
@@ -1119,7 +1329,9 @@ test('the speak tool is offered for the whole session and gates itself at call t
 
 test('asSpeak sends a voice and fetches audio from the audio provider', async () => {
   const { context } = makeContext();
-  context.asCfg = { speak: true, audio: { provider: 'llamacpp', base: 'http://localhost:9931/v1', auth: 'none', model: 'tts', voice: 'v1' } };
+  context.asCfg = { speak: true, provider: 'llamacpp',
+    providers: { llamacpp: { base: 'http://localhost:9931/v1', auth: 'none', key: '', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { model: 'tts', voice: 'v1' } };
   let seen = null;
   context.fetch = async (url, opts) => {
     seen = { url, opts };
@@ -1146,7 +1358,9 @@ test('asSpeak sends a voice and fetches audio from the audio provider', async ()
 
 test('asSpeak decodes a base64 audio_data reply (Mistral Voxtral TTS)', async () => {
   const { context } = makeContext();
-  context.asCfg = { speak: true, audio: { provider: 'mistral', base: 'https://api.mistral.ai/v1', auth: 'bearer', key: 'k', model: 'voxtral-mini-tts-latest', voice: 'v1' } };
+  context.asCfg = { speak: true, provider: 'mistral',
+    providers: { mistral: { base: 'https://api.mistral.ai/v1', auth: 'bearer', key: 'k', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { model: 'voxtral-mini-tts-latest', voice: 'v1' } };
   context.fetch = async () => {
     const body = JSON.stringify({ audio_data: Buffer.from([9, 8, 7]).toString('base64') });
     return { ok: true, headers: { get: () => 'application/json' }, body: null, arrayBuffer: async () => new TextEncoder().encode(body).buffer };
@@ -1228,7 +1442,9 @@ test('asLangChanged drops the spoken-language plan so the new language is decide
 
 test('asVoiceRows sorts the voices by display name', () => {
   const { context } = makeContext();
-  context.asCfg = { audio: { provider: 'mistral', base: 'https://api.mistral.ai/v1' } };
+  context.asCfg = { provider: 'mistral',
+    providers: { mistral: { base: 'https://api.mistral.ai/v1', auth: 'bearer', key: '', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { model: '', voice: '' } };
   context.asVoicesCache = { key: 'mistral|https://api.mistral.ai/v1', items: [
     { id: 'p', name: 'Paul - Neutral' },
     { id: 'b', name: 'Béatrice' },
@@ -1243,7 +1459,9 @@ test('asVoiceRows sorts the voices by display name', () => {
 
 test('asVoiceRows lists the provider voices with their languages', () => {
   const { context } = makeContext();
-  context.asCfg = { audio: { provider: 'mistral', base: 'https://api.mistral.ai/v1' } };
+  context.asCfg = { provider: 'mistral',
+    providers: { mistral: { base: 'https://api.mistral.ai/v1', auth: 'bearer', key: '', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { model: '', voice: '' } };
   context.asVoicesCache = { key: 'mistral|https://api.mistral.ai/v1', items: [
     { id: 'v1', name: 'Alice', languages: ['en', 'fr'], gender: 'female' },
     { id: 'v2', languages: ['de'] },
@@ -1260,7 +1478,9 @@ test('asVoiceRows lists the provider voices with their languages', () => {
 
 test('the voice field shows the provider name and keeps the id as the value', () => {
   const { context } = makeContext();
-  context.asCfg = { audio: { provider: 'mistral', base: 'https://api.mistral.ai/v1', voice: 'v1' } };
+  context.asCfg = { provider: 'mistral',
+    providers: { mistral: { base: 'https://api.mistral.ai/v1', auth: 'bearer', key: '', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { voice: 'v1' } };
   context.asVoicesCache = { key: 'mistral|https://api.mistral.ai/v1', items: [
     { id: 'v1', name: 'Paul - Neutral', languages: ['en_us'] }
   ] };
@@ -1274,7 +1494,9 @@ test('the voice field shows the provider name and keeps the id as the value', ()
 test('asResolveVoice picks a voice for the interface language', async () => {
   const { context } = makeContext();
   context.currentLang = 'fr';
-  context.asCfg = { speak: true, audio: { provider: 'mistral', base: 'https://api.mistral.ai/v1', auth: 'bearer', key: 'k', model: 'voxtral-mini-tts-latest', voice: '' } };
+  context.asCfg = { speak: true, provider: 'mistral',
+    providers: { mistral: { base: 'https://api.mistral.ai/v1', auth: 'bearer', key: 'k', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { model: 'voxtral-mini-tts-latest', voice: '' } };
   context.fetch = async url => {
     assert.match(String(url), /\/audio\/voices\?type=preset/);
     return { ok: true, headers: { get: () => 'application/json' }, body: null, text: async () => JSON.stringify({ items: [
@@ -1447,9 +1669,10 @@ test('asMicContextIssue allows this secure top-level page', () => {
   assert.equal(context.asMicContextIssue(), '');
 });
 
-test('the input picker lists only the audio provider\u2019s realtime models', () => {
+test('the input picker lists only the configured provider\u2019s realtime models', () => {
   const { context } = makeContext();
-  context.asCfg = { provider: 'deepseek', model: 'deepseek-flash', input: { provider: 'mistral', model: '' } };
+  context.asCfg = { provider: 'mistral', model: '', input: { model: '' },
+    providers: { mistral: { base: 'https://api.mistral.ai/v1', auth: 'bearer', key: '', apiVersion: '2024-10-21', oauth: {} } } };
   context.asModelCache = {
     mistral: [
       { id: 'voxtral-mini-transcribe-realtime-2602', cost: '', transcribeRealtime: true },
@@ -1459,7 +1682,7 @@ test('the input picker lists only the audio provider\u2019s realtime models', ()
   };
   context.asModelPickTarget = 'input';
   const shape = () => Array.from(context.asModelGroups('')).map(g => ({ provider: g.provider, ids: Array.from(g.models).map(m => m.id) }));
-  assert.deepEqual(shape(), [{ provider: 'mistral', ids: ['voxtral-mini-transcribe-realtime-2602'] }]);   // the input provider, realtime-capable only
+  assert.deepEqual(shape(), [{ provider: 'mistral', ids: ['voxtral-mini-transcribe-realtime-2602'] }]);   // the configured provider, realtime-capable only
   context.asModelPickTarget = null;
 });
 
@@ -1601,7 +1824,9 @@ test('asCommentary does nothing while audio output is off', async () => {
 
 test('asCommentary forces a speak call when the model did not speak', async () => {
   const { context } = makeContext();
-  context.asCfg = { speak: true, provider: 'llamacpp', base: 'http://localhost:9931/v1', auth: 'none', model: 'm', maxTokens: 1024, modelMax: 8192, audio: { provider: 'llamacpp', base: 'http://localhost:9931/v1', auth: 'none', model: 'tts', voice: 'v1' } };
+  context.asCfg = { speak: true, model: 'm', maxTokens: 1024, modelMax: 8192, modelProvider: 'llamacpp',
+    providers: { llamacpp: { base: 'http://localhost:9931/v1', auth: 'none', key: '', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { provider: 'llamacpp', model: 'tts', voice: 'v1' } };
   context.asMessages.push({ role: 'user', content: 'What is the state of security in okfy?' });
   context.asMessages.push({ role: 'assistant', content: 'It is thorough.' });
   const seen = [];
@@ -1630,7 +1855,9 @@ test('asCommentary forces a speak call when the model did not speak', async () =
 
 test('asCommentary reserves the speak reply so the tool call is never left unanswered', async () => {
   const { context } = makeContext();
-  context.asCfg = { speak: true, provider: 'llamacpp', base: 'http://localhost:9931/v1', auth: 'none', model: 'm', maxTokens: 1024, modelMax: 8192, audio: { provider: 'llamacpp', base: 'http://localhost:9931/v1', auth: 'none', model: 'tts', voice: 'v1' } };
+  context.asCfg = { speak: true, model: 'm', maxTokens: 1024, modelMax: 8192, modelProvider: 'llamacpp',
+    providers: { llamacpp: { base: 'http://localhost:9931/v1', auth: 'none', key: '', apiVersion: '2024-10-21', oauth: {} } },
+    audio: { provider: 'llamacpp', model: 'tts', voice: 'v1' } };
   context.asMessages.push({ role: 'user', content: 'q' });
   context.asMessages.push({ role: 'assistant', content: 'a' });
   context.fetch = async () => ({ ok: true, headers: { get: () => 'application/json' }, json: async () => ({ choices: [{ message: { role: 'assistant', content: '', tool_calls: [{ id: 's1', type: 'function', function: { name: 'speak', arguments: '{"text":"hi"}' } }] } }] }) });
@@ -1810,6 +2037,193 @@ test('viewer_preview history and back/forward read and step the history', async 
   assert.deepEqual(JSON.parse(await context.asExecTool('viewer_preview', { action: 'back' })), { moved: true, index: 0, path: 'a.md', title: 'A' });
   assert.deepEqual(JSON.parse(await context.asExecTool('viewer_preview', { action: 'forward' })), { moved: true, index: 2, path: 'c.md', title: 'C' });
   assert.deepEqual(context.pvNavCalls, ['back', 'forward']);
+});
+
+// A non-Markdown node, the shape the viewer builds for a file or an attachment. A file is read
+// straight away (loaded undefined); an attachment is a placeholder until it is loaded.
+function fileNode(path, kind, extra) {
+  return Object.assign({
+    id: path, path, kind, type: '', title: '', description: '', tags: [], status: '',
+    fm: {}, body: '', degree: 0
+  }, kind === 'attachment' ? { loaded: false } : {}, extra || {});
+}
+
+test('read_file reads a file, names its associated track, and refuses a concept', async () => {
+  const { context } = makeContext();
+  const track = fileNode('media/episode.vtt', 'file', { body: 'WEBVTT\n\n00:00.000 --> 00:01.000\nHi\n' });
+  const clip = fileNode('media/episode.mp3', 'attachment', { loaded: true, src: { size: 4096 } });
+  context.fileMap.set(track.path, track);
+  context.fileMap.set(clip.path, clip);
+  context.allNodes.push(track, clip);
+  // The viewer's own helpers, which the assistant slice reaches through guards.
+  context.mediaKind = p => (/\.mp3$/i.test(p) ? 'audio' : null);
+  context.associatedTrack = p => (/\.mp3$/i.test(p) ? { path: 'media/episode.vtt', size: 512, cues: 3 } : null);
+  context.vttTranscriptMarkdown = text => 'TRANSCRIPT ' + text.trim();
+
+  const out = JSON.parse(await context.asExecTool('read_file', { path: 'media/episode.mp3' }));
+  assert.equal(out.kind, 'attachment');
+  assert.equal(out.media, 'audio');
+  assert.equal(out.size, 4096);
+  // The clip's subtitle track is named, so the model knows it has captions.
+  assert.deepEqual(out.associated, [{ path: 'media/episode.vtt', size: 512, cues: 3 }]);
+
+  // A .vtt comes back as the transcript the preview shows, not as raw WebVTT.
+  const subtitles = JSON.parse(await context.asExecTool('read_file', { path: 'media/episode.vtt' }));
+  assert.match(subtitles.text, /^TRANSCRIPT WEBVTT/);
+  assert.equal(subtitles.chars, subtitles.text.length);
+  assert.equal(subtitles.truncated, undefined);
+
+  assert.match(JSON.parse(await context.asExecTool('read_file', { path: 'docs/guide.md' })).error, /No such file/);
+  context.fileMap.set('docs/guide.md', { path: 'docs/guide.md', kind: 'concept', type: 'Guide', title: 'Guide', description: '', tags: [], status: '', fm: {}, body: '# Guide\n' });
+  assert.match(JSON.parse(await context.asExecTool('read_file', { path: 'docs/guide.md' })).error, /is a concept/);
+});
+
+test('read_file loads an unloaded file without opening the preview, and bounds what it returns', async () => {
+  const { context, opened } = makeContext();
+  const node = fileNode('assets/report.txt', 'file', { loaded: false });
+  context.fileMap.set(node.path, node);
+  context.allNodes.push(node);
+  const calls = [];
+  context.loadFileNode = async (n, open) => { calls.push([n.path, open]); n.body = 'Report body'; return true; };
+  const out = JSON.parse(await context.asExecTool('read_file', { path: 'assets/report.txt' }));
+  // Loading is the viewer's own loader, asked not to open the page (a read is not a navigation).
+  assert.deepEqual(calls, [['assets/report.txt', false]]);
+  assert.equal(out.text, 'Report body');
+  assert.equal(opened.length, 0);
+
+  // A file that cannot be read says so rather than returning an empty result.
+  context.loadFileNode = async () => false;
+  const failed = JSON.parse(await context.asExecTool('read_file', { path: 'assets/report.txt' }));
+  assert.match(failed.note, /could not be read/);
+});
+
+test('a query finds text in a page without opening it', async () => {
+  const { context, opened } = makeContext();
+  // A transcript: the cue time rides with each match, so a mention can be located and played.
+  const track = fileNode('media/episode.vtt', 'file', { body: 'WEBVTT\n' });
+  context.fileMap.set(track.path, track);
+  context.allNodes.push(track);
+  context.vttTranscriptMarkdown = () => '**0:05** Erlend snakker om Railroad Tycoon\n\n**0:30** Ikke noe her';
+  const hit = JSON.parse(await context.asExecTool('read_file', { path: 'media/episode.vtt', query: 'railroad' }));
+  assert.deepEqual(Array.from(hit.matches), [{ time: '0:05', text: 'Erlend snakker om Railroad Tycoon' }]);
+  assert.equal(hit.matchCount, 1);
+  assert.equal(hit.text, undefined);   // a query returns the matches, never the whole text
+  // A plain text file: matches carry their line number, and a miss is reported as such.
+  const notes = fileNode('notes.txt', 'file', { body: 'first line\nA ROAD here\nthird' });
+  context.fileMap.set(notes.path, notes);
+  context.allNodes.push(notes);
+  assert.deepEqual(Array.from(JSON.parse(await context.asExecTool('read_file', { path: 'notes.txt', query: 'road' })).matches), [{ line: 2, text: 'A ROAD here' }]);
+  assert.equal(JSON.parse(await context.asExecTool('read_file', { path: 'notes.txt', query: 'nowhere' })).matchCount, 0);
+  // A concept body is searched the same way.
+  context.fileMap.set('docs/guide.md', { path: 'docs/guide.md', kind: 'concept', type: 'Guide', title: 'Guide', description: '', tags: [], status: '', fm: { type: 'Guide' }, body: '# Guide\n\nSe the Reference page.' });
+  const concept = JSON.parse(await context.asExecTool('read_concept', { path: 'docs/guide.md', query: 'reference' }));
+  assert.deepEqual(Array.from(concept.matches), [{ line: 3, text: 'Se the Reference page.' }]);
+  // None of it touches what the reader sees.
+  assert.equal(opened.length, 0);
+});
+
+test('a query reports when it hit the match limit', async () => {
+  const { context } = makeContext();
+  const many = Array.from({ length: context.AS_LIMITS.findMatches + 5 }, (_, i) => `line ${i} has the word needle`).join('\n');
+  const node = fileNode('log.txt', 'file', { body: many });
+  context.fileMap.set(node.path, node);
+  context.allNodes.push(node);
+  const out = JSON.parse(await context.asExecTool('read_file', { path: 'log.txt', query: 'needle' }));
+  assert.equal(out.matchCount, context.AS_LIMITS.findMatches);
+  assert.equal(out.truncated, true);
+});
+
+test('read_file reports a served clip the preview cannot play', async () => {
+  const { context } = makeContext();
+  const clip = fileNode('media/big.mp3', 'attachment', { loaded: true, src: 'https://explorer.test/media/big.mp3' });
+  context.fileMap.set(clip.path, clip);
+  context.allNodes.push(clip);
+  context.mediaKind = p => (/\.mp3$/i.test(p) ? 'audio' : null);
+  context.pvMediaReadable = () => ({ ok: false, size: 122817579, limit: 33554432, note: 'This clip is 117 MB, over the 32 MB limit a served clip is read under.' });
+  const out = JSON.parse(await context.asExecTool('read_file', { path: 'media/big.mp3' }));
+  assert.equal(out.media, 'audio');
+  assert.equal(out.readable, false);
+  // The note is the one the preview shows, so the model cannot promise a player that is not there.
+  assert.match(out.note, /117 MB/);
+  assert.equal(out.text, undefined);
+});
+
+test('open_concept loads a file before opening it, and opens it once', async () => {
+  const { context, opened } = makeContext();
+  const node = fileNode('media/clip.mp4', 'attachment');
+  context.fileMap.set(node.path, node);
+  context.allNodes.push(node);
+  const calls = [];
+  context.loadAttachmentNode = async (n, open) => { calls.push([n.path, open]); n.loaded = true; return true; };
+  const out = JSON.parse(await context.asExecTool('open_concept', { path: 'media/clip.mp4' }));
+  assert.equal(out.opened, 'media/clip.mp4');
+  assert.equal(out.kind, 'attachment');
+  assert.equal(out.loaded, true);
+  // The loader is asked not to open it, so the page is pushed into the history exactly once.
+  assert.deepEqual(calls, [['media/clip.mp4', false]]);
+  assert.equal(opened.length, 1);
+});
+
+test('open_concept reports a file it could not read instead of opening an empty page', async () => {
+  const { context, opened } = makeContext();
+  const node = fileNode('gone.bin', 'attachment');
+  context.fileMap.set(node.path, node);
+  context.allNodes.push(node);
+  context.loadAttachmentNode = async () => false;
+  const out = JSON.parse(await context.asExecTool('open_concept', { path: 'gone.bin' }));
+  assert.equal(out.opened, false);
+  assert.match(out.error, /could not be read/);
+  assert.equal(opened.length, 0);
+});
+
+test('viewer_media reads the player, presses its control and scrubs the audio', async () => {
+  const { context } = makeContext();
+  // Nothing open: both a read and a control say so rather than failing silently.
+  assert.equal(JSON.parse(await context.asExecTool('viewer_media', { action: 'read' })).open, false);
+  assert.match(JSON.parse(await context.asExecTool('viewer_media', { action: 'play' })).error, /No media page is open/);
+
+  const state = { kind: 'audio', path: 'media/episode.mp3', playing: false, position: 12, duration: 600 };
+  const controls = [], scrubs = [];
+  context.pvMediaStatus = () => Object.assign({}, state);
+  context.pvMediaControl = async action => {
+    controls.push(action);
+    state.playing = action === 'play' || (action === 'toggle' && !state.playing);
+    return Object.assign({}, state);
+  };
+  context.pvScrubTo = async (seconds, play) => { scrubs.push([seconds, play]); state.position = seconds; return seconds; };
+
+  assert.deepEqual(JSON.parse(await context.asExecTool('viewer_media', { action: 'read' })), state);
+  assert.equal(JSON.parse(await context.asExecTool('viewer_media', { action: 'play' })).playing, true);
+  assert.deepEqual(controls, ['play']);
+
+  // A position is seconds or a clock string; play is passed through, and omitted keeps the state.
+  assert.equal(JSON.parse(await context.asExecTool('viewer_media', { action: 'scrub', position: '1:30' })).scrubbedTo, 90);
+  assert.equal(JSON.parse(await context.asExecTool('viewer_media', { action: 'scrub', position: 45, play: false })).scrubbedTo, 45);
+  assert.deepEqual(scrubs, [[90, null], [45, false]]);
+  assert.match(JSON.parse(await context.asExecTool('viewer_media', { action: 'scrub', position: 'nope' })).error, /Provide 'position'/);
+  assert.match(JSON.parse(await context.asExecTool('viewer_media', { action: 'nope' })).error, /Unknown viewer_media action/);
+});
+
+test('viewer_media scrubs only the audio and reports a clip that is not ready', async () => {
+  const { context } = makeContext();
+  context.pvMediaStatus = () => ({ kind: 'video', path: 'clip.mp4', playing: false, position: 0, duration: 2 });
+  assert.match(JSON.parse(await context.asExecTool('viewer_media', { action: 'scrub', position: 1 })).error, /audio player/);
+  // A video still takes the play/pause control.
+  context.pvMediaControl = async () => ({ kind: 'video', playing: true });
+  assert.equal(JSON.parse(await context.asExecTool('viewer_media', { action: 'play' })).playing, true);
+
+  context.pvMediaStatus = () => ({ kind: 'audio', path: 'a.mp3', playing: false, position: 0, duration: 600 });
+  context.pvScrubTo = async () => null;
+  assert.match(JSON.parse(await context.asExecTool('viewer_media', { action: 'scrub', position: 5 })).error, /not ready to scrub/);
+});
+
+test('the file and media tools are offered to the model', () => {
+  const { context } = makeContext();
+  const tools = Array.from(context.asToolSchema()).map(t => t.function.name);
+  assert.ok(tools.includes('read_file'), 'missing tool: read_file');
+  assert.ok(tools.includes('viewer_media'), 'missing tool: viewer_media');
+  const media = Array.from(context.asToolSchema()).find(t => t.function.name === 'viewer_media').function;
+  assert.deepEqual(Array.from(media.parameters.properties.action.enum), ['read', 'play', 'pause', 'toggle', 'scrub']);
 });
 
 test('the preview history tools report the ends and a closed preview', async () => {
