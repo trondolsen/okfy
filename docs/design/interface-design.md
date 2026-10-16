@@ -21,7 +21,7 @@ The interface is plain inline CSS inside the single HTML file; there is no style
 
 # Theme
 
-One dark theme, defined as CSS custom properties on `:root`: a page background, two panel surfaces, a line colour, text and muted text, and an accent. Node colours (directories, index files, files, attachments, tag hubs and concept types) are separate constants in the script. There is no light theme and no theme switch.[^source]
+One dark theme, defined as CSS custom properties on `:root`: a page background, two panel surfaces, a line colour, text and muted text, and an accent. Node colours (directories, index files, files, tag hubs and concept types) are separate constants in the script. There is no light theme and no theme switch.[^source]
 
 # Layout
 

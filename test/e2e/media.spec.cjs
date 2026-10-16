@@ -565,12 +565,12 @@ test('volumet justeres på lyd og video og huskes til neste mediefil', async ({ 
   await expect.poll(async () => page.evaluate(() => document.getElementById('pvVideo').volume)).toBeCloseTo(0.8, 2);
 });
 
-// The node tooltip names the node's kind. A non-Markdown file or attachment must read its kind, not
-// the concept-type fallback (regression: such nodes were shown as "Concept" on hover).
-test('verktøytipset navngir filtypen for et vedlegg, ikke Concept', async ({ page }) => {
+// The node tooltip names the node's kind. A non-Markdown file must read its kind (File), not the
+// concept-type fallback (regression: such nodes were shown as "Concept" on hover).
+test('verktøytipset navngir filtypen for en fil, ikke Concept', async ({ page }) => {
   await openBundle(page);
   let text = '';
-  for (let i = 0; i < 8 && !/Attachment/.test(text); i++) {
+  for (let i = 0; i < 8 && !/File/.test(text); i++) {
     await page.waitForTimeout(400);
     const point = await page.evaluate(() => window.graphLabels['tone.wav']);
     if (!point) continue;
@@ -578,6 +578,6 @@ test('verktøytipset navngir filtypen for et vedlegg, ikke Concept', async ({ pa
     await page.mouse.move(canvas.x + point.x, canvas.y + point.y);
     text = await page.locator('#tip').textContent();
   }
-  expect(text).toContain('Attachment');
+  expect(text).toContain('File');
   expect(text).not.toContain('Concept');
 });

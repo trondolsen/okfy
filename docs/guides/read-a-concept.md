@@ -48,7 +48,7 @@ Choose **Close**, press `Escape`, or click outside the page.
 # Where other files differ
 
 Non-Markdown files open differently: an image shows the picture with a source
-toggle, an attachment shows its details — a PDF its metadata, an audio or video
+toggle, a binary file shows its details — a PDF its metadata, an audio or video
 clip a player. See
 [File, image and media preview](../interface/file-preview.md).[^preview]
 

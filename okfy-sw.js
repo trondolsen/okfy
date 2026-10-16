@@ -2,7 +2,7 @@
 //
 // Keeps the single-file app shell available offline so an installed okfy can
 // be launched without a network. It deliberately does NOT cache or intercept
-// bundle content: bundle Markdown, attachments and images are untrusted data,
+// bundle content: bundle Markdown, other files and images are untrusted data,
 // and the tool already bounds how they are fetched, so they always go to the
 // network and are never stored here. A single-file copy of okfy.html that does
 // not ship this file simply registers nothing and behaves exactly as before.

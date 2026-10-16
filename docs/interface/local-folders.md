@@ -27,7 +27,7 @@ Browse a bundle stored on your own machine, without a web server.[^readme]
 
 # What happens
 
-The tool reads the Markdown files and shows one level at a time: `?depth=N` keeps deeper files hidden but available, and clicking a dashed node reveals the next level. Attachments and non-Markdown files appear as nodes and are read only when opened.[^source]
+The tool reads the Markdown files and shows one level at a time: `?depth=N` keeps deeper files hidden but available, and clicking a dashed node reveals the next level. Non-Markdown files appear as nodes and are read only when opened.[^source]
 
 Every file the folder lists becomes a node, whether or not any Markdown refers to it. A folder with **no Markdown at all** therefore still shows its files, so a folder of media can be opened and a clip clicked even when nothing links to it — and its sibling subtitle track is among those nodes.
 

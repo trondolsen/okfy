@@ -50,10 +50,10 @@ Optional; append to the URL and combine as needed (e.g. `?start=guide.md&depth=1
 | Parameter | Values | Default | Description |
 | --- | --- | --- | --- |
 | `start` | file in the root folder | `index.md` | Crawl entry point. |
-| `depth` (or `levels`) | `0`…`n`, or `all` | `all` | Link levels to prefetch; nodes with unloaded content (pages, files or attachments) show a dashed ring and load on click. |
+| `depth` (or `levels`) | `0`…`n`, or `all` | `all` | Link levels to prefetch; nodes with unloaded content (pages or files) show a dashed ring and load on click. |
 
 - The bundle is the page root: the tool loads the `index.md` beside `okfy.html` and follows links (no manifest, no `bundle` parameter). `start` must be same-origin and inside the root.
-- The crawl loads only Markdown files. Other files (non-Markdown text and binary attachments) are shown as nodes and fetched on demand when clicked.
+- The crawl loads only Markdown files. Other files (non-Markdown) are shown as nodes and fetched on demand when clicked.
 - On `file://`, nothing auto-loads — open a folder instead. `depth` also applies to locally opened folders (deeper files revealed one level at a time).
 
 ### Declared decks

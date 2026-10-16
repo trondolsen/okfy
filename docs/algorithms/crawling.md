@@ -29,7 +29,7 @@ Given one entry file, find the set of concept files reachable through Markdown l
 
 # What the crawl loads
 
-Only Markdown files are fetched and followed. Any other referenced file — non-Markdown text or a binary attachment — is not fetched; it appears as an unloaded placeholder node and is loaded on click. The crawl therefore stays bounded to the Markdown graph.[^source]
+Only Markdown files are fetched and followed. Any other referenced file — non-Markdown text or binary — is not fetched; it appears as an unloaded placeholder node and is loaded on click. The crawl therefore stays bounded to the Markdown graph.[^source]
 
 # Progressive rendering
 
@@ -47,7 +47,7 @@ A link to a file that does not exist is only resolved if an alternative candidat
 
 # Local folders
 
-A folder opened locally cannot be crawled over the network. The tool reads the Markdown files and applies the same idea in memory: `filterByDepth` keeps files within the depth limit, and the rest stay available for on-demand reveal. Non-Markdown files are read only when opened, like attachments. See [local folders](../interface/local-folders.md).
+A folder opened locally cannot be crawled over the network. The tool reads the Markdown files and applies the same idea in memory: `filterByDepth` keeps files within the depth limit, and the rest stay available for on-demand reveal. Non-Markdown files are read only when opened. See [local folders](../interface/local-folders.md).
 
 # Connections
 

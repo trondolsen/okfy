@@ -910,7 +910,7 @@
   }
   #pvBody .pv-fields dt { color: var(--muted); font-size: 12px; line-height: 1.5; }
   #pvBody .pv-fields dd { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
-  #pvBody .pv-attach-note { margin-top: 4px; }
+  #pvBody .pv-file-note { margin-top: 4px; }
   #pvBody .pv-charts { margin: 6px 0 14px; }
   #pvBody .pv-charts h2 { margin: 14px 0 6px; }
   #pvBody .pv-chart { margin: 8px 0; }
@@ -1778,7 +1778,6 @@
   var DIR_COLOR = "#8b93a7";
   var INDEX_COLOR = "#37b6c4";
   var FILE_COLOR = "#c9a24d";
-  var ATTACH_COLOR = "#c06a5b";
   var TAG_COLOR = DIR_COLOR;   // tag hubs share the Directory colour
   var OTHER_COLOR = "#a274d6";
 
@@ -2010,7 +2009,7 @@
   var kindInclude = new Set(), kindExclude = new Set();
   var typeInclude = new Set(), typeExclude = new Set();
   var statusInclude = new Set(), statusExclude = new Set();
-  var KIND_LABELS = ["Directory", "Index file", "Concept", "File", "Attachment", "Tag"];
+  var KIND_LABELS = ["Directory", "Index file", "Concept", "File", "Tag"];
   var popovers = [];
   var allTags = [];
   var dragging = false, moved = false;
@@ -5023,9 +5022,9 @@
   };
   var MAX_FILE_BYTES = 512 * 1024;
 
-  // Attachment extensions: rendered as nodes, but never read into the graph; a few are
+  // Binary file extensions: rendered as nodes, but never read into the graph; a few are
   // previewed (images by their bytes, audio and video by a bounded fetch on open).
-  var ATTACH_EXT = {
+  var BINARY_EXT = {
     pdf: 1, doc: 1, docx: 1, odt: 1, rtf: 1,
     xls: 1, xlsx: 1, xlsm: 1, ods: 1,
     ppt: 1, pptx: 1, odp: 1,
@@ -5047,10 +5046,10 @@
     return ext && TEXT_EXT[ext] ? ext : null;
   }
 
-  // Lower-case extension for a binary attachment, else null.
-  function attachKind(name) {
+  // Lower-case extension for a binary file, else null.
+  function binaryKind(name) {
     var ext = extOf(name);
-    return ext && ATTACH_EXT[ext] ? ext : null;
+    return ext && BINARY_EXT[ext] ? ext : null;
   }
 
   // True for Markdown files, the only files the crawl loads into the graph.
@@ -5060,7 +5059,6 @@
     if (n.kind === "dir") return DIR_COLOR;
     if (n.kind === "index") return INDEX_COLOR;
     if (n.kind === "file") return FILE_COLOR;
-    if (n.kind === "attachment") return ATTACH_COLOR;
     if (n.kind === "tag") return TAG_COLOR;
     return TYPE_COLORS[n.type] || OTHER_COLOR;
   }
@@ -5068,7 +5066,6 @@
     if (n.kind === "dir") return "Directories";
     if (n.kind === "index") return "Index files";
     if (n.kind === "file") return "Files";
-    if (n.kind === "attachment") return "Attachments";
     if (n.kind === "tag") return "Tags";
     return n.type || "Other concepts";
   }
@@ -5168,9 +5165,9 @@
   }
 
   async function appendLocalFile(out, file, path, budget) {
-    if (!validBundlePath(path) || (!attachKind(file.name) && !fileKind(file.name))) return;
+    if (!validBundlePath(path) || (!binaryKind(file.name) && !fileKind(file.name))) return;
     if (budget.paths.size >= MAX_BUNDLE_FILES) throw new Error("Bundle contains too many files.");
-    if (attachKind(file.name)) {
+    if (binaryKind(file.name)) {
       addBundleFile(out, { path: path, text: "", binary: true, src: file }, budget);
       return;
     }
@@ -5216,7 +5213,7 @@
       var p = prefix ? prefix + "/" + entry.name : entry.name;
       if (!validBundlePath(p)) continue;
       if (entry.kind === "file") {
-        if (attachKind(entry.name) || fileKind(entry.name)) await appendLocalFile(out, await entry.getFile(), p, budget);
+        if (binaryKind(entry.name) || fileKind(entry.name)) await appendLocalFile(out, await entry.getFile(), p, budget);
       } else if (entry.kind === "directory" && entry.name.charAt(0) !== ".") {
         await walkDirAt(entry, p, out, depth + 1, budget);
       }
@@ -5244,7 +5241,7 @@
     if (entry.isDirectory && entry.name.charAt(0) === ".") return;
     var p = prefix ? prefix + "/" + entry.name : entry.name;
     if (!validBundlePath(p)) return;
-    if (entry.isFile && (attachKind(entry.name) || fileKind(entry.name))) {
+    if (entry.isFile && (binaryKind(entry.name) || fileKind(entry.name))) {
       var file = await new Promise(function (res, rej) { entry.file(res, rej); });
       await appendLocalFile(out, file, p, budget);
     } else if (entry.isDirectory) {
@@ -5276,8 +5273,8 @@
   function nodeHidden(n) { return expandableNode(n) && nodeShown(n) < pageableKids(n).length; }
   function defaultShown(kids) {
     // On load a directory shows its whole skeleton — every child directory and index file —
-    // and up to 50 of its concepts. Its files and attachments are held back, so a folder of
-    // assets does not flood the graph. `kids` is ordered so this count is a prefix of it.
+    // and up to 50 of its concepts. Its files are held back, so a folder of assets does not
+    // flood the graph. `kids` is ordered so this count is a prefix of it.
     var dirs = 0, indexes = 0, concepts = 0;
     for (var i = 0; i < kids.length; i++) {
       var k = kids[i].kind;
@@ -5343,7 +5340,7 @@
         fm = parsed.fm; body = parsed.body;
         kind = /(^|\/)index\.md$/i.test(f.path) ? "index" : "concept";
       } else {
-        kind = f.binary ? "attachment" : "file";
+        kind = "file";
       }
       var dir = f.path.indexOf("/") >= 0 ? f.path.slice(0, f.path.lastIndexOf("/")) : "";
       var n = {
@@ -5359,15 +5356,15 @@
       if (pn) { pn.children.push(n); pushGraphLink({ source: pn, target: n, kind: "tree" }, links); }
     });
 
-    // An unloaded node (an attachment or non-Markdown file) shown without reading it until it is
-    // opened; nothing is fetched for it. Referenced ones are seeded from markdown links below,
-    // and a locally opened folder seeds one for each of its files.
+    // An unloaded file node shown without reading it until it is opened; nothing is fetched for
+    // it. Referenced ones are seeded from markdown links below, and a locally opened folder
+    // seeds one for each of its files.
     var placeholderMap = new Map();   // path -> unloaded placeholder node
-    function seedPlaceholder(path, kind, cands) {
+    function seedPlaceholder(path, cands) {
       var ph = placeholderMap.get(path);
       if (ph) return ph;
       ph = {
-        id: path, path: path, kind: kind, loaded: false, candidates: (cands || [path]).slice(),
+        id: path, path: path, kind: "file", loaded: false, candidates: (cands || [path]).slice(),
         type: "", title: "", description: "", tags: [], status: "",
         fm: {}, body: "", src: null, pdfMeta: null, metaPromise: null,
         children: [], depth: 0, angle: 0, targetR: 0,
@@ -5384,13 +5381,13 @@
     var seenEdge = new Set();
     files.forEach(function (f) {
       var node = fileMapLocal.get(f.path);
-      if (!node || node.kind === "file" || node.kind === "attachment") return; // plaintext/attachment nodes have no links
+      if (!node || node.kind === "file") return; // file nodes have no links
       var targets = new Set();      // resolved (already-loaded) reference paths
       var pending = [];             // candidate paths for references not loaded yet
-      // Show an unresolved attachment or non-Markdown file as a visible,
-      // unloaded node (nothing is fetched for it), deduplicated across files.
-      function addPlaceholder(cands, kind) {
-        var ph = seedPlaceholder(cands[0], kind, cands);
+      // Show an unresolved non-Markdown file as a visible, unloaded node (nothing is
+      // fetched for it), deduplicated across files.
+      function addPlaceholder(cands) {
+        var ph = seedPlaceholder(cands[0], cands);
         if (ph === node) return;
         var key = node.id + "\u2192" + ph.id;
         if (!seenEdge.has(key)) { seenEdge.add(key); pushGraphLink({ source: node, target: ph, kind: "ref" }, links); }
@@ -5402,11 +5399,10 @@
         if (hit) { targets.add(hit); return; }
         // Embedded images render inline in the preview, so they get no node.
         if (embed && imageKind(cands[0])) return;
-        // Unresolved: attachments and non-Markdown files become visible
-        // placeholders, fetched on demand; page references stay in `missing` for
-        // the existing click-to-load behaviour.
-        if (attachKind(cands[0])) { addPlaceholder(cands, "attachment"); return; }
-        if (fileKind(cands[0]) && !isMarkdownPath(cands[0])) { addPlaceholder(cands, "file"); return; }
+        // Unresolved: non-Markdown files become visible placeholders, fetched on
+        // demand; page references stay in `missing` for the existing
+        // click-to-load behaviour.
+        if ((binaryKind(cands[0]) || fileKind(cands[0])) && !isMarkdownPath(cands[0])) { addPlaceholder(cands); return; }
         cands.forEach(function (c) { if (pending.indexOf(c) < 0) pending.push(c); });
       }
       extractLinks(node.body).forEach(function (l) { consider(linkCandidates(f.path, l), isEmbedRef(l)); });
@@ -5436,7 +5432,7 @@
       known.forEach(function (f, path) {
         if (fileMapLocal.has(path) || placeholderMap.has(path)) return;
         if (!f.binary && !f.lazy) return;
-        seedPlaceholder(path, f.binary ? "attachment" : "file");
+        seedPlaceholder(path);
       });
     }
 
@@ -5453,7 +5449,7 @@
         else if (c.kind === "concept") concepts.push(c);
         else rest.push(c);
       }
-      // Directories first, then index files, concepts and finally the files and attachments, so
+      // Directories first, then index files, concepts and finally the files, so
       // the load default is a prefix of this order and the held-back ones come last.
       d.kids = dirs.concat(indexes, concepts, rest);
       for (i = 0; i < d.kids.length; i++) { d.kids[i].kidIndex = i; d.kids[i].parentDir = d; }
@@ -6067,7 +6063,6 @@
     return n.kind === "dir" ? "Directory"
       : n.kind === "index" ? "Index file"
       : n.kind === "file" ? "File"
-      : n.kind === "attachment" ? "Attachment"
       : n.kind === "tag" ? "Tag"
       : "Concept";
   }
@@ -6231,7 +6226,7 @@
       var col = colorFor(n);
       var dim = isDimmed(n) || (active && !active.has(n.id));
 
-      var unloaded = n.loaded === false;                  // attachment placeholder
+      var unloaded = n.loaded === false;                  // file placeholder
       var missing = !unloaded && hasLoadableMissing(n);   // page with unloaded references
       var ancestorTag = n.kind === "tag" && tagIsAncestor(n);  // namespace ancestor of a selected tag
       var hidden = nodeCollapsed(n);                       // expansion: neighbours still held back
@@ -6263,8 +6258,8 @@
         ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.globalAlpha = 1; ctx.stroke();
       }
 
-      // Unloaded indicator, shared by attachment and file placeholders, pages
-      // whose references are not loaded yet, and namespace-ancestor tag hubs
+      // Unloaded indicator, shared by file placeholders, pages whose references
+      // are not loaded yet, and namespace-ancestor tag hubs
       // (click to load/expand): a dashed blue ring.
       if (unloaded || missing || ancestorTag || hidden) {
         ctx.beginPath();
@@ -6554,10 +6549,9 @@
           if (touch && node.path !== graphFocus) { enterDir(node.path); fitView(); }
         } else if (node.kind === "tag") {
           toggleTag(node.label);
-        } else if (node.kind === "attachment" && node.loaded === false) {
-          loadAttachmentNode(node);
         } else if (node.kind === "file" && node.loaded === false) {
-          loadFileNode(node).catch(function (err) { if (window.console && console.error) console.error(err); });
+          if (binaryKind(node.path)) loadBinaryFileNode(node);
+          else loadFileNode(node).catch(function (err) { if (window.console && console.error) console.error(err); });
         } else if (hasLoadableMissing(node)) {
           // First click loads this node's next level; once there is nothing more to
           // load, a later click opens the preview instead.
@@ -6721,7 +6715,7 @@
     return blobUrlFor(path, new Blob([res.bytes], { type: type }));
   }
 
-  // --- media files (audio and video attachments) ---
+  // --- media files (audio and video) ---
   // A served clip is fetched only when it is opened, bounded like every other read, and played
   // from a blob URL of its own bytes, so nothing is loaded from the network at play time. Its
   // budget is separate from the image budget, so a large clip cannot starve a page's images.
@@ -7632,7 +7626,7 @@
   }
 
   function peekPdfMeta(node) {
-    if (!node || node.kind !== "attachment" || extOf(node.path) !== "pdf") return Promise.resolve(null);
+    if (!node || extOf(node.path) !== "pdf") return Promise.resolve(null);
     if (node.pdfMeta) return Promise.resolve(node.pdfMeta);
     if (!node.metaPromise) {
       node.metaPromise = scanTextForPdf(node).then(function (text) {
@@ -8387,13 +8381,11 @@
     } else {
       perfSeriesPath = null;
     }
-    if (node.kind === "attachment") {
+    if (node.kind === "file") {
       if (imageKind(node.path)) renderImagePreview(node);
       else if (mediaKind(node.path)) renderMediaPreview(node);
-      else renderAttachmentPreview(node);
-    } else if (node.kind === "file") {
-      if (imageKind(node.path)) renderImagePreview(node);
       else if (vttKind(node.path)) renderVttPreview(node);
+      else if (binaryKind(node.path)) renderBinaryPreview(node);
       else pvBody.innerHTML = '<pre class="md-pre plain">' + esc(node.body || "") + "</pre>";
     } else {
       var meta = [];
@@ -8430,7 +8422,7 @@
     markDeckCurrent();
   }
 
-  function renderAttachmentPreview(node) {
+  function renderBinaryPreview(node) {
     var renderId = previewRenderId, generation = bundleGeneration;
     function current() { return renderId === previewRenderId && generation === bundleGeneration; }
     var ext = extOf(node.path) || "";
@@ -8442,9 +8434,9 @@
     if (isPdf) {
       body += '<h3 class="pv-sec">Document</h3><div id="pvMeta"><p class="pv-note">Reading PDF metadata\u2026</p></div>';
     } else {
-      body += '<p class="pv-note pv-attach-note">This file type is not previewed.</p>';
+      body += '<p class="pv-note pv-file-note">This file type is not previewed.</p>';
     }
-    body += '<p class="pv-note pv-attach-note">Binary attachments are shown as graph nodes. Open the file from the bundle directory to view it.</p>';
+    body += '<p class="pv-note pv-file-note">Binary files are shown as graph nodes. Open the file from the bundle directory to view it.</p>';
     pvBody.innerHTML = body;
     peekFileInfo(node).then(function () { if (current()) paintFileSection(node); });
     if (!isPdf) return;
@@ -8453,12 +8445,12 @@
       function () { if (current()) paintPdfMeta(node, null); });
   }
 
-  // Preview for an image file. A text-based image (kind "file", e.g. SVG) can be
-  // toggled between the rendered image and its source text; a binary attachment
-  // shows the image with its file details and no text view.
+  // Preview for an image file. A text-based image (e.g. SVG) can be toggled
+  // between the rendered image and its source text; a binary image shows the
+  // image with its file details and no text view.
   function renderImagePreview(node) {
     var ext = extOf(node.path) || "";
-    var hasText = node.kind === "file";
+    var hasText = !binaryKind(node.path);
     var showText = hasText && node.pvText === true;
     var toggle = hasText
       ? '<button type="button" class="pv-view" id="pvViewToggle" aria-pressed="' + (showText ? "true" : "false") +
@@ -8471,14 +8463,14 @@
       body += '<div class="pv-imgwrap"><p class="pv-note" id="pvImgNote">Loading image\u2026</p>' +
         '<img id="pvImg" alt="' + esc(node.path) + '" hidden></div>';
     }
-    if (node.kind === "attachment") {
+    if (!hasText) {
       body += '<h3 class="pv-sec">File</h3><div id="pvFile"><p class="pv-note">Reading file details\u2026</p></div>';
     }
     pvBody.innerHTML = body;
     if (!showText) pvBody.classList.add("pv-imgmode");
     var toggleEl = document.getElementById("pvViewToggle");
     if (toggleEl) toggleEl.addEventListener("click", function () { node.pvText = !showText; renderPreviewEntry(node); });
-    if (node.kind === "attachment") {
+    if (!hasText) {
       peekFileInfo(node).then(function () { if (previewPath === node.path) paintFileSection(node); });
     }
     if (showText) return;
@@ -10384,8 +10376,8 @@
     var depth = urlDepth();
     var known = new Map();
     files.forEach(function (f) { known.set(f.path, f); });
-    // Attachments and non-Markdown files are kept out of the loaded set: they
-    // appear as visible placeholders and load from `known` when clicked.
+    // Non-Markdown files are kept out of the loaded set: they appear as visible
+    // placeholders and load from `known` when clicked.
     var visible = (depth !== Infinity ? filterByDepth(files, depth) : files)
       .filter(function (f) { return !f.binary && !f.lazy; });
     load(visible, null, known);
@@ -10393,20 +10385,19 @@
 
   // A non-directory node can be expanded on demand when a depth-limited crawl
   // left it with unresolved references that resolve against the network
-  // (bundleRootUrl) or the local read set (bundleKnown). Attachments and
-  // non-Markdown files are handled separately as visible placeholders, so they
-  // are not part of `missing`.
+  // (bundleRootUrl) or the local read set (bundleKnown). Non-Markdown files are
+  // handled separately as visible placeholders, so they are not part of `missing`.
   function hasLoadableMissing(n) {
     if (!prefetchLimited || !n || !n.missing || !n.missing.length) return false;
     return !!(bundleRootUrl || bundleKnown);
   }
 
-  // Materialize a visible-but-unloaded attachment placeholder. Local files come
+  // Materialize a visible-but-unloaded binary file placeholder. Local files come
   // from the already-read set; server bundles resolve against the bundle root.
   // No bytes are fetched here — only the preview's metadata request is. `open`
   // false loads without opening the preview, for a caller that opens it itself.
-  function loadAttachmentNode(node, open) {
-    if (!node || node.kind !== "attachment" || node.loaded !== false) return false;
+  function loadBinaryFileNode(node, open) {
+    if (!node || node.kind !== "file" || node.loaded !== false || !binaryKind(node.path)) return false;
     var cands = (node.candidates && node.candidates.length) ? node.candidates : [node.path];
     var path = null, file = null;
     if (bundleKnown) {
@@ -10508,7 +10499,7 @@
           var url = bundleUrl(p, root);
           if (!url || attemptedUrls.has(url) || attemptedUrls.size >= MAX_BUNDLE_FILES) continue;
           attemptedUrls.add(url);
-          if (attachKind(p)) file = { path: p, text: "", binary: true, src: url };
+          if (binaryKind(p)) file = { path: p, text: "", binary: true, src: url };
           else if (fileKind(p)) {
             try {
               file = await fetchBundleText(p, url, budget, root);
@@ -11162,7 +11153,7 @@
     if (node.kind === "dir") return "Dir";
     if (node.kind === "index") return "Index";
     if (node.kind === "tag") return "Tag";
-    if (node.kind === "file" || node.kind === "attachment") return "File";
+    if (node.kind === "file") return "File";
     return node.type || "Concept";
   }
 
@@ -11216,8 +11207,8 @@
     return kind || (tag ? "#" + tag : "");
   }
 
-  // Only a concept can be carded into a deck; a directory, index file, plaintext file,
-  // attachment or tag is not a concept.
+  // Only a concept can be carded into a deck; a directory, index file, file or tag
+  // is not a concept.
   function cardable(n) { return !!n && n.kind === "concept" && !n.runtime; }
   function addCard(node, atTop) {
     if (!cardable(node)) return;
@@ -11303,7 +11294,7 @@
     if (node.kind === "dir" || node.kind === "tag") {
       return title + '<p class="pv-note">' + esc(node.description || (node.kind === "dir" ? "Directory" : "Tag")) + "</p>";
     }
-    if (node.kind === "file" || node.kind === "attachment") {
+    if (node.kind === "file") {
       if (node.body && node.body.trim()) return title + '<pre class="md-pre plain">' + esc(node.body) + "</pre>";
       return title + '<p class="pv-note">' + esc(node.description || deckTypeLabel(node)) + "</p>";
     }
@@ -12455,7 +12446,7 @@
     "Markdown link `[label](path)`, with the path exactly as the tools report it (from the " +
     "bundle root, no leading `/`, no `..`, no URL scheme).\n" +
     "- Use the path each node kind carries: a concept or index file ends in `.md` " +
-    "(`[Graph](docs/algorithms/graph-construction.md)`); a file or attachment uses its path " +
+    "(`[Graph](docs/algorithms/graph-construction.md)`); a file uses its path " +
     "(`[README](README.md)`); a directory ends in `/` (`[Algorithms](docs/algorithms/)`); a " +
     "tag uses `#label` (`[#guide](#guide)`).\n" +
     "- A bundle link opens the node in the viewer — a directory enters it and a tag filters by " +
@@ -12464,7 +12455,7 @@
     "- Ground every claim in tool results and cite the concept paths you used.\n" +
     "- Read concepts with `read_concept`. It returns frontmatter only by default; pass " +
     "`full:true` only when you actually need a concept's body.\n" +
-    "- Read a file or attachment with `read_file`, which loads it on demand — a file the viewer has " +
+    "- Read a file with `read_file`, which loads it on demand — a file the viewer has " +
     "not read yet still comes back as text, and a `.vtt` subtitle track comes back as the transcript " +
     "the preview shows. It also names the subtitle track a media file is associated with, so you " +
     "know a clip has captions before opening it.\n" +
@@ -12557,10 +12548,10 @@
     }, additionalProperties: false } },
     { name: "read_concept", description: "Peek at one concept by its bundle path, returning only its frontmatter (metadata). Pass full:true to also return the Markdown body when its content is actually needed. Pass query to instead return the lines of the body that contain that text, so you can find something on a page without opening it.", inputSchema: { type: "object", properties: { path: { type: "string", description: "Concept path from the bundle root, for example docs/model/graph-model.md." }, full: { type: "boolean", description: "Also return the Markdown body (default: frontmatter only)." }, query: { type: "string", description: "Instead of the body, return the lines that contain this text (case-insensitive)." } }, required: ["path"], additionalProperties: false } },
     { name: "list_neighbors", description: "List the concepts a given concept links to and the concepts that link to it.", inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"], additionalProperties: false } },
-    { name: "read_file", description: "Read a file or attachment node by its bundle path (a concept is read with read_concept), loading it on demand when the viewer has not read it yet. A text file returns its text, bounded - a WebVTT subtitle track returns the transcript the preview shows; an image, PDF or media file returns its details, including whether the preview can play it and the subtitle track associated with it. Pass query to instead return the lines that contain that text - with the cue time on a transcript line - which finds something in a file without opening it.", inputSchema: { type: "object", properties: { path: { type: "string", description: "File path from the bundle root, for example media/episode.mp3." }, query: { type: "string", description: "Instead of the text, return the lines that contain this text (case-insensitive)." } }, required: ["path"], additionalProperties: false } },
+    { name: "read_file", description: "Read a file node by its bundle path (a concept is read with read_concept), loading it on demand when the viewer has not read it yet. A text file returns its text, bounded - a WebVTT subtitle track returns the transcript the preview shows; an image, PDF or media file returns its details, including whether the preview can play it and the subtitle track associated with it. Pass query to instead return the lines that contain that text - with the cue time on a transcript line - which finds something in a file without opening it.", inputSchema: { type: "object", properties: { path: { type: "string", description: "File path from the bundle root, for example media/episode.mp3." }, query: { type: "string", description: "Instead of the text, return the lines that contain this text (case-insensitive)." } }, required: ["path"], additionalProperties: false } },
     { name: "list_facets", description: "List the bundle's kinds, concept types, tags and statuses with counts.", inputSchema: { type: "object", additionalProperties: false } },
     { name: "graph_overview", description: "Summarize the loaded bundle: file, link and concept counts and the top hub concepts.", inputSchema: { type: "object", additionalProperties: false } },
-    { name: "open_concept", description: "Open a page in the viewer's preview panel: a concept, an index file, or a file or attachment node. A file or attachment the viewer has not read yet is read first, so the page opens with its content. This changes what the reader sees, so open a page to show it rather than to look something up — a `query` reads a page without opening it.", inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"], additionalProperties: false } },
+    { name: "open_concept", description: "Open a page in the viewer's preview panel: a concept, an index file, or a file node. A file the viewer has not read yet is read first, so the page opens with its content. This changes what the reader sees, so open a page to show it rather than to look something up — a `query` reads a page without opening it.", inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"], additionalProperties: false } },
     { name: "list_decks", description: "List the decks and the concept paths each deck holds.", inputSchema: { type: "object", additionalProperties: false } },
     { name: "create_decks", description: "Create one or more decks in a single call, each optionally named and pre-filled with concept paths. The last one created becomes the active deck.", inputSchema: { type: "object", properties: { decks: { type: "array", minItems: 1, items: { type: "object", properties: { name: { type: "string", description: "Deck name (defaults to a generated name)." }, paths: { type: "array", items: { type: "string" }, description: "Concept paths to add to the deck." } }, additionalProperties: false } } }, required: ["decks"], additionalProperties: false } },
     { name: "add_to_decks", description: "Add one or more concepts to decks in a single call. Each item names a deck (or the active deck when omitted) and a concept path.", inputSchema: { type: "object", properties: { items: { type: "array", minItems: 1, items: { type: "object", properties: { deck: { type: "string", description: "Deck name; the active deck when omitted." }, path: { type: "string", description: "Concept path to add." }, sub: { type: "boolean", description: "Add a multi-page guide as a sub-deck." } }, required: ["path"], additionalProperties: false } } }, required: ["items"], additionalProperties: false } },
@@ -13319,15 +13310,15 @@
   }
   function asCap(s, n) { s = String(s == null ? "" : s); return s.length > n ? s.slice(0, n) + "…" : s; }
   function asBrief(n) { return { path: n.path, type: n.type || null, title: n.title || null, description: asCap(n.description || "", 200), tags: n.tags || [], status: n.status || null }; }
-  // Read a node the viewer has not loaded yet, the same as clicking it: a local file or attachment
-  // comes from the folder that was opened, a served one from its own URL. The preview is left to the
-  // caller, so opening a page does not push two entries into the preview history. Guarded for the
-  // unit context, where the viewer's loaders do not exist. Returns true when the node is now loaded
-  // (or never needed loading).
+  // Read a node the viewer has not loaded yet, the same as clicking it: a local file comes from the
+  // folder that was opened, a served one from its own URL. The preview is left to the caller, so
+  // opening a page does not push two entries into the preview history. Guarded for the unit context,
+  // where the viewer's loaders do not exist. Returns true when the node is now loaded (or never
+  // needed loading).
   async function asLoadUnloaded(node) {
     if (!node || node.loaded !== false) return true;
     try {
-      if (node.kind === "attachment" && typeof loadAttachmentNode === "function") return !!(await loadAttachmentNode(node, false));
+      if (node.kind === "file" && binaryKind(node.path) && typeof loadBinaryFileNode === "function") return !!(await loadBinaryFileNode(node, false));
       if (node.kind === "file" && typeof loadFileNode === "function") return !!(await loadFileNode(node, false));
     } catch (e) { return false; }
     return true;
@@ -13823,7 +13814,7 @@
       if (asReading() && !(typeof deckHas === "function" && deckHas(on.path))) {
         return JSON.stringify({ error: "The full-page reading view is open; only the user can close it, so " + on.path + " was not opened." });
       }
-      // A file or attachment the viewer has not read yet is read first (a concept is always
+      // A file the viewer has not read yet is read first (a concept is always
       // loaded), so the page opens with its content rather than empty.
       var onLoaded = false;
       if (on.loaded === false) {

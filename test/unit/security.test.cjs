@@ -982,26 +982,26 @@ test('local file-list file and entry counts are bounded even for unsupported ent
   await assert.rejects(api.fromFileList(unsupported), /directory entries/i);
 });
 
-test('pre-accounted local attachments materialize once and retain their native Blob source', async t => {
+test('pre-accounted local binary files materialize once and retain their native Blob source', async t => {
   const { api, opened, errors } = harness(t);
   const blob = new Blob(['%PDF-local']);
-  const attachment = { path: 'assets/report.pdf', text: '', binary: true, src: blob };
+  const report = { path: 'assets/report.pdf', text: '', binary: true, src: blob };
   const index = { path: 'index.md', text: '[report](assets/report.pdf)' };
   let calls = 0;
   api.fetch = async () => { calls++; throw new Error('Local materialization must not fetch'); };
-  api.loadLocal([index, attachment]);
+  api.loadLocal([index, report]);
   assert.equal(api.loadErrors.length, 0);
   assert.equal(errors.length, 0);
-  assert.ok(!api.bundleFiles.some(file => file.path === attachment.path));
-  const placeholder = api.allNodes.find(node => node.kind === 'attachment' && node.loaded === false);
+  assert.ok(!api.bundleFiles.some(file => file.path === report.path));
+  const placeholder = api.allNodes.find(node => node.kind === 'file' && node.loaded === false);
   assert.ok(placeholder);
-  assert.equal(api.loadAttachmentNode(placeholder), true);
-  assert.equal(api.bundleFiles.filter(file => file.path === attachment.path).length, 1);
-  assert.equal(api.fileMap.get(attachment.path).src, blob);
-  assert.equal(api.fileMap.get(attachment.path).kind, 'attachment');
+  assert.equal(api.loadBinaryFileNode(placeholder), true);
+  assert.equal(api.bundleFiles.filter(file => file.path === report.path).length, 1);
+  assert.equal(api.fileMap.get(report.path).src, blob);
+  assert.equal(api.fileMap.get(report.path).kind, 'file');
   assert.equal(opened.at(-1).src, blob);
-  api.loadAttachmentNode(placeholder);
-  assert.equal(api.bundleFiles.filter(file => file.path === attachment.path).length, 1);
+  api.loadBinaryFileNode(placeholder);
+  assert.equal(api.bundleFiles.filter(file => file.path === report.path).length, 1);
   assert.equal(calls, 0);
   assert.equal(errors.length, 0);
 });
@@ -1108,13 +1108,13 @@ test('remote expansion graph-limit rejection leaves files untouched and releases
   assertReservationsReleased(api.bundleBudget);
 });
 
-test('remote attachment graph-limit rejection rolls back its path charge without opening preview', t => {
+test('remote binary file graph-limit rejection rolls back its path charge without opening preview', t => {
   const { api, errors, opened } = harness(t, { MAX_GRAPH_NODES: 3 });
   assert.equal(api.load([{ path: 'index.md', text: '[report](assets/report.pdf)' }], ROOT), true);
   const snapshot = graphSnapshot(api), chargedBytes = api.bundleBudget.bytes;
   const placeholder = api.allNodes.find(node => node.loaded === false);
   assert.ok(placeholder);
-  assert.equal(api.loadAttachmentNode(placeholder), false);
+  assert.equal(api.loadBinaryFileNode(placeholder), false);
   assertGraphUnchanged(api, snapshot);
   assert.deepEqual(Array.from(api.bundleFiles, file => file.path), ['index.md']);
   assert.deepEqual(Array.from(api.bundleBudget.paths), ['index.md']);
@@ -1319,7 +1319,7 @@ test('image responses from an old bundle cannot repopulate the reset blob cache'
   }
 });
 
-test('mediaKind classifies audio and video attachments, and a scrub window stays in bounds', t => {
+test('mediaKind classifies audio and video files, and a scrub window stays in bounds', t => {
   const { api } = harness(t);
   assert.equal(api.mediaKind('clip.mp3'), 'audio');
   assert.equal(api.mediaKind('a/b/take.WAV'), 'audio');
@@ -1327,9 +1327,9 @@ test('mediaKind classifies audio and video attachments, and a scrub window stays
   assert.equal(api.mediaKind('trailer.MP4'), 'video');
   assert.equal(api.mediaKind('notes.md'), null);
   assert.equal(api.mediaKind('picture.png'), null);
-  // Audio and video extensions are attachments, so such a file becomes a node (but is not read).
-  assert.equal(api.attachKind('clip.mp3'), 'mp3');
-  assert.equal(api.attachKind('movie.mp4'), 'mp4');
+  // Audio and video extensions are binary files, so such a file becomes a node (but is not read).
+  assert.equal(api.binaryKind('clip.mp3'), 'mp3');
+  assert.equal(api.binaryKind('movie.mp4'), 'mp4');
   // A scrub grain is one short window, clamped so it never runs off the end of the clip.
   assert.deepEqual({ ...api.asScrubWindow(1, 30) }, { off: 1, dur: api.AS_SCRUB_GRAIN });
   assert.equal(api.asScrubWindow(29.99, 30).off, 30 - api.AS_SCRUB_GRAIN);

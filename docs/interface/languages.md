@@ -121,7 +121,7 @@ Counted text, such as the "files · links" summary, uses `Intl.PluralRules` toge
 
 # Scope and limits
 
-Only the viewer's own interface is translated. Labels drawn from the bundle (concept types, tags, statuses and the legend's kind names), the deck menu and the attachment notes are shown as the bundle or the source provides them and stay in English.
+Only the viewer's own interface is translated. Labels drawn from the bundle (concept types, tags, statuses and the legend's kind names), the deck menu and the file notes are shown as the bundle or the source provides them and stay in English.
 
 # Connections
 

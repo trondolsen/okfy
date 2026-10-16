@@ -1744,7 +1744,7 @@ test('en lokalt åpnet mappe tegner bare katalogskelettet ved oppstart', async (
 });
 
 // On load a directory shows its whole skeleton — every child directory and index file — and up
-// to 50 of its concepts; its files and attachments stay held back. Nine sub-directories also
+// to 50 of its concepts; its files stay held back. Nine sub-directories also
 // prove the child directories are not capped at one page.
 test('en mappe viser alle undermapper og konsepter, men holder filene tilbake', async ({ page }) => {
   await page.goto(`${fixtureExplorer('blocks')}?depth=all`);

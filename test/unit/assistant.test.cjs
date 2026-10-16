@@ -30,9 +30,11 @@ function makeContext() {
   const kindLabel = n => n.kind === 'dir' ? 'Directory'
     : n.kind === 'index' ? 'Index file'
     : n.kind === 'file' ? 'File'
-    : n.kind === 'attachment' ? 'Attachment'
     : n.kind === 'tag' ? 'Tag'
     : 'Concept';
+  // The viewer's own binary-extension test (BINARY_EXT), for the paths these tests use.
+  const binaryKind = p => /\.(pdf|png|jpe?g|gif|webp|ico|mp3|m4a|wav|mp4|webm|mov|zip)$/i.test(p)
+    ? p.split('.').pop().toLowerCase() : null;
   const fieldText = (n, field) => {
     const label = n.title || n.path.split('/').pop();
     const tags = (n.tags || []).join(' ');
@@ -105,7 +107,7 @@ function makeContext() {
     presentTypes: () => ['Reference', 'Guide'],
     presentStatuses: () => ['stable', 'draft'],
     groupOf: n => (n && n.kind === 'dir' ? 'Directories' : 'Concepts'),
-    kindLabel, fieldText,
+    kindLabel, binaryKind, fieldText,
     tagHitAny: (tags, set) => tags.some(t => tagInSet(t, set)),
     renderChips: () => {}, renderKindChips: () => {}, renderTypeChips: () => {}, renderStatusChips: () => {},
     updateFilterSummary: () => {}, updateView: () => {}, buildLegend: () => {},
@@ -1919,14 +1921,14 @@ test('viewer_filters set replaces a facet, sets the search and toggles Tags and 
     search: { query: 'nsm', field: 'tags' },
     ops: [
       { facet: 'tags', include: ['guide', 'security'] },
-      { facet: 'kinds', exclude: ['Attachment'] },
+      { facet: 'kinds', exclude: ['File'] },
       { facet: 'statuses', clear: true }
     ],
     showTags: true,
     showLabels: false
   }));
   assert.deepEqual(out.tags.include, ['guide', 'security']);   // replaced, not merged
-  assert.deepEqual(out.kinds.exclude, ['Attachment']);
+  assert.deepEqual(out.kinds.exclude, ['File']);
   assert.equal(out.search.query, 'nsm');
   assert.equal(out.showTags, true);
   assert.equal(out.showLabels, false);
@@ -2039,19 +2041,19 @@ test('viewer_preview history and back/forward read and step the history', async 
   assert.deepEqual(context.pvNavCalls, ['back', 'forward']);
 });
 
-// A non-Markdown node, the shape the viewer builds for a file or an attachment. A file is read
-// straight away (loaded undefined); an attachment is a placeholder until it is loaded.
+// A non-Markdown node, the shape the viewer builds for a file. A text file is read straight away
+// (loaded undefined); a binary file is a placeholder until its node is loaded.
 function fileNode(path, kind, extra) {
   return Object.assign({
     id: path, path, kind, type: '', title: '', description: '', tags: [], status: '',
     fm: {}, body: '', degree: 0
-  }, kind === 'attachment' ? { loaded: false } : {}, extra || {});
+  }, extra || {});
 }
 
 test('read_file reads a file, names its associated track, and refuses a concept', async () => {
   const { context } = makeContext();
   const track = fileNode('media/episode.vtt', 'file', { body: 'WEBVTT\n\n00:00.000 --> 00:01.000\nHi\n' });
-  const clip = fileNode('media/episode.mp3', 'attachment', { loaded: true, src: { size: 4096 } });
+  const clip = fileNode('media/episode.mp3', 'file', { loaded: true, src: { size: 4096 } });
   context.fileMap.set(track.path, track);
   context.fileMap.set(clip.path, clip);
   context.allNodes.push(track, clip);
@@ -2061,7 +2063,7 @@ test('read_file reads a file, names its associated track, and refuses a concept'
   context.vttTranscriptMarkdown = text => 'TRANSCRIPT ' + text.trim();
 
   const out = JSON.parse(await context.asExecTool('read_file', { path: 'media/episode.mp3' }));
-  assert.equal(out.kind, 'attachment');
+  assert.equal(out.kind, 'file');
   assert.equal(out.media, 'audio');
   assert.equal(out.size, 4096);
   // The clip's subtitle track is named, so the model knows it has captions.
@@ -2135,7 +2137,7 @@ test('a query reports when it hit the match limit', async () => {
 
 test('read_file reports a served clip the preview cannot play', async () => {
   const { context } = makeContext();
-  const clip = fileNode('media/big.mp3', 'attachment', { loaded: true, src: 'https://explorer.test/media/big.mp3' });
+  const clip = fileNode('media/big.mp3', 'file', { loaded: true, src: 'https://explorer.test/media/big.mp3' });
   context.fileMap.set(clip.path, clip);
   context.allNodes.push(clip);
   context.mediaKind = p => (/\.mp3$/i.test(p) ? 'audio' : null);
@@ -2150,14 +2152,14 @@ test('read_file reports a served clip the preview cannot play', async () => {
 
 test('open_concept loads a file before opening it, and opens it once', async () => {
   const { context, opened } = makeContext();
-  const node = fileNode('media/clip.mp4', 'attachment');
+  const node = fileNode('media/clip.mp4', 'file', { loaded: false });
   context.fileMap.set(node.path, node);
   context.allNodes.push(node);
   const calls = [];
-  context.loadAttachmentNode = async (n, open) => { calls.push([n.path, open]); n.loaded = true; return true; };
+  context.loadBinaryFileNode = async (n, open) => { calls.push([n.path, open]); n.loaded = true; return true; };
   const out = JSON.parse(await context.asExecTool('open_concept', { path: 'media/clip.mp4' }));
   assert.equal(out.opened, 'media/clip.mp4');
-  assert.equal(out.kind, 'attachment');
+  assert.equal(out.kind, 'file');
   assert.equal(out.loaded, true);
   // The loader is asked not to open it, so the page is pushed into the history exactly once.
   assert.deepEqual(calls, [['media/clip.mp4', false]]);
@@ -2166,10 +2168,10 @@ test('open_concept loads a file before opening it, and opens it once', async () 
 
 test('open_concept reports a file it could not read instead of opening an empty page', async () => {
   const { context, opened } = makeContext();
-  const node = fileNode('gone.bin', 'attachment');
+  const node = fileNode('gone.bin', 'file', { loaded: false });
   context.fileMap.set(node.path, node);
   context.allNodes.push(node);
-  context.loadAttachmentNode = async () => false;
+  context.loadFileNode = async () => false;
   const out = JSON.parse(await context.asExecTool('open_concept', { path: 'gone.bin' }));
   assert.equal(out.opened, false);
   assert.match(out.error, /could not be read/);
