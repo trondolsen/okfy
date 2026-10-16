@@ -10,7 +10,7 @@
 "use strict";
 
 // Bump the version to force a refresh of the cached shell.
-var CACHE = "okfy-shell-v13";
+var CACHE = "okfy-shell-v14";
 
 // The shell is everything the page itself needs to start. Bundle files are not
 // part of it and are never added.
@@ -19,7 +19,7 @@ var SHELL = [
   "./favicons/site.webmanifest",
   "./favicons/android-chrome-192x192.png",
   "./favicons/android-chrome-512x512.png",
-  "./favicons/apple-touch-icon.png"
+  "./apple-touch-icon.png"
 ];
 
 self.addEventListener("install", function (event) {

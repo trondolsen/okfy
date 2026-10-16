@@ -31,7 +31,9 @@ sources:
 | [`test/README.md`](../../test/README.md) | The test suite and how to run it |
 | [`attachments/favicon.svg`](../design/attachments/favicon.svg) | The project's mascot and favicon, shown in the interface design concept |
 | [`attachments/expansion-dial.svg`](../design/attachments/expansion-dial.svg) | The expansion dial illustration, shown in the interface design concept |
-| [`favicons/`](../../favicons/) | The favicon and app assets the tool references: the SVG and ICO sources (embedded in the page), `apple-touch-icon`, and `site.webmanifest` with the app name, scope, icons and screenshot |
+| [`attachments/expansion-states.svg`](../design/attachments/expansion-states.svg) | The node expansion states illustration, shown in the interface design concept |
+| [`favicons/`](../../favicons/) | The icon assets the tool references: the SVG and ICO sources (embedded in the page), the Android icons and `site.webmanifest` with the app name, scope, icons and screenshot |
+| [`apple-touch-icon.png`](../../apple-touch-icon.png) | The iOS home-screen icon, kept at the site root where iOS looks for it |
 | [`okfy-sw.js`](../../okfy-sw.js) | The optional service worker that keeps the app shell available offline |
 | [`okfy.png`](../../okfy.png) | The wide screenshot declared in the web app manifest |
 | [`okfy-logo.svg`](../../okfy-logo.svg) | The okfy wordmark shown in the README (the toolbar's node mark) |
