@@ -12,7 +12,7 @@ sources:
     title: okfy – README
   - id: overlay
     resource: ../../okfy.html
-    title: okfy.html – overlay text and about panel
+    title: okfy.html – the tool's source
 ---
 
 # Principle

@@ -17,11 +17,11 @@ sources:
     title: Limits and budgets
 ---
 
-# The window shows an "Open folder" card
+# The window shows no bundle
 
-Nothing auto-loads when you open the file from disk. Choose **Open folder…** and
-pick the bundle directory, or drag the folder onto the window. Auto-load works
-only when the page is served over HTTP.[^source]
+Nothing auto-loads when you open the file from disk. Choose **Open folder…** in
+the toolbar and pick the bundle directory, or drag the folder onto the window.
+Auto-load works only when the page is served over HTTP.[^source]
 
 # A bundle behind a login or a redirect does not load
 
@@ -29,6 +29,13 @@ This is intended. The viewer omits credentials and rejects redirects, so a bundl
 behind authentication, HTTP credentials or a redirect is deliberately
 unsupported. Serve the bundle from plain static hosting instead of weakening the
 URL controls. See [URL and network bounds](../security/url-and-network-bounds.md).[^bounds]
+
+# A bundle fails to load
+
+The viewer records the failure on the generated `.runtime/errors.md` page and
+opens it in the preview instead of showing a dialog. Read the message there — for
+example a missing entry file — fix the bundle and reload; a successful load
+clears the page. Open it again from **Runtime internals** in the About panel.[^source]
 
 # Clicking a node loads instead of opening
 

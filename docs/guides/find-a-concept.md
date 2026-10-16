@@ -26,6 +26,9 @@ filters dock at the right; the legend docks at the left.[^interface]
 3. Use the **in** menu to scope the search to All fields, Title, Description,
    Type, Tags or Path. All fields is the default.
 
+A search — like any attribute filter — draws the whole focused subtree, so a
+result inside a directory that has not been expanded yet is still shown.
+
 # Filter by attributes
 
 Each of **Kinds**, **Types**, **Tags** and **Status** has a **Select …** button
@@ -52,6 +55,10 @@ it.
 
 Choose **Clear filters** at the foot of the panel to drop every search, kind,
 type, tag and status selection at once.
+
+While the **Tags** toggle in the toolbar is on, the graph keeps hiding the
+directory ring, so that exclusion stays after a clear; turn **Tags** off to bring
+the directories back.
 
 # Connections
 

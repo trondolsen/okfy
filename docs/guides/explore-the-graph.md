@@ -34,6 +34,35 @@ you want to see.[^model]
    the bundle root, **‹** and **›** for back and forward. The path after the
    buttons shows where you are.
 
+# Expand or collapse a directory or tag hub
+
+A directory or a tag hub draws only a **page** of its neighbours at first. A node
+with more to show carries a dashed ring; a collapsed one is drawn hollow. A plain
+click never changes what is drawn — it keeps the node's own action (enter a
+directory, open a page, toggle a tag).
+
+1. **Press and hold** the node. A ring fills as the hold completes and the
+   **expansion dial** opens around the node.
+2. **Drag to a mode and release** to apply it. Release in the dial's hub, or press
+   `Escape`, to cancel and change nothing.
+
+| Sector | Mode | What it does |
+| --- | --- | --- |
+| top | Expand all | Show every neighbour of this node. |
+| right | Recursive expand all | Open the whole subtree below. |
+| bottom | Collapsed | Hold the neighbours and the subtree back. |
+| left | Expand more | Reveal the next page of neighbours. |
+
+The dial carries **no text**: each mode is a small pictogram built from the graph's
+own vocabulary — a solid node is shown, a dashed ring is held back, an arrowhead is
+a neighbour appearing, and an extra level of nodes marks the recursive mode. A mode
+with nothing to do is drawn faded and cannot be chosen, so the dial teaches the
+whole vocabulary without changing anything.[^controls]
+
+Every directory starts showing **all of its sub-directories and index files and up to 50 of its concepts**, so the structure and its pages are visible to any depth while a folder of files does not flood the graph; a directory that holds only files starts collapsed, with every file held back. The bundle root opens fully. While a **search** or an attribute filter is active the page is set aside — the whole subtree is drawn, so a match inside a collapsed directory is still shown.
+
+[^controls]: See [Controls](controls.md) for the gesture on mouse and touch.
+
 # Reframe and reset
 
 - **Reset view** zooms and pans so the whole graph fits, without moving nodes.

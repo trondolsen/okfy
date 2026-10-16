@@ -165,6 +165,11 @@ three directed links. The root index points to the guide; the guide and the
 reference point to each other. The test content has no external sources or
 claimed verification.
 
+`fixtures/folders/` (a directory that holds only a sub-directory and a file),
+`fixtures/blocks/` (one directory with nine sub-directories, two concepts and two
+plaintext files, for the load default) and `fixtures/media/` are small,
+purpose-built bundles for their own tests.
+
 The Node tests check the security functions from the actual HTML file, the
 server's GET/HEAD responses and content types, missing files, directory
 traversal, and symlinks outside the server root, and the assistant's provider
@@ -172,7 +177,8 @@ request shaping, streamed-reply assembly and in-process tools. The server tests
 use temporary directories and short-lived servers on random loopback ports.
 
 The browser tests cover loading, file and link counts, search, filters, labels,
-tag nodes, Markdown preview, history, directory navigation, incremental loading
+tag nodes, Markdown preview, history, directory navigation, what a directory draws
+on load and the expansion dial that changes it, incremental loading
 with `depth=0`, missing bundles, rejection of bundles from other origins, and
 mobile view at 390 × 844. The project's actual knowledge index is tested as a
 separate smoke test. The assistant is checked on by default and makes no external

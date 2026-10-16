@@ -120,12 +120,6 @@
   .title:hover { background: transparent; border-color: transparent; }
   .title .caret { font-size: 10px; line-height: 1; transition: transform .15s ease; }
   .title[aria-expanded="true"] .caret { transform: rotate(180deg); }
-  .wordmark .gr {
-    background-image: linear-gradient(90deg, var(--accent) 50%, var(--text) 50%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: transparent;
-  }
-  .wordmark .f { color: var(--accent); }
   /* The okfy brand mark: each letter drawn as a node, a filled circle in its node-kind
      colour with the letter in white, joined by links in the graph link colour (see
      #brandMark). It sits on the app's own dark surface, so it carries no background of its
@@ -531,6 +525,24 @@
     text-decoration: line-through;
   }
 
+  /* The expansion dial. A directory or tag hub opens it when pressed and held; it is a
+     temporary overlay drawn where the node is, so it carries no text and needs no
+     translation. Its icons are the graph's own vocabulary: solid nodes are shown,
+     dashed rings are held back, and a link with an arrowhead is a neighbour appearing. */
+  #dial {
+    position: fixed; left: 0; top: 0; z-index: 20; pointer-events: none;
+    will-change: transform;
+  }
+  #dial svg { display: block; overflow: visible; transform: scale(var(--dial-scale, .5)); transform-origin: center; }
+  /* The dial is drawn scaled down, so keep its line weights (and the pictogram outlines) from
+     thinning with it: they hold the design's widths at any size. */
+  #dial svg * { vector-effect: non-scaling-stroke; }
+  #dial .ds { fill: var(--panel); fill-opacity: .94; stroke: var(--line); stroke-width: 2; }
+  #dial .ds.hi { fill: var(--panel-2); stroke: var(--accent); stroke-width: 3; }
+  #dial .ds.off { fill-opacity: .5; }
+  #dial .ico { opacity: 1; }
+  #dial .ico.off { opacity: .3; }
+
   /* Node hover tooltip. Sits above the deck (z-index 19) but below the docked
      panels (z-index 21), so a panel is never covered by it. */
   #tip {
@@ -718,28 +730,6 @@
     #aboutPop.collapsible .about-toggle { display: flex; }
     #aboutPop.collapsed .about-more { display: none; }
   }
-
-  #overlay {
-    position: fixed; inset: 0; z-index: 30; display: none;
-    align-items: center; justify-content: center;
-    background: rgba(18,20,26,.78);
-    background: color-mix(in srgb, var(--bg) 78%, transparent); backdrop-filter: blur(3px);
-  }
-  #overlay.show { display: flex; }
-  #card {
-    max-width: 560px; margin: 16px; padding: 22px 24px;
-    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.5);
-  }
-  #card h1 { margin: 0 0 6px; font-size: 19px; }
-  #card .card-logo { float: inline-end; margin: 0 0 8px 12px; }
-  #card p { color: var(--muted); margin: 0 0 12px; }
-  #card ul { margin: 0 0 16px; padding-inline-start: 20px; color: var(--text); }
-  #card li { margin: 5px 0; }
-  #card code { background: var(--panel-2); padding: 1px 5px; border-radius: 5px; }
-  #card .row { display: flex; gap: 8px; flex-wrap: wrap; }
-  #card.dropping { border-color: var(--accent); }
-  .hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
 
   #preview {
     position: fixed; inset: 0; z-index: 50; display: none;
@@ -1649,6 +1639,62 @@
   </div>
 </div>
 <div id="tip"></div>
+<div id="dial" hidden>
+  <svg viewBox="-132 -132 264 264" width="264" height="264" aria-hidden="true" focusable="false">
+    <defs>
+      <g id="dip-more">
+        <line x1="-16" y1="0" x2="4" y2="-9" stroke="#6a7488" stroke-width="2"/>
+        <line x1="-16" y1="0" x2="4" y2="9" stroke="#6a7488" stroke-width="2"/>
+        <line x1="-16" y1="0" x2="18" y2="0" stroke="var(--accent)" stroke-width="2"/>
+        <path d="M 12 0 L 6.5 -3.5 L 6.5 3.5 Z" fill="var(--accent)"/>
+        <circle cx="-16" cy="0" r="5" fill="var(--dir)"/>
+        <circle cx="4" cy="-9" r="5" fill="var(--dir)"/>
+        <circle cx="4" cy="9" r="5" fill="var(--dir)"/>
+        <circle cx="18" cy="0" r="5" fill="var(--accent)"/>
+      </g>
+      <g id="dip-all">
+        <line x1="-16" y1="0" x2="6" y2="-11" stroke="#6a7488" stroke-width="2"/>
+        <line x1="-16" y1="0" x2="12" y2="0" stroke="#6a7488" stroke-width="2"/>
+        <line x1="-16" y1="0" x2="6" y2="11" stroke="#6a7488" stroke-width="2"/>
+        <circle cx="-16" cy="0" r="5" fill="var(--dir)"/>
+        <circle cx="6" cy="-11" r="5" fill="var(--dir)"/>
+        <circle cx="12" cy="0" r="5" fill="var(--dir)"/>
+        <circle cx="6" cy="11" r="5" fill="var(--dir)"/>
+      </g>
+      <g id="dip-rec">
+        <line x1="-19" y1="0" x2="-2" y2="-10" stroke="#6a7488" stroke-width="2"/>
+        <line x1="-19" y1="0" x2="-2" y2="10" stroke="#6a7488" stroke-width="2"/>
+        <line x1="-2" y1="-10" x2="11" y2="-15" stroke="#6a7488" stroke-width="1.6"/>
+        <line x1="-2" y1="-10" x2="11" y2="-5" stroke="#6a7488" stroke-width="1.6"/>
+        <line x1="-2" y1="10" x2="11" y2="5" stroke="#6a7488" stroke-width="1.6"/>
+        <line x1="-2" y1="10" x2="11" y2="15" stroke="#6a7488" stroke-width="1.6"/>
+        <circle cx="-19" cy="0" r="4.5" fill="var(--dir)"/>
+        <circle cx="-2" cy="-10" r="4.5" fill="var(--dir)"/>
+        <circle cx="-2" cy="10" r="4.5" fill="var(--dir)"/>
+        <circle cx="11" cy="-15" r="3.5" fill="var(--dir)"/>
+        <circle cx="11" cy="-5" r="3.5" fill="var(--dir)"/>
+        <circle cx="11" cy="5" r="3.5" fill="var(--dir)"/>
+        <circle cx="11" cy="15" r="3.5" fill="var(--dir)"/>
+      </g>
+      <g id="dip-none">
+        <circle cx="0" cy="0" r="10" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="5 4"/>
+      </g>
+    </defs>
+    <line id="dialLead" x1="0" y1="0" x2="0" y2="0" stroke="var(--muted)" stroke-width="2" stroke-dasharray="4 4"/>
+    <g id="dialSectors">
+      <path class="ds" d="M -70.5 -87 A 112 112 0 0 1 70.5 -87 L 30.2 -37.3 A 48 48 0 0 0 -30.2 -37.3 Z"/>
+      <path class="ds" d="M 87 -70.5 A 112 112 0 0 1 87 70.5 L 37.3 30.2 A 48 48 0 0 0 37.3 -30.2 Z"/>
+      <path class="ds" d="M 70.5 87 A 112 112 0 0 1 -70.5 87 L -30.2 37.3 A 48 48 0 0 0 30.2 37.3 Z"/>
+      <path class="ds" d="M -87 70.5 A 112 112 0 0 1 -87 -70.5 L -37.3 -30.2 A 48 48 0 0 0 -37.3 30.2 Z"/>
+    </g>
+    <g id="dialIcons">
+      <use class="ico" href="#dip-all" transform="translate(0,-80)"/>
+      <use class="ico" href="#dip-rec" transform="translate(80,0)"/>
+      <use class="ico" href="#dip-none" transform="translate(0,80)"/>
+      <use class="ico" href="#dip-more" transform="translate(-80,0)"/>
+    </g>
+  </svg>
+</div>
 <div id="pvTagPop" hidden></div>
 
 <div id="aboutPop" class="pop" hidden>
@@ -1692,38 +1738,7 @@
   </div>
 </div>
 
-<div id="overlay">
-  <div id="card">
-    <svg class="card-logo" data-mascot width="72" height="72" viewBox="0 0 32 32" role="img" aria-label="okfy">
-      <path data-links d="M15.5 15 L21 21.5 M15.5 15 L9.5 22 M9.5 22 L6.5 29 M21 21.5 L27 29 M3.5 13 L8 11 M20 6 L27 3 M15.5 15 L10.5 8.5 M10.5 8.5 L8 5 M3.5 13 L10.5 8.5 M10.5 8.5 L20 6" fill="none" stroke="#6a7488" stroke-width="1.8" stroke-linecap="round"/>
-      <circle data-joint="head" cx="8" cy="5" r="2.4" fill="#5b8def"/>
-      <circle data-joint="shoulder" cx="10.5" cy="8.5" r="1.4" fill="#5b8def"/>
-      <circle data-joint="lElbow" cx="8" cy="11" r="1.3" fill="#5b8def"/>
-      <circle data-joint="lHand" cx="3.5" cy="13" r="1.5" fill="#5b8def"/>
-      <circle data-joint="rElbow" cx="20" cy="6" r="1.5" fill="#5b8def"/>
-      <circle data-joint="rHand" cx="27" cy="3" r="1.8" fill="#5b8def"/>
-      <circle data-joint="lKnee" cx="9.5" cy="22" r="1.5" fill="#c9a24d"/>
-      <circle data-joint="lFoot" cx="6.5" cy="29" r="1.8" fill="#c9a24d"/>
-      <circle data-joint="rKnee" cx="21" cy="21.5" r="1.5" fill="#c9a24d"/>
-      <circle data-joint="rFoot" cx="27" cy="29" r="1.8" fill="#c9a24d"/>
-      <ellipse data-joint="torso" cx="15.5" cy="15" rx="3.2" ry="2.5" fill="#8b93a7"/>
-    </svg>
-    <h1 class="wordmark"><span class="gr">o</span><span class="gr">k</span><span class="f">f</span>y</h1>
-    <p data-i18n="card.desc">Single-file, dependency-free viewer for this knowledge bundle.</p>
-    <ul>
-      <li data-i18n-html="card.li1">Served: on a static server (including GitHub Pages) it loads <code>index.md</code>.</li>
-      <li data-i18n-html="card.li3">Limit prefetch depth with <code>?depth=N</code> (default: all levels); click a dotted node to load its next level, click again to preview.</li>
-      <li data-i18n="card.li4">Local file: click Open folder and choose a bundle directory, or drag it onto this window.</li>
-      <li data-i18n="card.li5">Press and hold a node, then drag the card to the right edge to build a deck; add pages from the preview with Add to deck.</li>
-    </ul>
-    <div class="row">
-      <button id="pick" data-i18n="nav.open">Open folder…</button>
-      <button id="retry" data-i18n="card.retry">Retry auto-load</button>
-    </div>
-    <div class="hint" id="overlayMsg" dir="auto"></div>
-    <input id="dirinput" type="file" webkitdirectory multiple hidden>
-  </div>
-</div>
+<input id="dirinput" type="file" webkitdirectory multiple hidden>
 
 <div id="preview">
   <div id="pvCard">
@@ -1771,8 +1786,6 @@
   var canvas = document.getElementById("c");
   var ctx = canvas.getContext("2d");
   var tip = document.getElementById("tip");
-  var overlay = document.getElementById("overlay");
-  var overlayMsg = document.getElementById("overlayMsg");
   var legendEl = document.getElementById("legend");
   var legendBody = document.getElementById("legendBody");
   var statsEl = document.getElementById("stats");
@@ -1796,7 +1809,7 @@
 
   // ---------------------------------------------------------------- state
   var W = 0, H = 0, dpr = 1;
-  var nodes = [], links = [], allNodes = [], allLinks = [], dirNodes = null, fileMap = null;
+  var nodes = [], links = [], allNodes = [], allLinks = [], statsNodes = [], dirNodes = null, fileMap = null;
   var graphStack = [""], graphIndex = 0, graphFocus = "";
   var view = { k: 1, x: 0, y: 0 };
   var ringGap = 160, maxDepth = 1;
@@ -1813,6 +1826,7 @@
   // every bundle rebuild re-inserts the directory so the pages stay reachable.
   var RUNTIME_DIR = ".runtime";
   var runtimeOn = false;
+  var loadErrors = [];         // bundle load failures, surfaced by the generated .runtime/errors.md page
   var runtimeNodes = [];       // injected runtime concept nodes (regenerated while read)
 
   // Loads surfaced in the toolbar spinner. `fetchCount` is work in flight;
@@ -1849,9 +1863,9 @@
   }
   var MAX_PENDING_FETCHES = 64;
   var FETCH_TIMEOUT_MS = 30000;
-  var MAX_BUNDLE_FILES = 2000;
-  var MAX_BUNDLE_BYTES = 32 * 1024 * 1024;
-  var MAX_GRAPH_NODES = 8000, MAX_GRAPH_LINKS = 20000;
+  var MAX_BUNDLE_FILES = 8000;
+  var MAX_BUNDLE_BYTES = 128 * 1024 * 1024;
+  var MAX_GRAPH_NODES = 32000, MAX_GRAPH_LINKS = 80000;
   var MAX_REFERENCES_PER_FILE = 256;
   var MAX_IMAGE_BYTES = 8 * 1024 * 1024;
   var MAX_IMAGE_TOTAL_BYTES = 16 * 1024 * 1024;
@@ -1985,6 +1999,11 @@
   var showTags = false;   // tag-hub links are opt-in (toolbar "Tags")
   var hubsOn = false;     // whether tag hubs are currently built into the graph
   var tagMaxSegs = 1;     // deepest namespace level among tag hubs (for sizing)
+  // Partial expansion: a directory or tag node reveals its neighbours one page at a time.
+  var EXPAND_PAGE = 8;          // neighbours revealed per click, and hidden per long-press
+  var AUTO_EXPAND_MAX = 16;     // fan-out above which a tag hub starts partially expanded
+  var DEFAULT_CONCEPTS = 50;    // concepts a directory shows on load, before its first page
+  var expandState = new Map();  // node id -> shown count, kept across graph rebuilds
   var query = "";
   var searchField = "";
   var tagInclude = new Set(), tagExclude = new Set();
@@ -5239,6 +5258,48 @@
   }
 
   // ---------------------------------------------------------------- graph
+  // ---- partial expansion --------------------------------------------------
+  // A directory or tag node shows its neighbours one bounded page at a time. `kids` is the
+  // ordered pageable neighbour list (child directories first); `shown` is how many are drawn.
+  function expandableNode(n) { return !!n && !n.runtime && (n.kind === "dir" || n.kind === "tag"); }
+  // A search or an attribute filter is a lens: while one is active the whole focused subtree
+  // is drawn, so a match is never held back inside a directory that has not been expanded yet.
+  function lensActive() {
+    return query !== "" || tagInclude.size || tagExclude.size || kindInclude.size ||
+      kindExclude.size || typeInclude.size || typeExclude.size || statusInclude.size || statusExclude.size;
+  }
+  // A neighbour is "collapsed" only while the expansion page is in effect; under a lens the
+  // page is bypassed, so nothing is held back and the dashed cue is not drawn.
+  function nodeCollapsed(n) { return !lensActive() && nodeHidden(n); }
+  function pageableKids(n) { return (n && n.kids) || []; }
+  function nodeShown(n) { var total = pageableKids(n).length; return n.shown == null ? total : Math.min(n.shown, total); }
+  function nodeHidden(n) { return expandableNode(n) && nodeShown(n) < pageableKids(n).length; }
+  function defaultShown(kids) {
+    // On load a directory shows its whole skeleton — every child directory and index file —
+    // and up to 50 of its concepts. Its files and attachments are held back, so a folder of
+    // assets does not flood the graph. `kids` is ordered so this count is a prefix of it.
+    var dirs = 0, indexes = 0, concepts = 0;
+    for (var i = 0; i < kids.length; i++) {
+      var k = kids[i].kind;
+      if (k === "dir") dirs++;
+      else if (k === "index") indexes++;
+      else if (k === "concept") concepts++;
+    }
+    return dirs + indexes + Math.min(concepts, DEFAULT_CONCEPTS);
+  }
+  // The children the layout positions: everything non-pageable (tag hubs), plus pageable
+  // children within `shown`.
+  function layoutKids(n) {
+    var kids = n.children || [];
+    if (lensActive()) return kids.slice();   // a lens draws the whole subtree
+    var out = [];
+    for (var i = 0; i < kids.length; i++) {
+      var c = kids[i];
+      if (c.kidIndex == null || c.kidIndex < nodeShown(n)) out.push(c);
+    }
+    return out;
+  }
+
   function buildGraph(files, known) {
     var nodes = [], links = [], hubsOn = false, tagMaxSegs = 1;
     var fileMapLocal = new Map();
@@ -5251,7 +5312,13 @@
     });
 
     var dirMap = new Map();
-    Array.from(dirSet).sort().forEach(function (d) {
+    // A directory node exists for every directory implied by a file or a placeholder, created on
+    // demand so their ancestors follow. This keeps a directory that holds only files (and so has
+    // no Markdown of its own) in the tree, with its own page, instead of leaving its nodes
+    // parentless at the bundle root.
+    function ensureDir(d) {
+      var existing = dirMap.get(d);
+      if (existing) return existing;
       var n = {
         id: "dir:" + d, path: d, kind: "dir",
         label: d ? d.split("/").pop() : "bundle",
@@ -5260,14 +5327,13 @@
         x: 0, y: 0, vx: 0, vy: 0, fx: null, fy: null, degree: 0
       };
       dirMap.set(d, n); pushGraphNode(n, nodes);
-    });
-
-    dirMap.forEach(function (n, d) {
-      if (d === "") return;
-      var parent = d.indexOf("/") >= 0 ? d.slice(0, d.lastIndexOf("/")) : "";
-      var pn = dirMap.get(parent);
-      if (pn) { pn.children.push(n); pushGraphLink({ source: pn, target: n, kind: "tree" }, links); }
-    });
+      if (d !== "") {
+        var pn = ensureDir(d.indexOf("/") >= 0 ? d.slice(0, d.lastIndexOf("/")) : "");
+        if (pn) { pn.children.push(n); pushGraphLink({ source: pn, target: n, kind: "tree" }, links); }
+      }
+      return n;
+    }
+    Array.from(dirSet).sort().forEach(ensureDir);
 
     files.forEach(function (f) {
       var isMd = /\.md$/i.test(f.path);
@@ -5289,7 +5355,7 @@
         x: 0, y: 0, vx: 0, vy: 0, fx: null, fy: null, degree: 0
       };
       fileMapLocal.set(f.path, n); pushGraphNode(n, nodes);
-      var pn = dirMap.get(dir);
+      var pn = ensureDir(dir);
       if (pn) { pn.children.push(n); pushGraphLink({ source: pn, target: n, kind: "tree" }, links); }
     });
 
@@ -5309,7 +5375,7 @@
       };
       placeholderMap.set(path, ph);
       pushGraphNode(ph, nodes);
-      var pn = dirMap.get(dirOf(path));
+      var pn = ensureDir(dirOf(path));
       if (pn) { pn.children.push(ph); pushGraphLink({ source: pn, target: ph, kind: "tree" }, links); }
       return ph;
     }
@@ -5374,6 +5440,27 @@
       });
     }
 
+    // Partial expansion: give every directory its pageable children (all but tag hubs), with
+    // child directories first, and its default page. A page the user set survives a rebuild.
+    dirMap.forEach(function (d) {
+      if (d.runtime) return;
+      var dirs = [], indexes = [], concepts = [], rest = [], i, c;
+      for (i = 0; i < d.children.length; i++) {
+        c = d.children[i];
+        if (c.kind === "tag") continue;
+        if (c.kind === "dir") dirs.push(c);
+        else if (c.kind === "index") indexes.push(c);
+        else if (c.kind === "concept") concepts.push(c);
+        else rest.push(c);
+      }
+      // Directories first, then index files, concepts and finally the files and attachments, so
+      // the load default is a prefix of this order and the held-back ones come last.
+      d.kids = dirs.concat(indexes, concepts, rest);
+      for (i = 0; i < d.kids.length; i++) { d.kids[i].kidIndex = i; d.kids[i].parentDir = d; }
+      d.shown = expandState.has(d.id) ? Math.min(expandState.get(d.id), d.kids.length)
+        : (d.path === "" ? d.kids.length : defaultShown(d.kids));
+    });
+
     // A pair of concepts that link to each other reads as one edge: mark one of the two
     // reference links as a duplicate to skip when drawing, and the kept one as
     // bidirectional (an arrowhead at each end). The model keeps both, so direction
@@ -5404,7 +5491,7 @@
           id: id, path: id, kind: "tag", label: name, tags: [name],
           type: "", title: "", description: "", status: "",
           fm: {}, body: "", src: null, pdfMeta: null, metaPromise: null,
-          children: [], depth: 0, angle: 0, targetR: 0,
+          children: [], kids: [], tagKids: [], depth: 0, angle: 0, targetR: 0,
           x: 0, y: 0, vx: 0, vy: 0, fx: null, fy: null, degree: 0
         };
         tagNodes.set(id, hn);
@@ -5434,8 +5521,17 @@
           }
           parent = hn;
         }
-        pushGraphLink({ source: node, target: parent, kind: "tag" }, links);   // node -> leaf tag
+        var tl = { source: node, target: parent, kind: "tag" };   // node -> leaf tag
+        tl.ti = parent.tagKids.length;
+        parent.tagKids.push(node);
+        pushGraphLink(tl, links);
       });
+    });
+
+    tagNodes.forEach(function (tn) {
+      tn.kids = tn.tagKids;
+      tn.shown = expandState.has(tn.id) ? Math.min(expandState.get(tn.id), tn.kids.length)
+        : (tn.kids.length > AUTO_EXPAND_MAX ? EXPAND_PAGE : tn.kids.length);
     });
 
     nodes.forEach(function (n) { n.degree = 0; });
@@ -5446,9 +5542,10 @@
 
   // ---------------------------------------------------------------- layout
   function weightOf(n) {
-    if (!n.children || !n.children.length) return 1;
+    var kids = layoutKids(n);
+    if (!kids.length) return 1;
     var s = 0;
-    n.children.forEach(function (c) { s += weightOf(c); });
+    kids.forEach(function (c) { s += weightOf(c); });
     return Math.max(1, s);
   }
 
@@ -5459,7 +5556,7 @@
     (function m(n, d) {
       n.depth = d;
       if (d > maxDepth) maxDepth = d;
-      (n.children || []).forEach(function (c) { m(c, d + 1); });
+      layoutKids(n).forEach(function (c) { m(c, d + 1); });
     })(root, 0);
   }
 
@@ -5487,7 +5584,7 @@
       n.x = n.targetR * Math.cos(mid);
       n.y = n.targetR * Math.sin(mid);
       n.vx = 0; n.vy = 0;
-      var kids = n.children || [];
+      var kids = layoutKids(n);
       var total = 0;
       kids.forEach(function (c) { total += weightOf(c); });
       if (!total) total = 1;
@@ -5505,8 +5602,28 @@
   // further narrowed by the sidebar's attribute filters.
   function applyFocus() {
     var f = graphFocus, prefix = f ? f + "/" : "";
-    nodes = allNodes.filter(function (n) {
-      if (n.kind === "tag" && !showTags && !tagInclude.size && !tagExclude.size) return false;
+    // Expansion: walk the focused directory's tree, revealing each node's pageable children
+    // only up to its `shown` count. Tag hubs are added afterwards, not through this walk.
+    var revealed = new Set();
+    var root = dirNodes && dirNodes.get(f);
+    if (root) {
+      (function walk(d) {
+        revealed.add(d);
+        var kids = d.kids || [], lim = nodeShown(d);
+        for (var i = 0; i < kids.length && i < lim; i++) {
+          var c = kids[i];
+          if (c.kind === "dir") walk(c); else revealed.add(c);
+        }
+      })(root);
+    }
+    // The set the focus and the attribute filters describe, before the expansion page: the
+    // stats line counts it, and a lens draws it whole (see lensActive).
+    var scoped = allNodes.filter(function (n) {
+      if (n.kind === "tag") {
+        if (f !== "") return false;   // tag hubs are drawn only at the bundle root
+        if (!showTags && !tagInclude.size && !tagExclude.size) return false;
+        return matchesAttrFilters(n);
+      }
       // Runtime internals stay out of the way until the user opens .runtime.
       if (n.runtime && f !== RUNTIME_DIR && f.indexOf(RUNTIME_DIR + "/") !== 0) return false;
       if (!matchesAttrFilters(n)) return false;
@@ -5514,8 +5631,17 @@
       if (n.kind === "dir") return (n.path === f) || n.path.indexOf(prefix) === 0;
       return n.path.indexOf(prefix) === 0;
     });
+    // Without a lens the expansion page decides: a node is drawn only once its directory (or
+    // tag hub) has revealed it. With a lens every scoped node is drawn.
+    nodes = lensActive() ? scoped : scoped.filter(function (n) { return revealed.has(n); });
+    // A tag edge is paged by its hub's own page; every other link needs both ends visible.
     var vis = new Set(nodes);
-    links = allLinks.filter(function (l) { return vis.has(l.source) && vis.has(l.target); });
+    links = allLinks.filter(function (l) {
+      if (!vis.has(l.source) || !vis.has(l.target)) return false;
+      if (l.kind === "tag" && l.ti != null) return nodeShown(l.target) > l.ti;
+      return true;
+    });
+    statsNodes = scoped;
     nodes.forEach(function (n) { n.degree = 0; });
     links.forEach(function (l) { l.source.degree++; l.target.degree++; });
   }
@@ -5558,6 +5684,27 @@
     updateStats();
     buildLegend();
     refreshRuntime();
+  }
+
+  // Reveal (delta > 0) or collapse (delta < 0) one page of a node's neighbours. The page is kept
+  // in expandState so it survives a rebuild; a revealed node is seeded beside its parent so it
+  // appears where it belongs instead of at the origin.
+  function setNodePage(n, delta) {
+    var total = pageableKids(n).length;
+    if (!total) return false;
+    var next = clamp(nodeShown(n) + delta, 0, total);
+    if (next === nodeShown(n)) return false;
+    n.shown = next;
+    expandState.set(n.id, next);
+    if (delta > 0) seedNewPositions(n);
+    updateView();
+    return true;
+  }
+  function seedNewPositions(parent) {
+    layoutKids(parent).forEach(function (c) {
+      if (!c.x && !c.y) { c.x = parent.x + jiggle(); c.y = parent.y; c.vx = 0; c.vy = 0; }
+      seedNewPositions(c);
+    });
   }
 
   function setFocus(path) {
@@ -5603,8 +5750,13 @@
 
   function updateStats() {
     if (!statsEl) return;
-    var files = nodes.filter(function (n) { return n.kind !== "dir"; }).length;
-    var linkCount = links.filter(function (l) { return l.kind === "ref" && !l.dup; }).length;
+    // Count the scoped set (the focused subtree after attribute filters), not the expansion
+    // page, so the line describes what is loaded rather than how far it has been revealed.
+    var scope = new Set(statsNodes);
+    var files = statsNodes.filter(function (n) { return n.kind !== "dir"; }).length;
+    var linkCount = allLinks.filter(function (l) {
+      return l.kind === "ref" && !l.dup && scope.has(l.source) && scope.has(l.target);
+    }).length;
     statsEl.textContent = statsText(files, linkCount);
   }
 
@@ -6082,17 +6234,26 @@
       var unloaded = n.loaded === false;                  // attachment placeholder
       var missing = !unloaded && hasLoadableMissing(n);   // page with unloaded references
       var ancestorTag = n.kind === "tag" && tagIsAncestor(n);  // namespace ancestor of a selected tag
+      var hidden = nodeCollapsed(n);                       // expansion: neighbours still held back
+      var hollow = hidden && nodeShown(n) === 0;           // nothing shown yet
       ctx.beginPath();
       ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.fillStyle = col;
-      ctx.globalAlpha = dim ? 0.18 : ((unloaded || missing || ancestorTag) ? 0.5 : 1);
-      ctx.fill();
-
-      if (n.kind === "dir" || n.kind === "index") {
-        ctx.lineWidth = Math.max(1, 1.4 * view.k);
-        ctx.strokeStyle = n.kind === "dir" ? "#cfd5e2" : "#0c2f33";
+      if (hollow) {
+        // Collapsed: an outline only, so a hollow node reads as "nothing shown yet".
+        ctx.strokeStyle = col;
+        ctx.lineWidth = Math.max(1, 1.6 * view.k);
         ctx.globalAlpha = dim ? 0.2 : 0.9;
         ctx.stroke();
+      } else {
+        ctx.fillStyle = col;
+        ctx.globalAlpha = dim ? 0.18 : ((unloaded || missing || ancestorTag) ? 0.5 : 1);
+        ctx.fill();
+        if (n.kind === "dir" || n.kind === "index") {
+          ctx.lineWidth = Math.max(1, 1.4 * view.k);
+          ctx.strokeStyle = n.kind === "dir" ? "#cfd5e2" : "#0c2f33";
+          ctx.globalAlpha = dim ? 0.2 : 0.9;
+          ctx.stroke();
+        }
       }
       ctx.globalAlpha = 1;
 
@@ -6105,7 +6266,7 @@
       // Unloaded indicator, shared by attachment and file placeholders, pages
       // whose references are not loaded yet, and namespace-ancestor tag hubs
       // (click to load/expand): a dashed blue ring.
-      if (unloaded || missing || ancestorTag) {
+      if (unloaded || missing || ancestorTag || hidden) {
         ctx.beginPath();
         ctx.arc(px, py, r + Math.max(1.5, 1.5 * view.k), 0, Math.PI * 2);
         ctx.setLineDash([Math.max(2, 3 * view.k), Math.max(2, 3 * view.k)]);
@@ -6331,6 +6492,7 @@
     }
 
     if (pressTimer) pressMoved(e.clientX, e.clientY);
+    if (dialNode) { dialMove(e.clientX, e.clientY); return; }
     if (cardDrag) { moveCardDrag(e.clientX, e.clientY); return; }
     if (dragNode) {
       moved = true;
@@ -6360,6 +6522,15 @@
     pinchPrev = null;
 
     if (pressTimer) cancelNodePress();
+    if (dialNode) {
+      // The dial owned the gesture: apply the chosen mode (a pointercancel just cancels).
+      if (e && e.type === "pointercancel") dialClose();
+      else dialRelease();
+      panning = null;
+      canvas.classList.remove("dragging");
+      if (e && e.pointerId != null && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+      return;
+    }
     if (cardDrag) {
       finishCardDrag();
       // The card drag owned the pointer: restore the graph cursor it left stale and
@@ -6378,7 +6549,8 @@
         var touch = ((e && e.pointerType) || lastPointerType) === "touch";
         if (node.kind === "dir") {
           // Double-click is unreliable on touch, so a single tap enters the
-          // directory there; on desktop a single click stays inert.
+          // directory there; on desktop a single click stays inert. Expanding and
+          // collapsing live on the press-and-hold dial instead.
           if (touch && node.path !== graphFocus) { enterDir(node.path); fitView(); }
         } else if (node.kind === "tag") {
           toggleTag(node.label);
@@ -6448,7 +6620,7 @@
 
   function showTip(n, x, y) {
     if (!n) { hideTip(); return; }
-    var kind = n.kind === "dir" ? "Directory" : n.kind === "index" ? "Index file" : (n.type || "Concept");
+    var kind = n.kind === "concept" ? (n.type || "Concept") : kindLabel(n);
     var html = '<div class="t">' + esc(displayLabel(n)) + "</div>";
     html += '<div class="meta">' + esc(kind) + (n.path ? " · <code>" + esc(n.path) + "</code>" : "") + "</div>";
     if (n.description) html += '<div class="desc">' + esc(n.description) + "</div>";
@@ -6456,6 +6628,7 @@
     var out = 0, inc = 0;
     links.forEach(function (l) { if (l.kind === "ref" && l.source === n) out++; if (l.kind === "ref" && l.target === n) inc++; });
     if (n.kind === "concept") html += '<div class="meta" style="margin-top:4px">' + inc + " incoming · " + out + " outgoing links</div>";
+    if (nodeCollapsed(n)) html += '<div class="meta" style="margin-top:4px">' + nodeShown(n) + " of " + pageableKids(n).length + " shown · press and hold for modes</div>";
     tip.innerHTML = html;
     tip.style.display = "block";
     positionTip(x, y);
@@ -7544,6 +7717,8 @@
   var RUNTIME_PAGES = [
     { id: "index.md", title: "Runtime",
       description: "Generated pages that describe the running viewer." },
+    { id: "errors.md", title: "Errors",
+      description: "Bundle load errors recorded in this session, cleared by a successful load." },
     { id: "status.md", title: "Runtime status",
       description: "The current load, navigation and filters." },
     { id: "bundle.md", title: "Bundle files",
@@ -7890,6 +8065,7 @@
       out += "# Runtime\n\n";
       out += "The viewer generated this directory while you read it. `.runtime/` is a " +
         "synthetic directory, not part of the bundle, and its pages describe the running app.\n\n";
+      out += "- [Errors](errors.md) \u2014 bundle load errors recorded in this session\n";
       out += "- [Status](status.md) \u2014 the current load, navigation and filters\n";
       out += "- [Bundle files](bundle.md) \u2014 every file the viewer has loaded\n";
       out += "- [Graph](graph.md) \u2014 how the graph is composed\n";
@@ -7898,6 +8074,19 @@
       out += "- [AI transparency](transparency.md) \u2014 the AI components, the transparency rules and what okfy discloses\n";
       out += "- [Assistant statistics](assistant.md) \u2014 token usage and activity of the assistant\n";
       out += "- [Agent instructions](AGENTS.md) \u2014 the instructions given to the assistant\n";
+      return out;
+    }
+    if (page === "errors.md") {
+      out += "# Errors\n\n";
+      out += "Bundle load errors recorded while this viewer has been running. Loading a bundle " +
+        "successfully clears this page.\n\n";
+      if (!loadErrors.length) {
+        out += "No errors recorded.\n";
+        return out;
+      }
+      out += rtLine("Count", loadErrors.length + "");
+      out += "\n";
+      loadErrors.forEach(function (msg) { out += "- " + msg + "\n"; });
       return out;
     }
     if (page === "transparency.md") return RT_TRANSPARENCY;
@@ -8113,6 +8302,9 @@
       dir.children.push(n);
       g.links.push({ source: dir, target: n, kind: "tree" });
     });
+    // The runtime directory is added after buildGraph, so give it its pageable children here.
+    dir.kids = runtimeNodes.slice();
+    dir.shown = dir.kids.length;
     return true;
   }
 
@@ -8129,6 +8321,31 @@
         !injectRuntimeInto({ nodes: allNodes, links: allLinks, dirs: dirNodes, files: fileMap })) return;
     enterDir(RUNTIME_DIR);
     var node = fileMap.get(RUNTIME_DIR + "/" + id);
+    if (node) openPreview(node);
+  }
+
+  // A bundle load failed: record it and show the generated .runtime/errors.md page
+  // instead of a dialog. recordLoadError only records (used for unexpected errors).
+  function recordLoadError(message) {
+    loadErrors.push(String(message == null ? "" : message));
+  }
+  function reportLoadError(message) {
+    recordLoadError(message);
+    showErrorsPage();
+  }
+  // Show the errors page. Build an empty graph if nothing is loaded yet, so the
+  // synthetic directory has somewhere to live, then open the page in the preview.
+  function showErrorsPage() {
+    if (!fileMap || !dirNodes) {
+      var kept = loadErrors.slice();   // a fresh graph clears the list; keep what we are showing
+      if (!load([], null, null)) return;
+      loadErrors = kept;
+    }
+    runtimeOn = true;
+    if (!fileMap.has(RUNTIME_DIR + "/index.md") &&
+        !injectRuntimeInto({ nodes: allNodes, links: allLinks, dirs: dirNodes, files: fileMap })) return;
+    closeAbout();
+    var node = fileMap.get(RUNTIME_DIR + "/errors.md");
     if (node) openPreview(node);
   }
 
@@ -9546,9 +9763,7 @@
 
   // ---------------------------------------------------------------- controls
   document.getElementById("open").addEventListener("click", pickFolder);
-  document.getElementById("pick").addEventListener("click", pickFolder);
   document.getElementById("reload").addEventListener("click", function () { autoLoad(true); });
-  document.getElementById("retry").addEventListener("click", function () { autoLoad(true); });
   document.getElementById("resetView").addEventListener("click", function () {
     fitView();
   });
@@ -9584,7 +9799,9 @@
   graphBackBtn.addEventListener("click", graphBack);
   graphFwdBtn.addEventListener("click", graphForward);
   graphTopBtn.addEventListener("click", graphTop);
-  searchEl.addEventListener("input", function () { query = searchEl.value.trim(); updateFilterSummary(); refreshRuntime(); });
+  // A search is a lens: it draws the whole scoped subtree, so it must rebuild the view (not
+  // just the dimming) when the query changes.
+  searchEl.addEventListener("input", function () { query = searchEl.value.trim(); updateFilterSummary(); updateView(); });
   var searchFieldEl = document.getElementById("searchField");
   searchFieldEl.addEventListener("change", function () { searchField = searchFieldEl.value; refreshRuntime(); });
 
@@ -9711,6 +9928,7 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
+    if (dialNode) { dialClose(); return; }
     if (deckMenuOpen()) { closeDeckMenu(); return; }
     if (preview.classList.contains("show")) { closePreview(true); return; }
     popovers.forEach(function (p) { if (p.isOpen()) p.close(); });
@@ -9769,11 +9987,10 @@
   bindChips("statusChips", statusInclude, statusExclude, renderStatusChips);
 
   // The "about" panel holds usage notes and the source repository link. It is
-  // revealed by the title, opens at startup (as the initial panel instead of the
-  // bundle dialog) and is dismissed by an outside click or Escape. Shown in the
-  // About panel so a deployed copy is easy to identify. Bump this whenever the
-  // file is revised. An unreleased revision uses a "-draft" suffix (for example
-  // "2-draft").
+  // revealed by the title, opens at startup and is dismissed by an outside click
+  // or Escape. The revision is shown in the About panel so a deployed copy is
+  // easy to identify; bump it whenever the file is revised. An unreleased
+  // revision uses a "-draft" suffix (for example "2-draft").
   var REVISION = "2-draft";
   var titleBtn = document.getElementById("titleBtn");
   var aboutPop = document.getElementById("aboutPop");
@@ -9934,6 +10151,9 @@
     kindPop.clear();
     typePop.clear();
     statusPop.clear();
+    // The Tags toggle hides the directory ring by excluding that kind; clearing the
+    // filters must not undo it, so re-apply it while the toggle is still on.
+    if (showTags) kindExclude.add("Directory");
     renderChips();
     renderKindChips();
     renderTypeChips();
@@ -9952,9 +10172,7 @@
     } catch (e) {
       if (request !== bundleLoadRequest) return;
       if (e && e.name === "AbortError") return; // the user dismissed the picker
-      overlay.classList.add("show");
-      overlayMsg.innerHTML = tHtml("msg.folderFailed", "Folder picker failed: {0}", { 0: e && e.message ? e.message : e });
-      closeAbout();
+      reportLoadError(t("msg.folderFailed", "Folder picker failed: {0}", { 0: e && e.message ? e.message : e }));
       return;
     }
     busyStart();
@@ -9962,13 +10180,11 @@
       var files = await fromDirectoryHandle(dir);
       if (request !== bundleLoadRequest) return;
       if (files.length) { loadLocal(files); closeAbout(); }
-      else overlayMsg.textContent = t("msg.noMdFolder", "No Markdown files found in the chosen folder.");
+      else reportLoadError(t("msg.noMdFolder", "No Markdown files found in the chosen folder."));
     } catch (e) {
       if (request !== bundleLoadRequest) return;
-      overlay.classList.add("show");
-      overlayMsg.innerHTML = tHtml("msg.readFolderFailed", "Could not read the folder: {0}", { 0: e && e.message ? e.message : e });
+      reportLoadError(t("msg.readFolderFailed", "Could not read the folder: {0}", { 0: e && e.message ? e.message : e }));
       if (window.console && console.error) console.error(e);
-      closeAbout();
     } finally {
       busyEnd();
     }
@@ -9982,13 +10198,11 @@
       var files = await fromFileList(dirInput.files);
       if (request !== bundleLoadRequest) return;
       if (files.length) { loadLocal(files); closeAbout(); }
-      else overlayMsg.textContent = t("msg.noMdFolder", "No Markdown files found in the chosen folder.");
+      else reportLoadError(t("msg.noMdFolder", "No Markdown files found in the chosen folder."));
     } catch (e) {
       if (request !== bundleLoadRequest) return;
-      overlay.classList.add("show");
-      overlayMsg.innerHTML = tHtml("msg.readFolderFailed", "Could not read the folder: {0}", { 0: e && e.message ? e.message : e });
+      reportLoadError(t("msg.readFolderFailed", "Could not read the folder: {0}", { 0: e && e.message ? e.message : e }));
       if (window.console && console.error) console.error(e);
-      closeAbout();
     } finally {
       busyEnd();
     }
@@ -9996,45 +10210,33 @@
 
   // Drag-and-drop of a folder onto the window.
   ["dragenter", "dragover"].forEach(function (t) {
-    window.addEventListener(t, function (e) {
-      e.preventDefault();
-      document.getElementById("card").classList.add("dropping");
-      overlay.classList.add("show");
-      closeAbout();
-    });
-  });
-  window.addEventListener("dragleave", function (e) {
-    if (e.relatedTarget === null) document.getElementById("card").classList.remove("dropping");
+    window.addEventListener(t, function (e) { e.preventDefault(); });
   });
   window.addEventListener("drop", async function (e) {
     e.preventDefault();
-    document.getElementById("card").classList.remove("dropping");
     var request = ++bundleLoadRequest;
     busyStart();
     try {
       var files = await fromDataTransfer(e.dataTransfer);
       if (request !== bundleLoadRequest) return;
       if (files.length) { loadLocal(files); closeAbout(); }
-      else overlayMsg.textContent = t("msg.noMdDropped", "No Markdown files found in the dropped folder.");
+      else reportLoadError(t("msg.noMdDropped", "No Markdown files found in the dropped folder."));
     } catch (err) {
       if (request !== bundleLoadRequest) return;
-      overlayMsg.innerHTML = tHtml("msg.readDroppedFailed", "Could not read the dropped folder: {0}", { 0: err.message });
+      reportLoadError(t("msg.readDroppedFailed", "Could not read the dropped folder: {0}", { 0: err.message }));
     } finally {
       busyEnd();
     }
   });
   window.addEventListener("dragover", function (e) { e.preventDefault(); });
 
-  // Surface unexpected errors instead of leaving the page apparently stuck.
+  // Record unexpected errors so they are available on the .runtime/errors.md page,
+  // without interrupting the reader (bundle load failures show that page directly).
   window.addEventListener("error", function (e) {
-    if (overlay && overlay.classList.contains("show") && e && e.message) {
-      overlayMsg.textContent = e.message;
-    }
+    if (e && e.message) recordLoadError(e.message);
   });
   window.addEventListener("unhandledrejection", function (e) {
-    if (overlay && overlay.classList.contains("show")) {
-      overlayMsg.textContent = (e && e.reason && e.reason.message) || t("msg.unexpected", "Unexpected error");
-    }
+    recordLoadError((e && e.reason && e.reason.message) || t("msg.unexpected", "Unexpected error"));
   });
 
   // ---------------------------------------------------------------- load
@@ -10049,8 +10251,7 @@
         accountBundleFile(nextBudget, file);
       });
     } catch (e) {
-      overlay.classList.add("show");
-      overlayMsg.textContent = e.message;
+      reportLoadError(e.message);
       return false;
     }
     var prev = null;
@@ -10061,7 +10262,7 @@
     try {
       var graph = buildGraph(files, known);
       if (runtimeOn) injectRuntimeInto(graph);
-      if (!preserve) { bundleGeneration++; resetBundleResources(); legendFilter.clear(); }
+      if (!preserve) { bundleGeneration++; resetBundleResources(); legendFilter.clear(); loadErrors.length = 0; expandState.clear(); }
       bundleBudget = nextBudget;
       bundleFiles = files;
       bundleRootUrl = rootUrl || null;
@@ -10099,13 +10300,16 @@
         relayout(true);
         autoFit = false;   // keep the user's view; do not re-frame
       } else {
+        // A single-shot load — a locally opened folder — is not followed by a progress rebuild,
+        // so apply the focus and the expansion page here; a served bundle also applies it on each
+        // progressive (preserve) load. Without this, every node would be drawn.
+        applyFocus();
         measureDepths();
         recomputeRadii();
         initialLayout();
         fitView();
         autoFit = true;   // keep it framed while the layout settles
         alpha = 1;
-        hideOverlay();
       }
       computeAllTags();
       updateStats();
@@ -10113,8 +10317,7 @@
       refreshRuntime();
       if (!raf) loop();
     } catch (e) {
-      overlay.classList.add("show");
-      overlayMsg.innerHTML = tHtml("msg.buildFailed", "Could not build the graph: {0}", { 0: e && e.message ? e.message : e });
+      reportLoadError(t("msg.buildFailed", "Could not build the graph: {0}", { 0: e && e.message ? e.message : e }));
       if (window.console && console.error) console.error(e);
       return false;
     }
@@ -10221,7 +10424,7 @@
     var candidate = bundleFiles, charged = false;
     if (!bundleFiles.some(function (f) { return f.path === path; })) {
       try { charged = accountBundleFile(bundleBudget, file); candidate = bundleFiles.concat([file]); }
-      catch (e) { overlayMsg.textContent = e.message; overlay.classList.add("show"); return false; }
+      catch (e) { reportLoadError(e.message); return false; }
     }
     if (!load(candidate, bundleRootUrl, bundleKnown, true)) {
       if (charged) releaseBundleFile(bundleBudget, file);
@@ -10273,7 +10476,7 @@
     var candidate = bundleFiles;
     if (!inFiles) {
       try { accountBundleFile(bundleBudget, file); }
-      catch (e) { overlayMsg.textContent = e.message; overlay.classList.add("show"); return false; }
+      catch (e) { reportLoadError(e.message); return false; }
       candidate = bundleFiles.concat([file]);
     }
     if (!load(candidate, bundleRootUrl, bundleKnown, true)) {
@@ -10323,7 +10526,7 @@
     }
     var completed = await Promise.allSettled(Array.from({ length: Math.min(MAX_CONCURRENT_FETCHES, pending.length) }, worker));
     var failed = completed.find(function (result) { return result.status === "rejected"; });
-    if (failed && generation === bundleGeneration) { overlayMsg.textContent = failed.reason.message; overlay.classList.add("show"); }
+    if (failed && generation === bundleGeneration) { reportLoadError(failed.reason.message); }
     if (generation !== bundleGeneration) return false;
     var candidate = bundleFiles.slice(), have = new Set(candidate.map(function (file) { return file.path; }));
     results.forEach(function (file) { if (!have.has(file.path)) { have.add(file.path); candidate.push(file); } });
@@ -10377,10 +10580,9 @@
   async function autoLoad(force) {
     var proto = location.protocol;
     if (proto !== "http:" && proto !== "https:") {
-      if (force) { overlayMsg.textContent = t("msg.needsServer", "Auto-load needs a web server; open the folder instead."); overlay.classList.add("show"); closeAbout(); }
+      if (force) reportLoadError(t("msg.needsServer", "Auto-load needs a web server; open the folder instead."));
       return false;
     }
-    overlayMsg.textContent = t("msg.loading", "Loading bundle\u2026");
     var depth = urlDepth();
     var request = ++bundleLoadRequest;
     // Render the graph and decks while the crawl runs, so nodes and declared
@@ -10413,20 +10615,13 @@
         }
         return ok;
       }
-      overlayMsg.textContent = t("msg.nothingToLoad", "Nothing to load: add index.md, or pass ?start=file.md.");
-      // A forced reload is an error worth showing; the plain startup state keeps
-      // the About panel and leaves the bundle dialog hidden.
-      if (force) { overlay.classList.add("show"); closeAbout(); }
+      reportLoadError(t("msg.nothingToLoad", "Nothing to load: add index.md, or pass ?start=file.md."));
     } catch (e) {
       if (request !== bundleLoadRequest) return false;
-      overlayMsg.innerHTML = tHtml("msg.autoLoadFailed", "Auto-load failed: {0}", { 0: e.message });
-      overlay.classList.add("show");
-      closeAbout();
+      reportLoadError(t("msg.autoLoadFailed", "Auto-load failed: {0}", { 0: e.message }));
     }
     return false;
   }
-
-  function hideOverlay() { overlay.classList.remove("show"); }
 
   // ---------------------------------------------------------------- resize
   function resize() {
@@ -10451,7 +10646,7 @@
   });
 
   // ---------------------------------------------------------------- mascot
-  // The stick figure shown in the About panel and the bundle dialog starts in a
+  // The stick figure shown in the About panel starts in a
   // fixed pose (joints are circles, links are one path). It alternates on a
   // timer: it holds the pose, then releases it and lets the physics run (the
   // same kind of force-directed relaxation the graph uses), and then forcibly
@@ -10482,8 +10677,6 @@
   // an inline <svg> root in some engines, so test the hosting panel directly.
   function mascotShown(m) {
     if (!m.svg.closest) return true;
-    var overlay = m.svg.closest("#overlay");
-    if (overlay) return overlay.classList.contains("show");
     var pop = m.svg.closest("#aboutPop");
     if (pop) return !pop.hidden;
     return true;
@@ -10663,13 +10856,6 @@
     if (reduceMotion) return;
     collectMascots();
     mascotPlay();
-    // Restart the cycle whenever the bundle dialog is shown again, so it uses
-    // the same animation as the About panel.
-    if (window.MutationObserver && overlay) {
-      new MutationObserver(function () {
-        if (overlay.classList.contains("show")) mascotPlay();
-      }).observe(overlay, { attributes: true, attributeFilter: ["class"] });
-    }
   }
 
   // ---------------------------------------------------------------- deck
@@ -10678,7 +10864,7 @@
   // guide added as a sub-deck. Cards show a lazy, scaled mini-view of their
   // page. Build a deck by press-holding a graph node and dropping the card on
   // the right edge, or with "Add to deck" in the preview.
-  var PRESS_HOLD_MS = 400, PRESS_MOVE_TOL = 6, HOVER_REPEL = 6;
+  var PRESS_HOLD_MS = 600, PRESS_MOVE_TOL = 6, HOVER_REPEL = 6;
   // Several decks can exist; the panel shows the active one. `deck` always aliases the
   // active deck's items, so the card code below works on it directly. At most MAX_DECKS
   // decks can be created.
@@ -11470,13 +11656,17 @@
 
   // ---- press-hold a node to start a card drag ----
   function startNodePress(n, x, y) {
-    if (!cardable(n)) return;
+    if (!cardable(n) && !expandableNode(n)) return;
     cancelNodePress();
     pressNode = n; pressStart = { x: x, y: y };
     pressTimer = setTimeout(function () {
       pressTimer = null;
       var node = pressNode; pressNode = null;
-      if (node) beginCardDrag(node, pressStart.x, pressStart.y);
+      if (!node) return;
+      if (cardable(node)) { beginCardDrag(node, pressStart.x, pressStart.y); return; }
+      // A directory or tag hub opens the expansion dial; the release must not also click it.
+      dragNode = null;
+      openDial(node);
     }, PRESS_HOLD_MS);
   }
   function cancelNodePress() {
@@ -11487,6 +11677,141 @@
     if (!pressTimer || !pressStart) return;
     var dx = x - pressStart.x, dy = y - pressStart.y;
     if (dx * dx + dy * dy > PRESS_MOVE_TOL * PRESS_MOVE_TOL) cancelNodePress();
+  }
+
+  // ---- the expansion dial ----
+  // Pressing and holding a directory or tag hub opens a dial of four expansion modes
+  // around it. The modes are pictograms drawn from the graph's own vocabulary (a solid
+  // node is shown, a dashed ring is held back, an arrowhead is a neighbour appearing), so
+  // the dial carries no text and needs no translation. Drag to a sector and release to
+  // apply it; release in the hub, or press Escape, to cancel and change nothing.
+  var DIAL_MODES = ["all", "recursive", "collapsed", "more"];   // by sector: top, right, bottom, left
+  var DIAL_SECTOR_DEG = [-90, 0, 90, 180];
+  var DIAL_HUB_R = 40, DIAL_RING_R = 132, DIAL_SPAN_DEG = 39;
+  // The dial is drawn smaller than its viewBox: half size on a desktop, three-quarters on a
+  // small screen, where it is also a touch target. The scale drives the hit test and the
+  // clamp too, so the sectors stay where they are drawn.
+  function dialScale() {
+    try { return window.matchMedia("(max-width: 760px)").matches ? 0.75 : 0.5; }
+    catch (e) { return 0.5; }
+  }
+  var dialK = 0.5;
+  var dialEl = document.getElementById("dial");
+  var dialLead = document.getElementById("dialLead");
+  var dialPaths = Array.prototype.slice.call(dialEl.querySelectorAll("#dialSectors .ds"));
+  var dialIcons = Array.prototype.slice.call(dialEl.querySelectorAll("#dialIcons .ico"));
+  var dialNode = null, dialChoice = null, dialAvail = null, dialPin = null;
+  var dialCenter = { x: 0, y: 0 };
+
+  // True when the node itself, or any directory below it, passes `test`.
+  function anyDir(n, test) {
+    if (test(n)) return true;
+    for (var i = 0; i < n.children.length; i++) {
+      var c = n.children[i];
+      if ((c.kind === "dir" || c.kind === "tag") && anyDir(c, test)) return true;
+    }
+    return false;
+  }
+  // A mode is offered when there is something for it to do.
+  function dialAvailability(n) {
+    var room = nodeShown(n) < pageableKids(n).length;
+    return {
+      more: room,
+      all: room,
+      recursive: anyDir(n, function (d) { return nodeShown(d) < pageableKids(d).length; }),
+      collapsed: anyDir(n, function (d) { return nodeShown(d) > 0; })
+    };
+  }
+  // The sector a screen point falls in, by angle around the dial; inside the hub is none.
+  function dialSectorAt(dx, dy) {
+    if (Math.sqrt(dx * dx + dy * dy) < DIAL_HUB_R) return null;
+    var a = Math.atan2(dy, dx) * 180 / Math.PI, best = 0, bestD = 1e9;
+    for (var i = 0; i < DIAL_SECTOR_DEG.length; i++) {
+      var d = Math.abs(((a - DIAL_SECTOR_DEG[i] + 540) % 360) - 180);
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    return bestD <= DIAL_SPAN_DEG ? best : null;
+  }
+
+  function openDial(n) {
+    dialNode = n;
+    dialAvail = dialAvailability(n);
+    dialChoice = null;
+    dialK = dialScale();
+    dialEl.style.setProperty("--dial-scale", String(dialK));
+    // Hold the node still while the dial is up, so the dial stays over it.
+    dialPin = { fx: n.fx, fy: n.fy };
+    n.fx = n.x; n.fy = n.y;
+    dialPlace();
+    dialEl.hidden = false;
+    dialRender();
+    hover = n; hideTip();
+    canvas.style.cursor = "default";
+  }
+  function dialPlace() {
+    var x = sx(dialNode.x), y = sy(dialNode.y);
+    // Keep the whole dial on screen; the lead line ties it back to the node. The lead is in
+    // the dial's own units, so both ends are divided by the scale.
+    var r = DIAL_RING_R * dialK;
+    dialCenter.x = clamp(x, r + 4, Math.max(r + 4, W - r - 4));
+    dialCenter.y = clamp(y, r + 4, Math.max(r + 4, H - r - 4));
+    dialEl.style.transform = "translate(" + Math.round(dialCenter.x) + "px," + Math.round(dialCenter.y) + "px) translate(-50%,-50%)";
+    dialLead.setAttribute("x2", ((x - dialCenter.x) / dialK).toFixed(1));
+    dialLead.setAttribute("y2", ((y - dialCenter.y) / dialK).toFixed(1));
+  }
+  function dialRender() {
+    for (var i = 0; i < DIAL_MODES.length; i++) {
+      var ok = !!dialAvail[DIAL_MODES[i]];
+      var hi = dialChoice === i && ok;
+      dialPaths[i].classList.toggle("off", !ok);
+      dialPaths[i].classList.toggle("hi", hi);
+      dialIcons[i].classList.toggle("off", !ok);
+      dialIcons[i].classList.toggle("hi", hi);
+    }
+  }
+  function dialMove(x, y) {
+    if (!dialNode) return;
+    var i = dialSectorAt((x - dialCenter.x) / dialK, (y - dialCenter.y) / dialK);
+    if (i != null && !dialAvail[DIAL_MODES[i]]) i = null;   // a mode that does not apply cannot be chosen
+    if (i === dialChoice) return;
+    dialChoice = i;
+    dialRender();
+  }
+  function dialClose() {
+    if (dialNode && dialPin) { dialNode.fx = dialPin.fx; dialNode.fy = dialPin.fy; }
+    dialNode = null; dialChoice = null; dialAvail = null; dialPin = null;
+    dialEl.hidden = true;
+    hover = null;
+    canvas.style.cursor = "grab";
+  }
+  // Apply the chosen mode. Returns true when something changed.
+  function dialRelease() {
+    var node = dialNode, mode = dialChoice == null ? null : DIAL_MODES[dialChoice];
+    dialClose();
+    if (!node || !mode) return false;
+    dialApply(node, mode);
+    return true;
+  }
+  function dialApply(n, mode) {
+    if (mode === "more") { setNodePage(n, EXPAND_PAGE); return; }
+    if (mode === "all") { setNodePage(n, Infinity); return; }
+    // Recursive: open, or hold back, the whole subtree of directories below the node.
+    var changed = false;
+    (function walk(d) {
+      var before = nodeShown(d);
+      var next = mode === "recursive" ? pageableKids(d).length : 0;
+      if (before !== next) {
+        d.shown = next;
+        expandState.set(d.id, next);
+        changed = true;
+        if (next > before) seedNewPositions(d);
+      }
+      for (var i = 0; i < d.children.length; i++) {
+        var c = d.children[i];
+        if (c.kind === "dir" || c.kind === "tag") walk(c);
+      }
+    })(n);
+    if (changed) updateView();
   }
 
   function beginCardDrag(node, x, y) {
@@ -16888,8 +17213,8 @@
       history.replaceState(history.state, "", langUrl.href);
     }
   } catch (e) {}
-  // Start on the About panel instead of the bundle dialog. It stays until the
-  // user interacts with the interface, while auto-loading runs underneath.
+  // Start on the About panel. It stays until the user interacts with the
+  // interface, while auto-loading runs underneath.
   openAbout();
   autoLoad(false);
 })();

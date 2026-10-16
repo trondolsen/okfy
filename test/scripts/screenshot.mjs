@@ -33,11 +33,6 @@ try {
   });
 
   if (new URL(url).pathname.endsWith('/okfy.html')) {
-    await page.waitForFunction(
-      () => !document.querySelector('#overlay').classList.contains('show'),
-      undefined,
-      { timeout: 30_000 }
-    );
     await page.locator('#spinner').waitFor({ state: 'hidden', timeout: 30_000 });
     // The viewer opens on the About panel; dismiss it so it does not cover the graph.
     await page.keyboard.press('Escape');

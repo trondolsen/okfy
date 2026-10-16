@@ -22,15 +22,16 @@ The tool enforces these caps while loading and rendering a bundle:[^review]
 | Area | Limit |
 | --- | --- |
 | Text file | 512 KiB before full buffering; a non-Markdown text file in a local folder is listed even when larger, and opening it reads a bounded prefix |
-| Bundle | 2 000 files and 32 MiB of text bytes |
-| Directory listing / graph node | 8 000 |
+| Bundle | 8 000 files and 128 MiB of text bytes |
+| Directory listing / graph node | 32 000 |
 | Local directory depth | 12; deeper trees are rejected |
 | Stored file path | 2 048 characters and 24 path segments |
-| Graph links | 20 000 |
+| Graph links | 80 000 |
+| Node fan-out (expansion) | on load a directory draws all of its child directories and index files and up to 50 concepts; one page of 8 neighbours per *Expand more*; a tag hub over 16 neighbours starts as a first page |
 | References from a Markdown body | 256 per file; frontmatter `sources` has its own limit of 256 |
 | Tags | 64 per file, at most 256 characters and 16 namespace segments per tag |
 | HTTP | 4 concurrent requests through body reading; at most 64 pending; 30-second timeout after a slot is granted |
-| Crawling / new expansion attempts | at most 2 000 URLs per crawl and 2 000 expansion attempts per bundle |
+| Crawling / new expansion attempts | at most 8 000 URLs per crawl and 8 000 expansion attempts per bundle |
 | Markdown preview | 512 Ki characters in, 2 Mi characters of HTML out, nesting 24 and bounded search work |
 | Images | 8 MiB per image, 16 MiB cache including reservations, 64 images per preview |
 | Media (audio and video) | 256 MiB per **served** clip, read once and bounded, and never streamed from the network; a served clip over the 32 MiB **decode** bound is played from a blob of its own bytes rather than decoded. A **local** clip streams from an object URL on demand and is not size-limited |

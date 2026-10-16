@@ -37,6 +37,10 @@ When two concepts link to each other, the pair is drawn as a single **bidirectio
 
 An unresolved reference to an attachment or a non-Markdown file appears as a **placeholder** node with no content (drawn with a dashed ring); the tool loads it only when the user asks.
 
+# Expansion
+
+A directory or tag hub draws only a **page** of its neighbours at first: it keeps an ordered neighbour list (directories, index files, concepts, then files and attachments) and a count of how many are drawn. On load a directory draws **all of its child directories and index files and up to 50 concepts**, so its files and attachments stay held back and the directory skeleton and its pages show to every depth; a directory that holds only files therefore starts collapsed, drawn as a hollow directory node of its own. A tag hub opens fully unless it has more than 16 neighbours, when it starts as a first page, and the bundle root always opens fully. A node with neighbours still held back is **filled** and carries a **dashed ring**; a collapsed node (none drawn yet) is drawn **hollow**. A **press-and-hold** opens an expansion **dial** of four modes — Expand all, Recursive expand all, Collapsed and Expand more — drawn as graph pictograms, and the reader drags to one and releases to apply it; a plain click keeps the node's own action. The page survives a rebuild and resets when a new bundle is loaded. A **search** or an **attribute filter** is a lens: while one is active the whole focused subtree is drawn, so a match inside a directory that has not been expanded is still shown, and the toolbar's file and link totals count that scoped subtree rather than the page. See [Explore the graph](../guides/explore-the-graph.md).
+
 # Node attributes
 
 Every node carries `id` and `path`, `kind`, `label`, `type`, `title`, `description`, `tags`, `status`, layout coordinates and a `degree`, the number of connected links. The tool also keeps each concept's raw frontmatter and body for the preview.

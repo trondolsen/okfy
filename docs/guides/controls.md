@@ -26,6 +26,8 @@ sources:
 | Drag a node | Move it; the layout takes it back when you let go. |
 | Scroll wheel | Zoom around the pointer. |
 | Press and hold a concept, then drag | Start a deck card and drop it on the deck. |
+| Press and hold a directory or tag | Open the expansion dial; drag to a mode and release to apply it. |
+| Release in the dial's hub | Cancel the dial without changing anything. |
 | Side buttons (back / forward) | Step the preview back or forward. |
 
 # Touch
@@ -38,12 +40,13 @@ sources:
 | Drag | Pan. |
 | Pinch | Zoom. |
 | Press and hold a concept, then drag | Start a deck card. |
+| Press and hold a directory or tag | Open the expansion dial; drag to a mode and release to apply it. |
 
 # Keyboard
 
 | Key | Result |
 | --- | --- |
-| `Escape` | Close, in order: the deck menu, the preview, the About panel, then any open filter list. |
+| `Escape` | Close, in order: the expansion dial, the deck menu, the preview, the About panel, then any open filter list. |
 | `Alt`+`←` / `Alt`+`→` | Step the preview back or forward. |
 | `Enter` / `Space` | Activate the focused legend row. |
 
@@ -58,14 +61,16 @@ There are no other global shortcuts.[^source]
 | **Reset view** | Fit the whole graph in view. |
 | **Reset layout** | Run the layout again from a fresh arrangement. |
 | **Labels** | Show or hide node labels (on by default). |
-| **Tags** | Show or hide tag hubs. |
+| **Tags** | Show the tag hubs and hide the directory ring, or hide them again. |
 | **Top** / **‹** / **›** | Directory navigation, with the current path beside them. |
 | **okfy ▾** | Open the About panel. |
 
 # Panels
 
 - **Filters** dock right: the search box, the Kinds, Types, Tags and Status
-  filters, and **Clear filters**. Open or close it with the **Filters** tab.
+  filters, and **Clear filters**. Open or close it with the **Filters** tab. A
+  search or an attribute filter draws the whole subtree, so a match inside a
+  directory that has not been expanded yet is still shown.
 - **Legend** docks left: the list of groups with their colours and counts; click
   a row to filter the graph to that group.
 - **About** opens from the **okfy ▾** title as the startup panel. It holds a

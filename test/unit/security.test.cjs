@@ -86,19 +86,22 @@ function harness(t, overrides = {}) {
     },
     clearTimeout(timer) { clearTimeout(timer); timers.delete(timer); },
     fetch: async () => { throw new Error('Unexpected network request in test'); },
-    spinnerEl: element(), fetchCountEl: element(), overlay: element(), overlayMsg: element(),
+    spinnerEl: element(), fetchCountEl: element(),
     preview: element(), pvBody: element(), previewPath: null,
     pvStack: [], pvIndex: -1, pvSuppress: false, pvPushed: false,
     raf: 1, resize: noop, measureDepths: noop, recomputeRadii: noop,
     initialLayout: noop, fitView: noop, applyFocus: noop, relayout: noop,
     computeAllTags: noop, updateStats: noop, updateGraphNav: noop, loop: noop,
-    hideOverlay: noop, hidePreview: noop, buildLegend: noop,
+    hidePreview: noop, buildLegend: noop,
     renderChips: noop, renderKindChips: noop, renderTypeChips: noop, renderStatusChips: noop,
     tagPop: { render: noop }, kindPop: { render: noop },
     typePop: { render: noop }, statusPop: { render: noop },
     openPreview: node => opened.push(node), renderPreviewEntry: noop
   });
   helperScript.runInContext(context, { timeout: 1000 });
+  // The production load helpers report a failed load through reportLoadError, which records it
+  // for the generated .runtime/errors.md page; record into loadErrors so the tests can inspect it.
+  context.reportLoadError = message => { context.loadErrors.push(String(message == null ? '' : message)); };
   Object.assign(context, overrides);
   t.after(() => { for (const timer of timers) clearTimeout(timer); });
   return { api: context, createdUrls, revokedUrls, opened, errors, timers };
@@ -216,8 +219,7 @@ function assertGraphUnchanged(api, snapshot) {
 }
 
 function assertGraphLimitDiagnostic(api, errors) {
-  assert.equal(api.overlay.classList.contains('show'), true);
-  assert.match(api.overlayMsg.textContent, /graph.*too many (?:nodes|links)/i);
+  assert.ok(api.loadErrors.some(message => /graph.*too many (?:nodes|links)/i.test(message)));
   assert.ok(errors.some(args => /too many (?:nodes|links)/i.test(String(args[0] && args[0].message))));
 }
 
@@ -988,7 +990,7 @@ test('pre-accounted local attachments materialize once and retain their native B
   let calls = 0;
   api.fetch = async () => { calls++; throw new Error('Local materialization must not fetch'); };
   api.loadLocal([index, attachment]);
-  assert.equal(api.overlayMsg.textContent, '');
+  assert.equal(api.loadErrors.length, 0);
   assert.equal(errors.length, 0);
   assert.ok(!api.bundleFiles.some(file => file.path === attachment.path));
   const placeholder = api.allNodes.find(node => node.kind === 'attachment' && node.loaded === false);
@@ -1014,7 +1016,7 @@ test('depth-limited local expansion reveals already-accounted files without fetc
   assert.equal(await api.expandNode(api.fileMap.get('index.md')), true);
   assert.ok(api.fileMap.has('nested/next.md'));
   assert.equal(api.bundleBudget.bytes, before);
-  assert.equal(api.overlayMsg.textContent, '');
+  assert.equal(api.loadErrors.length, 0);
   assert.equal(errors.length, 0);
 });
 

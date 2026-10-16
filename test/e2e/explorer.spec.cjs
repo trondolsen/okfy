@@ -63,7 +63,6 @@ async function loadBundle(page, depth = 'all', options = {}) {
     await page.addInitScript(() => { try { localStorage.setItem('okfy.assistant.ack', '1'); } catch (e) {} });
   }
   await page.goto(`${explorer}?depth=${depth}`);
-  await expect(page.locator('#overlay')).not.toHaveClass(/\bshow\b/);
   await expect(page.locator('#spinner')).toBeHidden();
   await expect(page.locator('#stats')).toContainText('files');
   // The viewer opens on the About panel and keeps it until the user interacts;
@@ -107,6 +106,27 @@ async function clickNode(page, label, doubleClick = false) {
   expect(y).toBeLessThan(page.viewportSize().height);
   if (doubleClick) await page.mouse.dblclick(x, y);
   else await page.mouse.click(x, y);
+}
+
+// Press and hold a node until the expansion dial opens, leaving the pointer down. Returns the
+// canvas box and the node's drawn point, so a dial sector can be reached by offset from it.
+async function pressHoldNode(page, label) {
+  await page.clock.runFor(2000);   // let the layout settle so the node is where it is read
+  const point = await page.evaluate(l => window.graphLabels[l], label);
+  expect(point, `Fant ikke den tegnede noden «${label}»`).toBeTruthy();
+  const canvas = await page.locator('#c').boundingBox();
+  await page.mouse.move(canvas.x + point.x, canvas.y + point.y);
+  await page.mouse.down();
+  await page.clock.runFor(800);    // the press-hold fires and the dial opens
+  return { canvas, point };
+}
+
+// Move the held pointer to a dial sector and release. Offsets are screen pixels from the node:
+// the dial is drawn around the node at 1:1, with the sectors at -90, 0, 90 and 180 degrees.
+async function dialReleaseAt(page, at, dx, dy) {
+  await page.mouse.move(at.canvas.x + at.point.x + dx, at.canvas.y + at.point.y + dy);
+  await page.mouse.up();
+  await page.clock.runFor(300);
 }
 
 test('assistenten er på som standard og gjør ingen ekstern forespørsel før et spørsmål', async ({ page }) => {
@@ -618,7 +638,6 @@ test('assistenten anbefaler grensesnittspråket når modellen ikke lister det', 
     };
   });
   await page.goto(`${explorer}?depth=all`);
-  await expect(page.locator('#overlay')).not.toHaveClass(/\bshow\b/);
   await expect(page.locator('#spinner')).toBeHidden();
   await page.keyboard.press('Escape');
   await expect(page.locator('#aboutPop')).toBeHidden();
@@ -1540,6 +1559,23 @@ test('slår etiketter og emneknaggnoder av og på', async ({ page }) => {
   await expect(page.locator('#stats')).toHaveText('3 files · 3 links');
 });
 
+test('Clear filters holder katalogringen skjult mens Tags er på', async ({ page }) => {
+  await loadBundle(page);
+  await setFilters(page, true);   // the filter panel starts collapsed
+  // Tags on shows the tag hubs and hides the directory ring.
+  await page.locator('#tags').click();
+  await expect(page.locator('#tags')).toHaveAttribute('aria-pressed', 'true');
+  expect(await renderedLabels(page)).toHaveProperty('#testing/ui');
+  expect(await renderedLabels(page)).not.toHaveProperty('nested/');
+  await expect(page.locator('#kindChips .chip')).toHaveCount(1);
+  // Clearing the filters must not bring the directories back while Tags stays on.
+  await page.locator('#clearFilters').click();
+  await expect(page.locator('#tags')).toHaveAttribute('aria-pressed', 'true');
+  expect(await renderedLabels(page)).toHaveProperty('#testing/ui');
+  expect(await renderedLabels(page)).not.toHaveProperty('nested/');
+  await expect(page.locator('#kindChips .chip')).toHaveCount(1);
+});
+
 test('forhåndsviser Markdown og navigerer tilbake og frem', async ({ page }) => {
   await loadBundle(page);
   await clickNode(page, 'Veiledning');
@@ -1591,6 +1627,143 @@ test('fester ikke noden etter et drag, men slipper den tilbake til layouten', as
   expect(Math.hypot(after.x - drop.x, after.y - drop.y), 'Noden skal ikke bli stående fast der den ble sluppet').toBeGreaterThan(3);
 });
 
+test('langt trykk på en mappe åpner utvidelseshjulet, og et klikk utvider ikke', async ({ page }) => {
+  await page.goto(`${fixtureExplorer('folders')}?depth=all`);
+  await expect(page.locator('#spinner')).toBeHidden();
+  await expect(page.locator('#stats')).toContainText('files');
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(1500);
+  // assets/ holds a sub-directory and a file and no Markdown of its own, so on load it is
+  // partially expanded: only the sub-directory is drawn, and the file is held back.
+  let labels = await renderedLabels(page);
+  expect(labels['assets/']).toBeTruthy();
+  expect(labels['docs/']).toBeTruthy();
+  expect(labels['logo.svg']).toBeFalsy();
+
+  // A plain click no longer pages: the file stays held back.
+  await clickNode(page, 'assets/');
+  labels = await renderedLabels(page);
+  expect(labels['logo.svg']).toBeFalsy();
+
+  // A long press opens the dial around the node; drawing the pointer to the top sector
+  // (Expand all) releases on it and the file appears.
+  let at = await pressHoldNode(page, 'assets/');
+  await expect(page.locator('#dial')).toBeVisible();
+  await expect(page.locator('#dialSectors .ds')).toHaveCount(4);
+  // Half size on a desktop; the small-screen size is checked below.
+  expect(Number(await page.evaluate(() => document.getElementById('dial').style.getPropertyValue('--dial-scale')))).toBe(0.5);
+  await page.mouse.move(at.canvas.x + at.point.x, at.canvas.y + at.point.y - 85);
+  await expect(page.locator('#dialSectors .ds').nth(0)).toHaveClass(/\bhi\b/);
+  await dialReleaseAt(page, at, 0, -85);
+  await expect(page.locator('#dial')).toBeHidden();
+  labels = await renderedLabels(page);
+  expect(labels['logo.svg']).toBeTruthy();
+
+  // Everything is shown now, so Expand all is faded and cannot be chosen: it never lights up.
+  at = await pressHoldNode(page, 'assets/');
+  await page.mouse.move(at.canvas.x + at.point.x, at.canvas.y + at.point.y - 85);
+  await expect(page.locator('#dialSectors .ds').nth(0)).toHaveClass(/\boff\b/);
+  await expect(page.locator('#dialSectors .ds').nth(0)).not.toHaveClass(/\bhi\b/);
+  await page.mouse.up();
+  await page.clock.runFor(300);
+  labels = await renderedLabels(page);
+  expect(labels['logo.svg']).toBeTruthy();
+
+  // The bottom sector (Collapsed) holds the neighbours back again.
+  at = await pressHoldNode(page, 'assets/');
+  await page.mouse.move(at.canvas.x + at.point.x, at.canvas.y + at.point.y + 85);
+  await expect(page.locator('#dialSectors .ds').nth(2)).toHaveClass(/\bhi\b/);
+  await dialReleaseAt(page, at, 0, 85);
+  labels = await renderedLabels(page);
+  expect(labels['logo.svg']).toBeFalsy();
+
+  // The right sector (Recursive expand all) opens the subtree below, so the inner
+  // directory's page appears as well as the file.
+  at = await pressHoldNode(page, 'assets/');
+  await dialReleaseAt(page, at, 85, 0);
+  labels = await renderedLabels(page);
+  expect(labels['logo.svg']).toBeTruthy();
+  expect(labels['Guide']).toBeTruthy();
+});
+
+// The dial is drawn three-quarters size on a small screen rather than half, where it also has
+// to stay a touch target; the sectors are still reachable there.
+test('utvidelseshjulet tegnes større på små skjermer', async ({ page }) => {
+  await page.setViewportSize({ width: 700, height: 800 });
+  await page.goto(`${fixtureExplorer('folders')}?depth=all`);
+  await expect(page.locator('#spinner')).toBeHidden();
+  await expect(page.locator('#stats')).toContainText('files');
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(1500);
+  const at = await pressHoldNode(page, 'assets/');
+  await expect(page.locator('#dial')).toBeVisible();
+  expect(Number(await page.evaluate(() => document.getElementById('dial').style.getPropertyValue('--dial-scale')))).toBe(0.75);
+  // A sector is still chosen at the smaller radius: the top one reveals the file.
+  await page.mouse.move(at.canvas.x + at.point.x, at.canvas.y + at.point.y - 45);
+  await expect(page.locator('#dialSectors .ds').nth(0)).toHaveClass(/\bhi\b/);
+  await dialReleaseAt(page, at, 0, -45);
+  const labels = await renderedLabels(page);
+  expect(labels['logo.svg']).toBeTruthy();
+});
+
+// A locally opened folder is a single-shot load, unlike a served bundle whose progressive
+// crawl rebuilds the graph. It must apply the expansion page too, or every node is drawn.
+test('en lokalt åpnet mappe tegner bare katalogskelettet ved oppstart', async ({ page }) => {
+  await loadBundle(page);
+  await page.evaluate(() => {
+    // A folder whose tmp/ holds only files: no Markdown of its own, so it is its own
+    // collapsed directory node, and its files must be held back.
+    const tree = [
+      ['okfy/index.md', '---\nokf_version: "0.2"\n---\n\n# T\n\n- [A](docs/a.md)\n'],
+      ['okfy/docs/a.md', '---\ntype: Guide\ntitle: A\n---\n\n# A\n'],
+      ['okfy/tmp/one.html', '<p>one</p>\n'],
+      ['okfy/tmp/sub/notes.txt', 'notes\n'],
+    ];
+    const dt = new DataTransfer();
+    for (const [path, text] of tree) {
+      const f = new File([text], path.split('/').pop(), { type: 'text/plain' });
+      Object.defineProperty(f, 'webkitRelativePath', { value: path });
+      dt.items.add(f);
+    }
+    window.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+  });
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(1500);
+  const labels = await renderedLabels(page);
+  // The directory skeleton, including a folder that holds only files, is drawn, and so is a
+  // directory's concept...
+  expect(labels['docs/']).toBeTruthy();
+  expect(labels['tmp/']).toBeTruthy();
+  expect(labels['sub/']).toBeTruthy();
+  expect(labels['A']).toBeTruthy();
+  // ...the bundle root opens fully, so its own index is drawn...
+  expect(labels['index.md']).toBeTruthy();
+  // ...and the files are still held back.
+  expect(labels['one.html']).toBeFalsy();
+  expect(labels['notes.txt']).toBeFalsy();
+});
+
+// On load a directory shows its whole skeleton — every child directory and index file — and up
+// to 50 of its concepts; its files and attachments stay held back. Nine sub-directories also
+// prove the child directories are not capped at one page.
+test('en mappe viser alle undermapper og konsepter, men holder filene tilbake', async ({ page }) => {
+  await page.goto(`${fixtureExplorer('blocks')}?depth=all`);
+  await expect(page.locator('#spinner')).toBeHidden();
+  await expect(page.locator('#stats')).toContainText('files');
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(1500);
+  const labels = await renderedLabels(page);
+  // Every sub-directory is drawn, well past the one-page cap...
+  for (let i = 1; i <= 9; i++) expect(labels[`sub${i}/`]).toBeTruthy();
+  // ...every concept of the group is drawn, and so is a sub-directory's own concept...
+  expect(labels['C1']).toBeTruthy();
+  expect(labels['C2']).toBeTruthy();
+  expect(labels['Sub 1']).toBeTruthy();
+  // ...and the group's plaintext files are held back.
+  expect(labels['note.txt']).toBeFalsy();
+  expect(labels['extra.txt']).toBeFalsy();
+});
+
 test('depth=0 laster neste nivå ved klikk, ikke ved oppstart', async ({ page }) => {
   const paths = [];
   page.on('request', request => paths.push(new URL(request.url()).pathname));
@@ -1607,14 +1780,35 @@ test('depth=0 laster neste nivå ved klikk, ikke ved oppstart', async ({ page })
   await expect(page.locator('#pvTitle')).toHaveText('Referanse');
 });
 
-test('viser en forståelig melding når pakken mangler', async ({ page }) => {
+test('viser en feilside i .runtime når pakken mangler', async ({ page }) => {
   await page.goto(fixtureExplorer('missing'));
   await expect(page.locator('#spinner')).toBeHidden();
-  // The root has no index.md, so nothing loads at startup; a forced reload reports it.
-  await page.locator('#reload').click();
-  await expect(page.locator('#overlay')).toHaveClass(/\bshow\b/);
-  await expect(page.locator('#overlayMsg')).toContainText('Nothing to load');
+  // The root has no index.md, so the load fails and the errors page is shown.
+  await expect(page.locator('#preview')).toHaveClass(/\bshow\b/);
+  await expect(page.locator('#pvTitle')).toHaveText('Errors');
+  await expect(page.locator('#pvBody')).toContainText('Nothing to load');
   await expect(page.locator('#spinner')).toBeHidden();
+});
+
+test('en vellykket last tømmer feilsiden', async ({ page }) => {
+  await loadBundle(page);
+  // Record an error the way an unexpected one is recorded, then read it on the generated page.
+  await page.evaluate(() => window.dispatchEvent(new ErrorEvent('error', { message: 'boom-from-test' })));
+  await page.locator('#titleBtn').click();
+  await page.locator('#aboutRuntime').click();
+  await page.locator('#pvBody').getByRole('link', { name: 'Errors', exact: true }).click();
+  await expect(page.locator('#pvPath')).toHaveText('.runtime/errors.md');
+  await expect(page.locator('#pvBody')).toContainText('boom-from-test');
+  // A successful load clears it again (close the fullscreen preview to reach the toolbar).
+  await page.keyboard.press('Escape');
+  await page.locator('#reload').click();
+  await expect(page.locator('#spinner')).toBeHidden();
+  await expect(page.locator('#stats')).toContainText('files');
+  await page.locator('#titleBtn').click();
+  await page.locator('#aboutRuntime').click();
+  await page.locator('#pvBody').getByRole('link', { name: 'Errors', exact: true }).click();
+  await expect(page.locator('#pvBody')).toContainText('No errors recorded');
+  await expect(page.locator('#pvBody')).not.toContainText('boom-from-test');
 });
 
 test('ignorerer en ekstern start uten å sende forespørsler til den', async ({ page }) => {
@@ -1626,7 +1820,6 @@ test('ignorerer en ekstern start uten å sende forespørsler til den', async ({ 
   });
   await page.goto(`${explorer}?start=https://example.invalid/private/x.md`);
   // An external ?start is refused and the bundle at the root loads instead.
-  await expect(page.locator('#overlay')).not.toHaveClass(/\bshow\b/);
   await expect(page.locator('#stats')).toContainText('files');
   expect(externalRequests).toEqual([]);
 });
@@ -1773,7 +1966,6 @@ test('oversetter grensesnittet og støtter høyre-til-venstre', async ({ page })
   // Arabic: chosen from the language dialog, which persists it in the browser (there is
   // no ?lang URL parameter any more). Right-to-left orientation and translated controls.
   await page.goto(`${explorer}?depth=all`);
-  await expect(page.locator('#overlay')).not.toHaveClass(/\bshow\b/);
   await expect(page.locator('#spinner')).toBeHidden();
   await expect(page.locator('#stats')).toHaveText(/\S/);
   await page.keyboard.press('Escape');
@@ -1963,7 +2155,6 @@ test('viser hele Om-panelet når det er plass', async ({ page }) => {
 
 test('laster prosjektets kunnskapsindeks som en separat røykprøve', async ({ page }) => {
   await page.goto(`${projectExplorer}?depth=all`);
-  await expect(page.locator('#overlay')).not.toHaveClass(/\bshow\b/);
   await expect(page.locator('#spinner')).toBeHidden();
   await expect(page.locator('#stats')).toHaveText(/[1-9]\d* files · \d+ links/);
 });
@@ -2020,17 +2211,32 @@ test('starter en ny kortstokk når panelet er fullt', async ({ page }) => {
     return (b.scrollHeight - 2 * room) > b.clientHeight + 1;
   });
   expect(full).toBe(true);
-  // Pick a concept node clear of the docked panel.
+  // On load only the directory skeleton is drawn, so the bundle's concepts are held back.
+  // A search is a lens that draws the whole graph; use one to reveal the concepts, close the
+  // search panel again, and press-hold a concept that the browser hit-tests onto the canvas.
+  await setFilters(page, true);
+  await page.locator('#search').fill('e');
+  await page.clock.runFor(2000);
+  await setFilters(page, false);
+  await page.clock.runFor(200);
   const label = await page.evaluate(() => {
     const g = window.graphLabels;
-    return Object.keys(g).find(k => !k.endsWith('/') && g[k].x < 700 && g[k].y > 80);
+    // Concept labels are titles; skip file names and directory labels (a slash or a dot) and
+    // the root directory, whose label is "bundle". Only a concept starts a card drag.
+    const concepts = Object.keys(g).filter(k => k !== 'bundle' && !k.includes('/') && !k.includes('.'));
+    // Keep the ones whose centre is not covered by a docked panel, nearest the middle.
+    const free = concepts.filter(k => {
+      const el = document.elementFromPoint(g[k].x, g[k].y);
+      return el && el.id === 'c';
+    });
+    return free.sort((a, b) => (Math.abs(g[a].x - 620) + Math.abs(g[a].y - 320)) - (Math.abs(g[b].x - 620) + Math.abs(g[b].y - 320)))[0];
   });
   expect(label).toBeTruthy();
   const p = await page.evaluate(l => window.graphLabels[l], label);
   const cv = await page.locator('#c').boundingBox();
   await page.mouse.move(cv.x + p.x, cv.y + p.y);
   await page.mouse.down();
-  await page.clock.runFor(600);                       // the press-hold starts the card drag
+  await page.clock.runFor(800);                       // the press-hold starts the card drag
   const deck = await page.locator('#deck').boundingBox();
   await page.mouse.move(deck.x + deck.width / 2, deck.y + 30, { steps: 8 });
   await page.clock.runFor(50);

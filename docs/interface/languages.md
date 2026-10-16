@@ -44,7 +44,7 @@ sources:
 
 # What is translated
 
-The viewer's own interface is translated: the toolbar, the filter sidebar, the About panel, the bundle dialog and the preview controls. A **Language** picker in the About panel switches language, and the choice is kept in the browser. The interface ships dictionaries for English, Spanish, French, German, Portuguese, Italian, Dutch, Polish, Swedish, Danish, Norwegian (Bokmål), Finnish, Greek, Czech, Slovak, Hungarian, Romanian, Bulgarian, Russian, Turkish, Hindi, Bengali, Urdu, Indonesian, Vietnamese, Persian, Chinese (Simplified), Japanese, Korean and Arabic. Further languages can be added as a new dictionary in the tool source, and a language without one keeps the English interface.
+The viewer's own interface is translated: the toolbar, the filter sidebar, the About panel and the preview controls. A **Language** picker in the About panel switches language, and the choice is kept in the browser. The interface ships dictionaries for English, Spanish, French, German, Portuguese, Italian, Dutch, Polish, Swedish, Danish, Norwegian (Bokmål), Finnish, Greek, Czech, Slovak, Hungarian, Romanian, Bulgarian, Russian, Turkish, Hindi, Bengali, Urdu, Indonesian, Vietnamese, Persian, Chinese (Simplified), Japanese, Korean and Arabic. Further languages can be added as a new dictionary in the tool source, and a language without one keeps the English interface.
 
 # Choosing a language
 

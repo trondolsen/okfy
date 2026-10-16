@@ -1,5 +1,5 @@
 // Measures the mascot animation's cost and verifies it only runs while its
-// panel (bundle dialog or About) is visible.
+// panel (the About panel) is visible.
 //
 // Run from the repository root:
 //   bash tools/playwright-cli/run.sh --workdir . -- test/scripts/mascot-perf.mjs
@@ -54,7 +54,7 @@ try {
 
   await page.goto(url, { waitUntil: 'load', timeout: 30_000 });
   await page.waitForFunction(
-    () => !document.querySelector('#overlay').classList.contains('show'),
+    () => { const el = document.getElementById('stats'); return !!el && /files/.test(el.textContent); },
     undefined,
     { timeout: 30_000 }
   );
@@ -68,8 +68,7 @@ try {
 
   await page.clock.runFor(2000); // warm up the graph loop
 
-  // 1) Both panels hidden: the mascot must stay completely idle, even across
-  //    the 10 s release timer of the (now hidden) bundle dialog.
+  // 1) The mascot's panel hidden: the figure must stay completely idle.
   await reset();
   const hiddenMs = await runFor(page, 12_000);
   const hiddenMut = await mutations();

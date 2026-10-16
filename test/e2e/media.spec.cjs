@@ -40,7 +40,6 @@ function wavBytes(seconds = 2, rate = 16000, hz = 440) {
 async function openBundle(page) {
   await installLabelHook(page);
   await page.goto(`${explorer}?depth=all`);
-  await expect(page.locator('#overlay')).not.toHaveClass(/\bshow\b/);
   await expect(page.locator('#spinner')).toBeHidden();
   await expect(page.locator('#stats')).toContainText('files');
   await page.keyboard.press('Escape');
@@ -564,4 +563,21 @@ test('volumet justeres på lyd og video og huskes til neste mediefil', async ({ 
   await page.locator('#pvVolBtn').click();
   await expect(page.locator('#pvVol')).toHaveValue('80');
   await expect.poll(async () => page.evaluate(() => document.getElementById('pvVideo').volume)).toBeCloseTo(0.8, 2);
+});
+
+// The node tooltip names the node's kind. A non-Markdown file or attachment must read its kind, not
+// the concept-type fallback (regression: such nodes were shown as "Concept" on hover).
+test('verktøytipset navngir filtypen for et vedlegg, ikke Concept', async ({ page }) => {
+  await openBundle(page);
+  let text = '';
+  for (let i = 0; i < 8 && !/Attachment/.test(text); i++) {
+    await page.waitForTimeout(400);
+    const point = await page.evaluate(() => window.graphLabels['tone.wav']);
+    if (!point) continue;
+    const canvas = await page.locator('#c').boundingBox();
+    await page.mouse.move(canvas.x + point.x, canvas.y + point.y);
+    text = await page.locator('#tip').textContent();
+  }
+  expect(text).toContain('Attachment');
+  expect(text).not.toContain('Concept');
 });
