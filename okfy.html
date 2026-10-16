@@ -5567,8 +5567,10 @@
     treeDist = ringGap;
     refDist = ringGap * 1.4;
     tagDist = ringGap * 1.7;
-    MAX_SPEED = clamp(ringGap * 0.15, 14, 46);
-    MAX_ACC = MAX_SPEED * 3;
+    // A frame moves a node only a few percent of a ring gap, and the acceleration cap equals the
+    // speed cap (see MAX_SPEED), so a busy hub stays calm enough to click while it settles.
+    MAX_SPEED = clamp(ringGap * 0.05, 4, 12);
+    MAX_ACC = MAX_SPEED;
   }
 
   function initialLayout() {
@@ -5766,11 +5768,14 @@
   // guarantees nodes never overlap regardless of how the forces are tuned.
   var CHARGE = -900;                 // many-body strength (negative = repulsion)
   var THETA = 0.9;                   // Barnes-Hut accuracy (smaller = finer)
-  var MIN_DIST2 = 36;                // softening, avoids singular forces
+  var MIN_DIST2 = 36;                // softening distance², added to d² so a near pair pushes gently
   var treeDist = 150, refDist = 220, tagDist = 260;
   var treeStrength = 0.8, refStrength = 0.05, tagStrength = 0.03;
   var radialStrength = 0.35, centerStrength = 0.003, collideStrength = 1.0;
-  var MAX_SPEED = 20, MAX_ACC = 60;
+  // The step caps are set by recomputeRadii() from the ring gap. The acceleration cap equals the
+  // speed cap: physicsStep adds the half-step `0.5 * a` to the position, so a node moves at most
+  // about 1.5 * MAX_SPEED per frame and can never jump across the canvas between two frames.
+  var MAX_SPEED = 12, MAX_ACC = 12;
 
   function jiggle() { return (Math.random() - 0.5) * 1e-6; }
 
@@ -5924,7 +5929,7 @@
       if (cell.point === node) return;
       if (dx === 0 && dy === 0) { dx = jiggle(); dy = jiggle(); }
       l = dx * dx + dy * dy;
-      if (l < MIN_DIST2) l = Math.sqrt(MIN_DIST2 * l);
+      l += MIN_DIST2;
       node.ax += dx * CHARGE * alpha / l;
       node.ay += dy * CHARGE * alpha / l;
       return;
@@ -5936,7 +5941,7 @@
         var qx = q.x - node.x, qy = q.y - node.y;
         if (qx === 0 && qy === 0) { qx = jiggle(); qy = jiggle(); }
         var ql = qx * qx + qy * qy;
-        if (ql < MIN_DIST2) ql = Math.sqrt(MIN_DIST2 * ql);
+        ql += MIN_DIST2;
         node.ax += qx * CHARGE * alpha / ql;
         node.ay += qy * CHARGE * alpha / ql;
       }
@@ -5945,7 +5950,7 @@
     var w = cell.x1 - cell.x0;
     if (w * w / (THETA * THETA) < l) {            // far enough: pool the cell
       if (dx === 0 && dy === 0) { dx = jiggle(); dy = jiggle(); l = dx * dx + dy * dy; }
-      if (l < MIN_DIST2) l = Math.sqrt(MIN_DIST2 * l);
+      l += MIN_DIST2;
       node.ax += dx * cell.mass * CHARGE * alpha / l;
       node.ay += dy * cell.mass * CHARGE * alpha / l;
       return;
@@ -5985,11 +5990,15 @@
             var d = Math.sqrt(dx * dx + dy * dy);
             var minD = n.cr + m.cr;
             if (d >= minD) continue;
-            if (d < 1e-6) { dx = jiggle(); dy = jiggle(); d = Math.sqrt(dx * dx + dy * dy); }
-            var dd = d < 1e-3 ? 1e-3 : d;
-            var push = (minD - d) / dd * 0.5 * collideStrength * alpha;
-            n.ax += dx * push; n.ay += dy * push;
-            m.ax -= dx * push; m.ay -= dy * push;
+            // Normalise the direction, so the push does not vanish as two nodes approach the same
+            // point (a freshly revealed node is seeded on top of its neighbour). A random direction
+            // breaks an exact tie.
+            var ux, uy;
+            if (d > 1e-6) { ux = dx / d; uy = dy / d; }
+            else { var ang = Math.random() * Math.PI * 2; ux = Math.cos(ang); uy = Math.sin(ang); }
+            var push = (minD - d) * 0.5 * collideStrength * alpha;
+            n.ax += ux * push; n.ay += uy * push;
+            m.ax -= ux * push; m.ay -= uy * push;
           }
         }
       }
@@ -6029,9 +6038,11 @@
 
   // ---- layout step ---------------------------------------------------------
   // The graph layout runs the shared physics step. MAX_SPEED is read live
-  // because recomputeRadii() updates it, and pinned nodes are held at (fx, fy).
+  // because recomputeRadii() updates it, pinned nodes are held at (fx, fy), and
+  // `damping` (the velocity retained each step, so a smaller value damps harder)
+  // hardens as the layout cools, so the residual motion dies instead of jittering.
   var graphPhysics = {
-    damping: 0.7,
+    get damping() { return 0.7 - 0.2 * (1 - Math.min(1, alpha / 0.6)); },
     get maxSpeed() { return MAX_SPEED; },
     pinned: function (n) { return n.fx != null; }
   };
@@ -6039,7 +6050,7 @@
 
   function tick() {
     physicsStep(nodes, accumulateGraphForces, graphPhysics);
-    alpha = Math.max(0.02, alpha * 0.992);
+    alpha = Math.max(0.02, alpha * 0.975);   // cool quickly, so the violent phase is short
   }
 
   // ---------------------------------------------------------------- drawing

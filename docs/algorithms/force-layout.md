@@ -20,15 +20,15 @@ The graph is drawn on an HTML canvas with no charting library. Node positions ar
 
 The simulation accumulates acceleration from several forces:[^source]
 
-- **Many-body repulsion** between all nodes, approximated with a Barnes-Hut quadtree so the cost stays near `O(n log n)` instead of `O(n²)`.
+- **Many-body repulsion** between all nodes, approximated with a Barnes-Hut quadtree so the cost stays near `O(n log n)` instead of `O(n²)`. Each pair is softened by a small constant distance, so two nodes that nearly coincide push gently instead of with a singular force.
 - **Link forces** that pull connected nodes together, with different strengths for tree, reference and tag links.
 - A weak **radial** force that gives the tree a ring structure by depth.
-- A **collision** force that prevents overlap, using a uniform grid.
+- A **collision** force that prevents overlap, using a uniform grid, with a direction-normalised push so two nodes that sit on the same point separate instead of sticking together.
 - A weak **centering** force.
 
 # Integration
 
-Velocities are updated with a velocity-Verlet step and clamped to a maximum speed and acceleration. A cooling factor `alpha` decays each tick and never drops below a floor, so the layout keeps a slow, continuous motion instead of freezing. Interaction that changes the layout — entering a directory, resetting, or dragging a node — raises `alpha` and re-energizes it, while a plain single click leaves the graph undisturbed.[^source]
+Velocities are updated with a velocity-Verlet step and clamped to a maximum speed and acceleration. The speed cap is a small fraction of the ring gap (a few percent) and the acceleration cap equals it, so the half-step term cannot carry a node further than about one and a half speed caps in one frame: a node never crosses the canvas between two frames, which keeps a busy directory calm enough to click while it settles. A cooling factor `alpha` decays each tick, the velocity damping hardens as it falls, and it never drops below a floor, so the layout keeps a slow, continuous motion instead of freezing. Interaction that changes the layout — entering a directory, resetting, or dragging a node — raises `alpha` and re-energizes it, while a plain single click leaves the graph undisturbed.[^source]
 
 # Shared physics
 
