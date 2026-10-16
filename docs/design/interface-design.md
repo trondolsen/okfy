@@ -37,7 +37,7 @@ One dark theme, defined as CSS custom properties on `:root`: a page background, 
 Shared styling keeps the controls consistent:[^source]
 
 - Buttons share one base rule (surface, border, radius, padding); hover promotes the border to the accent colour. The **title control** is the exception: it shows the brand mark and stays flat on hover — no fill and no accent ring.
-- The filter and legend **panel tabs** keep their inner border transparent in every state, so the tab blends into the panel and its hover accent never draws the edge where it meets the panel — the highlight stops at the panel rather than ringing the tab.
+- The filter, assistant and legend **panel tabs** keep their inner border transparent in every state, so the tab blends into the panel and its hover accent never draws the edge where it meets the panel — the highlight stops at the panel rather than ringing the tab.
 - Groups are translucent, blurred pills that hold related controls.
 - Toggle buttons (Labels and Tags) carry their state in `aria-pressed`. The **on** state is the normal label; the **off** state dims the label to a shade only slightly lighter than the button surface, rather than tinting the button fill.
 - The title control and the mobile hamburger use the same vertical box model as the nav buttons. The title's brand mark is taller than a text line box, so the title carries a negative block margin that absorbs the excess and keeps every top-bar group the same height.

@@ -185,21 +185,36 @@
   .lg .sw, .sw { width: 11px; height: 11px; border-radius: 50%; flex: none; }
   .lg .n { margin-inline-start: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-  /* Assistant: a right-docked chat panel for the internal AI agent. Opening it
-     hides the filter sidebar, legend and deck so the panel owns the edge. It is
-     fixed width on desktop and nearly full width on small screens. */
+  /* Assistant: a right-docked chat panel for the internal AI agent, opened and closed from its own
+     edge tab like the filter panel. Opening it hides the legend and deck so the panel owns the edge.
+     It is fixed width on desktop and nearly full width on small screens. Closed, it slides off the
+     inline-end edge so its tab stays visible there, next to the filters tab. */
   #assistant {
     position: fixed; top: 0; inset-inline-end: 0; bottom: 0; width: var(--assist-w); max-width: 94vw; z-index: 24;
-    display: none; flex-direction: column;
+    display: flex; flex-direction: column;
     background: var(--panel); border-inline-start: 1px solid var(--line);
+    transform: translateX(var(--panel-off-end));
   }
+  body.as-open #assistant { transform: translateX(0); }
+  /* Assistant tab: attached to the panel's inner edge, above the filters tab (whose top follows it;
+     see layoutPanelTabs). Like the filters tab it uses physical properties, because its writing mode
+     makes the logical ones map to the vertical axis, and it is mirrored for right-to-left. */
+  #asHandle {
+    display: block; position: absolute; right: 100%; top: 12px;
+    border-right-color: transparent; border-radius: 10px 0 0 10px;
+  }
+  [dir="rtl"] #asHandle {
+    right: auto; left: 100%;
+    border-right-color: var(--line); border-left-color: transparent;
+    border-radius: 0 10px 10px 0;
+  }
+  [dir="rtl"] #asHandle:hover { border-right-color: var(--accent); }
   /* Drag handle on the panel's inline-start edge, so the user can resize it. */
   .as-resize {
     position: absolute; top: 0; bottom: 0; inset-inline-start: -5px; width: 11px; z-index: 2;
     cursor: col-resize; touch-action: none;
   }
   .as-resize:hover, .as-resize:focus-visible { background: color-mix(in srgb, var(--accent) 45%, transparent); outline: none; }
-  body.as-open #assistant { display: flex; }
   /* With the assistant open the filter sidebar docks to its left; while closed it
      slides under the assistant so only its Filters tab shows at the panel's edge. */
   @media (min-width: 761px) {
@@ -980,6 +995,12 @@
        body.side-open on small screens, or by clearing body.hide-side on desktop). */
     #sidebar { width: min(var(--side-w), 86vw); transform: translateX(var(--panel-off-end)); }
     body.side-open #sidebar { transform: translateX(0); }
+    /* The assistant keeps its tab on screen, so its panel is narrower than the window too. */
+    #assistant { width: min(var(--assist-w), 86vw); }
+    /* With the assistant open, the filter panel sits exactly behind it — the two are the same
+       width here, or it is the narrower of the two — so its tab peeks out beside the assistant
+       tab instead of hiding behind the panel. */
+    body.as-open #sidebar { transform: translateX(calc(min(var(--side-w), 86vw) - min(var(--assist-w), 86vw))); }
 
     /* Legend: left-docked panel (mirrors filters); tab attached to its right
        edge, near the bottom. Like the filter sidebar it sits above the docked
@@ -1357,7 +1378,6 @@
         <button id="labels" aria-pressed="true" data-i18n="nav.labels">Labels</button>
         <button id="tags" aria-pressed="false" title="Tag links" data-i18n="nav.tags" data-i18n-title="nav.tagsTitle">Tags</button>
         <button id="install" type="button" title="Install okfy as an app" hidden data-i18n="nav.install" data-i18n-title="nav.installTitle">Install</button>
-        <button id="assistBtn" type="button" aria-pressed="false" title="Assistant" data-i18n="as.title" data-i18n-title="as.titleOpen">Assistant</button>
       </div>
     </div>
     <div class="group group-dir">
@@ -1478,6 +1498,7 @@
 </div>
 
 <aside id="assistant" aria-label="Assistant" data-i18n-aria-label="as.title">
+  <button id="asHandle" class="panel-handle" type="button" aria-controls="assistant" aria-expanded="false" title="Assistant" data-i18n="as.title" data-i18n-title="as.titleOpen">Assistant</button>
   <div id="asResize" class="as-resize" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize assistant" data-i18n-aria-label="as.resize"></div>
   <div class="as-head">
     <span data-i18n="as.title">Assistant</span>
@@ -6379,6 +6400,12 @@
         } else {
           openPreview(node);
         }
+      } else {
+        // A drag moves the node but does not pin it: it is released back to the
+        // simulation, so it settles into the layout instead of staying where it
+        // was dropped.
+        node.fx = null; node.fy = null;
+        alpha = Math.max(alpha, 0.5);
       }
     }
     if (activePointers.size === 1) {
@@ -6403,9 +6430,7 @@
   canvas.addEventListener("dblclick", function (e) {
     if (lastPointerType === "touch") return; // handled on tap for touch devices
     var n = nodeAt(e.clientX, e.clientY);
-    if (!n) return;
-    if (n.kind === "dir") enterDir(n.path);
-    else { n.fx = null; n.fy = null; alpha = Math.max(alpha, 0.5); }
+    if (n && n.kind === "dir") enterDir(n.path);
   });
 
   canvas.addEventListener("wheel", function (e) {
@@ -9868,6 +9893,9 @@
   function setSideOpen(open) {
     if (isMobileView()) document.body.classList.toggle("side-open", open);
     else document.body.classList.toggle("hide-side", !open);
+    // Expanding a panel collapses the other when the window cannot hold both — every small screen,
+    // where each panel is most of the width. (The assistant does the same in reverse.)
+    if (open && asOpen && !asRoomForBothPanels()) asSetPanelOpen(false);
     var h = document.getElementById("sideHandle");
     if (h) h.setAttribute("aria-expanded", open ? "true" : "false");
     positionDeck();
@@ -10409,6 +10437,7 @@
     canvas.style.width = W + "px";
     canvas.style.height = H + "px";
     if (view.x === 0 && view.y === 0) { view.x = W / 2; view.y = H / 2; }
+    if (typeof layoutPanelTabs === "function") layoutPanelTabs();
   }
   window.addEventListener("resize", function () {
     var oldW = W, oldH = H;
@@ -11730,6 +11759,17 @@
     if (!deckEl) return;
     var info = deckTabInfo();
     deckEl.style.insetInlineEnd = info && info.inset != null ? info.inset + "px" : "";
+  }
+  // The two panel tabs share the inline-end edge, the assistant's first and the filters' below it.
+  // The filters tab's top follows the assistant tab's height, which the interface language changes,
+  // and the deck docks below it. Falls back to the tab's own default when there is no assistant tab.
+  function layoutPanelTabs() {
+    var sideTab = document.getElementById("sideHandle");
+    if (!sideTab) return;
+    var asTab = document.getElementById("asHandle");
+    var top = asTab && asTab.offsetHeight > 0 ? asTab.offsetTop + asTab.offsetHeight + 6 : 84;
+    sideTab.style.top = top + "px";
+    positionDeck();
   }
 
   // ---- reading the deck as a continuous stream ----
@@ -16274,23 +16314,33 @@
     asSave(); asOauthStatus();
   }
 
-  // The assistant panel is enabled by default, so its state is set once here and by the
-  // toolbar toggle. Opening it collapses the filter panel, which the user can reopen to
-  // the left; the startup default (below) opens it on a desktop layout and collapses the
-  // filter panel with it.
+  // The assistant panel is enabled by default, so its state is set once here and by its edge tab.
+  // Opening it leaves the filter panel as it is — the two dock side by side — unless the window has
+  // no room left for both and a workable graph; the startup default (below) opens it on a desktop
+  // layout, where the filter panel starts collapsed anyway.
   function asSetPanelOpen(open) {
     asOpen = open;
     document.body.classList.toggle("as-open", open);
-    var btn = document.getElementById("assistBtn");
-    if (btn) btn.setAttribute("aria-pressed", open ? "true" : "false");
+    var tab = document.getElementById("asHandle");
+    if (tab) tab.setAttribute("aria-expanded", open ? "true" : "false");
     positionDeck();   // the deck docks left of the open panel
     if (open) {
-      // The filter panel starts collapsed; the user can reopen it to the left.
-      setSideOpen(false);
+      if (!asRoomForBothPanels()) setSideOpen(false);
       asRenderLog();
     } else if (asMicOn()) {
       asSetMic(false);   // closing the panel stops listening
     }
+  }
+  // Whether the two right-docked panels fit with a workable graph between them. Both are laid out
+  // even while closed, so their widths are readable; on a small screen they take a share of the
+  // window rather than their desktop width. The figures are the `:root` defaults for --assist-w
+  // and --side-w, used only if a panel cannot be measured.
+  var AS_MIN_GRAPH = 320;
+  function asRoomForBothPanels() {
+    var side = document.getElementById("sidebar");
+    var assistW = asEls.panel && asEls.panel.offsetWidth ? asEls.panel.offsetWidth : 372;
+    var sideW = side && side.offsetWidth ? side.offsetWidth : 312;
+    return window.innerWidth - assistW - sideW >= AS_MIN_GRAPH;
   }
   function asToggle() {
     asSetPanelOpen(!asOpen);
@@ -16404,10 +16454,8 @@
 
   function initAssistant() {
     if (!ASSISTANT_ENABLED) {
-      // The assistant is switched off in this file. Remove its toolbar button and its panel so
-      // no part of the assistant remains in the interface, then leave it uninitialised.
-      var assistButton = document.getElementById("assistBtn");
-      if (assistButton) assistButton.remove();
+      // The assistant is switched off in this file. Remove its panel — and with it its edge tab —
+      // so no part of the assistant remains in the interface, then leave it uninitialised.
       var assistPanel = document.getElementById("assistant");
       if (assistPanel) assistPanel.remove();
       return;
@@ -16510,8 +16558,8 @@
     asSetBusy();
     asRenderGate();   // start ungated only if the acknowledgement is already remembered
 
-    var toggle = document.getElementById("assistBtn");
-    if (toggle) toggle.addEventListener("click", asToggle);
+    var tab = document.getElementById("asHandle");
+    if (tab) tab.addEventListener("click", asToggle);
     if (asEls.settingsBtn) asEls.settingsBtn.addEventListener("click", asToggleSettings);
     // The acknowledgement gate: the box enables Continue, Continue accepts (and remembers) it,
     // and Cancel closes Settings without accepting.
@@ -16613,7 +16661,7 @@
 
     // The assistant is enabled by default on a desktop layout; the filter panel starts
     // collapsed. On small screens the panel would fill the window, so it stays closed
-    // until the user opens it from the toolbar.
+    // until the user opens it from its edge tab.
     if (!isMobileView()) asSetPanelOpen(true);
   }
 
@@ -16817,6 +16865,7 @@
     document.documentElement.dir = dirFor(currentLang);
     if (langCurrentEl) langCurrentEl.textContent = langLabel(currentLang);
     applyStaticI18n();
+    layoutPanelTabs();   // the filters tab follows the assistant tab's width in the new language
     updateFilterSummary();
     if (bundleFiles) updateStats();
     if (langPopEl && !langPopEl.hidden) renderLangList();   // names and selection follow the new language

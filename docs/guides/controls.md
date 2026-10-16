@@ -22,9 +22,8 @@ sources:
 | Click a node | Open its page in the preview; a node with a dashed ring loads first. |
 | Click a tag hub | Toggle that tag in the filter. |
 | Double-click a directory | Enter the directory. |
-| Double-click a concept | Release the node and let the layout move it again. |
 | Drag empty canvas | Pan. |
-| Drag a node | Move it and pin it there. |
+| Drag a node | Move it; the layout takes it back when you let go. |
 | Scroll wheel | Zoom around the pointer. |
 | Press and hold a concept, then drag | Start a deck card and drop it on the deck. |
 | Side buttons (back / forward) | Step the preview back or forward. |
@@ -57,7 +56,7 @@ There are no other global shortcuts.[^source]
 | **Open folder…** | Pick a bundle directory from disk. |
 | **Reload** | Re-fetch the bundle from the page's address. |
 | **Reset view** | Fit the whole graph in view. |
-| **Reset layout** | Release pinned nodes and run the layout again. |
+| **Reset layout** | Run the layout again from a fresh arrangement. |
 | **Labels** | Show or hide node labels (on by default). |
 | **Tags** | Show or hide tag hubs. |
 | **Top** / **‹** / **›** | Directory navigation, with the current path beside them. |

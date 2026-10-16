@@ -83,8 +83,8 @@ async function setFilters(page, open) {
 }
 async function setAssistant(page, open) {
   await page.evaluate(open => {
-    const b = document.getElementById('assistBtn');
-    if ((b.getAttribute('aria-pressed') === 'true') !== open) b.click();
+    const b = document.getElementById('asHandle');
+    if ((b.getAttribute('aria-expanded') === 'true') !== open) b.click();
   }, open);
 }
 
@@ -1180,6 +1180,61 @@ test('assistenten er på som standard og filterpanelet dokker til venstre når d
   expect(sidebarWidth).toBeGreaterThan(0);
 });
 
+test('assistenten lukker bare filterpanelet når det ikke er plass til begge', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await loadBundle(page);
+  // With room for both, opening the assistant leaves the expanded filter panel alone.
+  await page.evaluate(() => document.getElementById('asHandle').click());    // close the assistant
+  await page.evaluate(() => document.getElementById('sideHandle').click());   // open the filters
+  await expect(page.locator('body')).not.toHaveClass(/\bhide-side\b/);
+  await page.evaluate(() => document.getElementById('asHandle').click());     // open it again
+  await expect(page.locator('body')).toHaveClass(/\bas-open\b/);
+  await expect(page.locator('body')).not.toHaveClass(/\bhide-side\b/);        // the filters stay open
+
+  // Without room for both, the filter panel collapses with it. (Both are still open here from the
+  // wide step; a resize alone leaves them alone, so closing and reopening the assistant is what
+  // makes the room check run.)
+  await page.setViewportSize({ width: 900, height: 900 });
+  await expect(page.locator('body')).not.toHaveClass(/\bhide-side\b/);
+  await page.evaluate(() => document.getElementById('asHandle').click());
+  await expect(page.locator('body')).not.toHaveClass(/\bas-open\b/);
+  await page.evaluate(() => document.getElementById('asHandle').click());
+  await expect(page.locator('body')).toHaveClass(/\bas-open\b/);
+  await expect(page.locator('body')).toHaveClass(/\bhide-side\b/);            // no room: filters collapse
+});
+
+test('begge fanene er synlige og det ene panelet lukker det andre på små skjermer', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await loadBundle(page);
+  // A tab counts as visible when its own centre point is on screen and nothing covers it.
+  const tabVisible = (sel) => page.evaluate(sel => {
+    const el = document.querySelector(sel);
+    const r = el.getBoundingClientRect();
+    const x = Math.round(r.x + r.width / 2), y = Math.round(r.y + r.height / 2);
+    const hit = x >= 0 && x <= window.innerWidth && y >= 0 && y <= window.innerHeight ? document.elementFromPoint(x, y) : null;
+    return !!(hit && (hit === el || el.contains(hit)));
+  }, sel);
+
+  // The assistant starts closed here, with both tabs on the edge.
+  await expect(page.locator('body')).not.toHaveClass(/\bas-open\b/);
+  await expect.poll(() => tabVisible('#asHandle')).toBe(true);
+  await expect.poll(() => tabVisible('#sideHandle')).toBe(true);
+
+  // Opening the assistant leaves the filters tab showing beside it — there is room for the tab,
+  // not for the panel.
+  await page.evaluate(() => document.getElementById('asHandle').click());
+  await expect(page.locator('body')).toHaveClass(/\bas-open\b/);
+  await expect.poll(() => tabVisible('#asHandle')).toBe(true);
+  await expect.poll(() => tabVisible('#sideHandle')).toBe(true);
+
+  // Expanding the filters there collapses the assistant: only one panel fits.
+  await page.evaluate(() => document.getElementById('sideHandle').click());
+  await expect(page.locator('body')).not.toHaveClass(/\bas-open\b/);
+  await expect(page.locator('body')).toHaveClass(/\bside-open\b/);
+  await expect.poll(() => tabVisible('#asHandle')).toBe(true);
+  await expect.poll(() => tabVisible('#sideHandle')).toBe(true);
+});
+
 test('assistentpanelet kan endres i bredde', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await loadBundle(page);
@@ -1513,6 +1568,27 @@ test('navigerer inn i en katalog og bruker grafhistorikken', async ({ page }) =>
   await expect(page.locator('#graphPath')).toHaveText('nested/');
   await page.locator('#graphTop').click();
   await expect(page.locator('#graphPath')).toHaveText('/');
+});
+
+test('fester ikke noden etter et drag, men slipper den tilbake til layouten', async ({ page }) => {
+  await loadBundle(page);
+  await page.clock.runFor(2000);
+  const label = 'Veiledning';
+  const canvas = await page.locator('#c').boundingBox();
+  const start = await page.evaluate(l => window.graphLabels[l], label);
+  expect(start, `Fant ikke den tegnede noden «${label}»`).toBeTruthy();
+  // Drag the node well clear of where the layout put it.
+  const drop = { x: start.x + 150, y: start.y + 120 };
+  await page.mouse.move(canvas.x + start.x, canvas.y + start.y);
+  await page.mouse.down();
+  await page.mouse.move(canvas.x + drop.x, canvas.y + drop.y, { steps: 6 });
+  await page.mouse.up();
+  // A pinned node would stay exactly at the drop point; a released one is moved
+  // away from it again by the layout.
+  await page.clock.runFor(4000);
+  const after = await page.evaluate(l => window.graphLabels[l], label);
+  expect(after).toBeTruthy();
+  expect(Math.hypot(after.x - drop.x, after.y - drop.y), 'Noden skal ikke bli stående fast der den ble sluppet').toBeGreaterThan(3);
 });
 
 test('depth=0 laster neste nivå ved klikk, ikke ved oppstart', async ({ page }) => {

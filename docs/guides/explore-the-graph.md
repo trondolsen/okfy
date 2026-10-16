@@ -33,14 +33,12 @@ you want to see.[^model]
 2. Use the directory controls in the top bar to move between levels: **Top** for
    the bundle root, **‹** and **›** for back and forward. The path after the
    buttons shows where you are.
-3. Double-clicking a concept does not enter it; it frees the node from its pinned
-   spot and lets the layout move it again.
 
 # Reframe and reset
 
 - **Reset view** zooms and pans so the whole graph fits, without moving nodes.
-- **Reset layout** releases every node you have dragged and runs the layout
-  again. Use it when the graph has drifted into a shape you do not like.
+- **Reset layout** runs the layout again from a fresh arrangement. Use it when
+  the graph has drifted into a shape you do not like.
 - **Reload** re-fetches the bundle from the address the page was opened with.
 
 # Change what is drawn
