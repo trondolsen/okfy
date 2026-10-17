@@ -179,6 +179,63 @@ fi
 
 Save it as `.git/hooks/pre-push` and make it executable with `chmod +x .git/hooks/pre-push`. The hook is local and can be bypassed, so keep the manual check as the release step.
 
+# Promote a batch
+
+Use a temporary release branch when more than one commit moves to live. It keeps `live` untouched until the batch passes the checks.
+
+Sync both sides and list the candidates, oldest first:
+
+```sh
+git fetch origin-draft origin-live
+git switch draft
+git pull --ff-only
+git switch live
+git merge --ff-only origin-live/main
+git log --reverse --oneline live..draft
+```
+
+If `live` has local commits that are not on `origin-live/main`, merge them first; the fast-forward above only works when `live` is behind the remote.
+
+Inspect each candidate before choosing it:
+
+```sh
+git show --stat <sha>
+git show <sha>
+```
+
+Create the release branch and cherry-pick the chosen commits in order:
+
+```sh
+git switch --create release/next live
+git cherry-pick <sha1> <sha2> <sha3>
+```
+
+Promote only commits that are wholly release-ready. A commit is safe when it touches only released files, adds no `release: unreleased` file and adds no link to one. A commit that also touches an unreleased file is mixed: split it on `draft` first, then cherry-pick only the released part.
+
+For the latest commit, split it with:
+
+```sh
+git switch draft
+git reset --soft HEAD~1
+git restore --staged path/to/unreleased.md
+git commit -m "released part"
+git add path/to/unreleased.md
+git commit -m "unreleased part"
+```
+
+For an older commit, use `git rebase -i` and split it there. A released commit must not depend on one left behind.
+
+Verify the release branch with the `git grep` check above, confirm that no released page links to an unreleased concept, and run the tests. Then publish:
+
+```sh
+git switch live
+git merge --ff-only release/next
+git diff --stat origin-live/main..live
+git push origin-live live:main
+```
+
+Do not `git merge draft`, and do not `git cherry-pick live..draft` without classifying the commits first.
+
 # This page is unreleased
 
 This concept sets `okfx.release: unreleased`, so it is not part of the released bundle and `docs/devops/index.md` does not link to it. When the work it documents ships, remove the field and add the link from the released index in the same change. The rule is in [About this bundle](../about-this-bundle.md#release-state).
