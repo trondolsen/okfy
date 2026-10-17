@@ -66,7 +66,7 @@ sources:
 
 # Notes
 
-The tool's source is a single HTML file, so the concepts name the functions they rely on rather than line numbers, and they survive edits. Where a claim comes from the implementation rather than from documentation, the concept cites the relevant function. The [Favicon](../design/favicon.md) concept is the exception: it records external web specifications and vendor documentation, cited in its `sources`, rather than project files. The [Assistant](../interface/assistant.md) and [Assistant data flow](../security/assistant-data-flow.md) concepts likewise cite external specifications — the Fetch and Streams standards, the Model Context Protocol, the AGENTS.md convention, the provider API documentation and the OAuth, JWT and Problem Details RFCs — alongside the tool source. All concepts are currently **unverified**, since no `verified` field is set.
+The tool's source is a single HTML file, so the concepts name the functions they rely on rather than line numbers, and they survive edits. Where a claim comes from the implementation rather than from documentation, the concept cites the relevant function. The [Favicon](../design/favicon.md) concept is the exception: it records external web specifications and vendor documentation, cited in its `sources`, rather than project files. The Assistant and Assistant data flow concepts likewise cite external specifications — the Fetch and Streams standards, the Model Context Protocol, the AGENTS.md convention, the provider API documentation and the OAuth, JWT and Problem Details RFCs — alongside the tool source. All concepts are currently **unverified**, since no `verified` field is set.
 
 # Connections
 

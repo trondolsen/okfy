@@ -28,7 +28,7 @@ The protections bound what the tool does, not what the browser or the platform d
 - **No memory promise.** A combined byte limit is not a guarantee of low memory use for every allowed graph.
 - **Service worker.** An installed okfy registers a same-origin service worker. It caches only the app shell and handles only navigations, but it is a persistent same-origin actor whose behaviour still needs checking in the target browsers.
 - **Same-origin icons.** The CSP allows `img-src 'self'` so the web app manifest's own icons and screenshot can load for install surfaces. This does not let the renderer show bundle images over the network, because the renderer never emits a network image `src`.
-- **Assistant egress.** The CSP permits `connect-src` for `https`, loopback `http`, and `wss` (with loopback `ws`) so the optional [assistant](../interface/assistant.md) can reach the configured LLM provider — the WebSocket scheme is for the realtime microphone transcription. When it is used, the prompt, the concepts the tools return and, with the microphone, the audio you speak leave the machine, and prompt injection from a hostile bundle is mitigated but not eliminated.[^source] See [Assistant data flow](assistant-data-flow.md).
+- **Assistant egress.** The CSP permits `connect-src` for `https`, loopback `http`, and `wss` (with loopback `ws`) so the optional assistant can reach the configured LLM provider — the WebSocket scheme is for the realtime microphone transcription. When it is used, the prompt, the concepts the tools return and, with the microphone, the audio you speak leave the machine, and prompt injection from a hostile bundle is mitigated but not eliminated.[^source] See Assistant data flow.
 
 # Checks that remain
 

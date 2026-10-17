@@ -318,7 +318,7 @@ function toolResult(body, name) {
 // The assistant's file and media tools, driven through the real viewer: the provider is mocked, so
 // the page itself runs the tool calls (open an unloaded file, read it with its caption track, and
 // drive the player).
-test('assistenten åpner, leser og styrer mediefilen', async ({ page }) => {
+test.skip('assistenten åpner, leser og styrer mediefilen', async ({ page }) => {
   await page.route('**/media/tone.wav', route => route.fulfill({ status: 200, contentType: 'audio/wav', body: wavBytes(10) }));
   await page.route('**/media/tone.vtt', route => route.fulfill({
     status: 200, contentType: 'text/vtt',
@@ -390,7 +390,7 @@ test('assistenten åpner, leser og styrer mediefilen', async ({ page }) => {
 
 // A served clip over the byte limit has no player at all, and the assistant is told why rather than
 // finding a player that never starts (its media tool reports the player's own failure).
-test('assistenten får beskjed når en servert mediefil ikke kan spilles', async ({ page }) => {
+test.skip('assistenten får beskjed når en servert mediefil ikke kan spilles', async ({ page }) => {
   await page.route('**/media/clip.mp4', route => route.fulfill({
     status: 200, contentType: 'video/mp4',
     headers: { 'content-length': String(260 * 1024 * 1024) },

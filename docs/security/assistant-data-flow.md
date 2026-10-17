@@ -1,12 +1,12 @@
 ---
 type: Explanation
 title: Assistant data flow
-description: What the optional assistant sends off the page, why the CSP allows it, how authentication works, and the risk that remains.
+description: What the assistant sends off the page, why the CSP allows it, how authentication works, and the risk that remains.
 tags: [security, assistant, privacy, network, oauth, residual-risk]
 okfx:
   mode: explanation
   version: praxis/1
-  release: preview
+  release: unreleased
 sources:
   - id: source
     resource: ../../okfy.html

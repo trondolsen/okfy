@@ -10,9 +10,6 @@ sources:
   - id: source
     resource: ../../okfy.html
     title: okfy.html – the assistant client, the context assembly and the tool loop
-  - id: assistant
-    resource: ../interface/assistant.md
-    title: The assistant – providers, models and tools
   - id: transformer
     resource: https://arxiv.org/abs/1706.03762
     title: Vaswani et al. – Attention Is All You Need
@@ -49,16 +46,13 @@ The model cannot read a file, run a command, open a socket or remember an earlie
 
 # What follows from it
 
-- **The window is the whole world.** Anything the harness leaves out does not exist to the model, and anything it puts in is indistinguishable from instructions — which is why bundle text is treated as data.[^assistant] See [Assistant data flow](../security/assistant-data-flow.md).
+- **The window is the whole world.** Anything the harness leaves out does not exist to the model, and anything it puts in is indistinguishable from instructions — which is why bundle text is treated as data.[^assistant] See Assistant data flow.
 - **It is a predictor, not a lookup.** It answers from what is in the window, so a claim can be wrong even when the text reads confidently; the tools exist to put facts into the window.[^gpt3]
 - **A reply is not deterministic.** Sampling makes the same prompt produce different text; a low temperature narrows the spread but does not fix it.
 - **One call is bounded.** The window has a length, the reply has a cap and the loop has a step limit, all enforced by the assistant. See [Limits and budgets](../security/limits-and-budgets.md).
 
 # Connections
 
-- [Assistant loop](assistant-loop.md)
-- [Assistant data flow](../security/assistant-data-flow.md)
-- [Assistant](../interface/assistant.md)
 - [Limits and budgets](../security/limits-and-budgets.md)
 
 [^source]: `okfy.html`, the assistant section: the context assembly, the request and the tool loop.

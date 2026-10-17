@@ -9,7 +9,8 @@ of Trond Olsen (Mastodon: [@trond@sorbit.no](https://sorbit.no/@trond)).
 
 ## The assistant is an AI system
 
-okfy includes an optional **assistant**. It is an AI system: when you chat with it,
+okfy includes an optional **assistant**, currently gated by an unreleased toggle and
+disabled in this revision. When enabled, it is an AI system: when you chat with it,
 you interact with a large language model through a provider you configure (DeepSeek,
 Mistral, Azure OpenAI, a local llama.cpp server or any OpenAI-compatible endpoint).
 
@@ -18,8 +19,7 @@ Mistral, Azure OpenAI, a local llama.cpp server or any OpenAI-compatible endpoin
 - okfy sends nothing until you ask a question, or open the model field's picker to
   list the provider's own models.
 - Your prompt and the concepts the tools read go only to the provider you configure,
-  under your own key. okfy has no server and keeps no copy. See
-  [Assistant data flow](docs/security/assistant-data-flow.md).
+  under your own key. okfy has no server and keeps no copy.
 - okfy makes **no automated decisions** about you. The assistant reads the bundle
   and, on your request, changes what the viewer shows; you stay in control of the
   viewer and of the model settings.

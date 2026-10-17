@@ -58,9 +58,8 @@ const test = base.extend({
 });
 
 async function loadBundle(page, depth = 'all', options = {}) {
-  // Most tests drive the assistant's Settings, which is gated behind an acknowledgement of what
-  // enabling a model means. Seed that acknowledgement before the page loads, unless a test opts
-  // out with options.ack === false to exercise the gate itself.
+  // Assistant tests are skipped while the assistant is an unreleased toggle. Seed the
+  // acknowledgement anyway, unless a test opts out of it.
   if (options.ack !== false) {
     await page.addInitScript(() => { try { localStorage.setItem('okfy.assistant.ack', '1'); } catch (e) {} });
   }
@@ -131,7 +130,14 @@ async function dialReleaseAt(page, at, dx, dy) {
   await page.clock.runFor(300);
 }
 
-test('assistenten er på som standard og gjør ingen ekstern forespørsel før et spørsmål', async ({ page }) => {
+test('assistenten er av fordi den er en unreleased-toggle', async ({ page }) => {
+  await loadBundle(page);
+  await expect(page.locator('#assistant')).toBeHidden();
+  await expect(page.locator('#asHandle')).toBeHidden();
+  await expect(page.locator('body')).toHaveClass(/\bas-disabled\b/);
+});
+
+test.skip('assistenten er på som standard og gjør ingen ekstern forespørsel før et spørsmål', async ({ page }) => {
   const external = [];
   page.on('request', request => {
     const host = new URL(request.url()).hostname;
@@ -184,7 +190,7 @@ test('assistenten er på som standard og gjør ingen ekstern forespørsel før e
   expect(external).toEqual([]);
 });
 
-test('assistentinnstillingene er gated bak en bekreftelse', async ({ page }) => {
+test.skip('assistentinnstillingene er gated bak en bekreftelse', async ({ page }) => {
   // Without the stored acknowledgement, opening Settings shows only the gate: the provider
   // fields stay hidden until the user explicitly accepts what enabling a model means.
   await loadBundle(page, 'all', { ack: false });
@@ -211,7 +217,7 @@ test('assistentinnstillingene er gated bak en bekreftelse', async ({ page }) => 
   await expect(page.locator('#asProvider')).toBeVisible();
 });
 
-test('avbryt lukker innstillingene uten å godta bekrefrelsen', async ({ page }) => {
+test.skip('avbryt lukker innstillingene uten å godta bekrefrelsen', async ({ page }) => {
   await loadBundle(page, 'all', { ack: false });
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
   await expect(page.locator('#asGate')).toBeVisible();
@@ -222,7 +228,7 @@ test('avbryt lukker innstillingene uten å godta bekrefrelsen', async ({ page })
   await expect(page.locator('#asGate')).toBeVisible();
 });
 
-test('husker at varselnotisen er avvist for en vert', async ({ page }) => {
+test.skip('husker at varselnotisen er avvist for en vert', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#asWarn')).toBeVisible();
   await page.evaluate(() => document.getElementById('asWarnClose').click());
@@ -240,7 +246,7 @@ test('husker at varselnotisen er avvist for en vert', async ({ page }) => {
   await expect(page.locator('#asWarnText')).toContainText('api.mistral.ai');
 });
 
-test('setter et tokenbudsjett fra hurtigvalg', async ({ page }) => {
+test.skip('setter et tokenbudsjett fra hurtigvalg', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   // The budget symbol sits right of the usage badge.
@@ -268,7 +274,7 @@ test('setter et tokenbudsjett fra hurtigvalg', async ({ page }) => {
   await expect(page.locator('#asBudgetLabel')).toHaveText('');
 });
 
-test('velger en lydutgangsmodell fra modellene som støtter det', async ({ page }) => {
+test.skip('velger en lydutgangsmodell fra modellene som støtter det', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -298,7 +304,7 @@ test('velger en lydutgangsmodell fra modellene som støtter det', async ({ page 
   await expect.poll(async () => page.evaluate(() => document.getElementById('asModel').value)).toBe('');
 });
 
-test('en lokal leverandør med bind-adressen 0.0.0.0 normaliseres til loopback', async ({ page }) => {
+test.skip('en lokal leverandør med bind-adressen 0.0.0.0 normaliseres til loopback', async ({ page }) => {
   // A local server is often configured with the address it printed when it bound — 0.0.0.0 — which
   // a browser cannot connect to. It is accepted and rewritten to 127.0.0.1, so the model list loads.
   // The provider setup is shared, so the config is seeded the way the popup's editor would store it.
@@ -331,7 +337,7 @@ test('en lokal leverandør med bind-adressen 0.0.0.0 normaliseres til loopback',
   await expect(page.locator('#asBase')).toHaveValue('http://0.0.0.0:8004/v1');
 });
 
-test('velger en stemme fra stemmene leverandøren oppgir', async ({ page }) => {
+test.skip('velger en stemme fra stemmene leverandøren oppgir', async ({ page }) => {
   // The audio provider's shared setup carries the key the voices endpoint needs; it is seeded the
   // way the popup's provider editor would store it.
   await page.addInitScript(() => { try { localStorage.setItem('okfy.assistant', JSON.stringify({
@@ -371,7 +377,7 @@ test('velger en stemme fra stemmene leverandøren oppgir', async ({ page }) => {
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('okfy.assistant')).audio.voice)).toBe('voice-fr');
 });
 
-test('leverandører legges til én gang, settes opp i raden sin og kan fjernes', async ({ page }) => {
+test.skip('leverandører legges til én gang, settes opp i raden sin og kan fjernes', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -473,7 +479,7 @@ test('leverandører legges til én gang, settes opp i raden sin og kan fjernes',
   await expect(page.locator('#asProvList [data-kind="llamacpp"]')).toBeEnabled();
 });
 
-test('assistenten snakker svaret og kan avbrytes', async ({ page }) => {
+test.skip('assistenten snakker svaret og kan avbrytes', async ({ page }) => {
   // A stand-in Web Audio API: decoding succeeds and playback never ends, so the speaking
   // indicator stays up until it is interrupted.
   await page.addInitScript(() => {
@@ -566,7 +572,7 @@ test('assistenten snakker svaret og kan avbrytes', async ({ page }) => {
   await expect.poll(async () => page.evaluate(() => window.__speechStarts)).toBeGreaterThan(startsBefore);
 });
 
-test('avbrytelse mens klippet dekodes spiller ikke av lyden', async ({ page }) => {
+test.skip('avbrytelse mens klippet dekodes spiller ikke av lyden', async ({ page }) => {
   // A Web Audio API whose decode resolves on a timer, so the interruption lands in the window
   // between the request and the start of playback: the clip must not start when it resolves.
   await page.addInitScript(() => {
@@ -624,7 +630,7 @@ test('avbrytelse mens klippet dekodes spiller ikke av lyden', async ({ page }) =
   await expect(page.locator('#asSpeaking')).toBeHidden();
 });
 
-test('assistenten anbefaler grensesnittspråket når modellen ikke lister det', async ({ page }) => {
+test.skip('assistenten anbefaler grensesnittspråket når modellen ikke lister det', async ({ page }) => {
   // The interface language is Norwegian, but the audio output model's voices speak English and
   // French only. That coverage is a recommendation, not a requirement: the assistant is still
   // told to speak Norwegian, with English offered as a fallback, and a voice is still used.
@@ -695,7 +701,7 @@ test('assistenten anbefaler grensesnittspråket når modellen ikke lister det', 
   expect(speech.voice_id).toBe('en-voice');
 });
 
-test('sender tenkningen tilbake med det påtvungne speak-kallet', async ({ page }) => {
+test.skip('sender tenkningen tilbake med det påtvungne speak-kallet', async ({ page }) => {
   // Audio output on: when the model answers without calling `speak`, the viewer forces a
   // `speak` call and keeps it in the transcript. A thinking-mode provider requires that call's
   // reasoning to ride back on the next request, or it rejects it.
@@ -746,7 +752,7 @@ test('sender tenkningen tilbake med det påtvungne speak-kallet', async ({ page 
   expect(speakMsg.reasoning_content).toBe('commentary thoughts');
 });
 
-test('et påtvunget speak-kall uten tenkning beholder reasoning_content-feltet', async ({ page }) => {
+test.skip('et påtvunget speak-kall uten tenkning beholder reasoning_content-feltet', async ({ page }) => {
   // Some thinking-mode providers answer the forced `speak` call with no reasoning_content. The
   // field must still ride back on the next request, or the provider rejects it (HTTP 400).
   await page.addInitScript(() => {
@@ -793,7 +799,7 @@ test('et påtvunget speak-kall uten tenkning beholder reasoning_content-feltet',
   expect(call.reasoning_content).toBe('');
 });
 
-test('assistenten styrer filterpanelet og oversikten', async ({ page }) => {
+test.skip('assistenten styrer filterpanelet og oversikten', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -824,7 +830,7 @@ test('assistenten styrer filterpanelet og oversikten', async ({ page }) => {
   await expect(page.locator('#legendBody .lg.sel')).toContainText('Guide');
 });
 
-test('search_concepts søker med filterpanelets parametere uten å endre panelet', async ({ page }) => {
+test.skip('search_concepts søker med filterpanelets parametere uten å endre panelet', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -862,7 +868,7 @@ test('search_concepts søker med filterpanelets parametere uten å endre panelet
   await expect(page.locator('#search')).toHaveValue('');
 });
 
-test('assistenten markerer, leser og lukker forhåndsvisningen', async ({ page }) => {
+test.skip('assistenten markerer, leser og lukker forhåndsvisningen', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -935,7 +941,7 @@ test('assistenten markerer, leser og lukker forhåndsvisningen', async ({ page }
   await expect(page.locator('#preview')).not.toHaveClass(/\bshow\b/);
 });
 
-test('assistenten navigerer forhåndsvisningens historikk', async ({ page }) => {
+test.skip('assistenten navigerer forhåndsvisningens historikk', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -986,7 +992,7 @@ test('assistenten navigerer forhåndsvisningens historikk', async ({ page }) => 
   await expect(page.locator('#pvPath')).toHaveText('nested/reference.md');
 });
 
-test('tokenbruk-popupen viser bytes sendt og mottatt', async ({ page }) => {
+test.skip('tokenbruk-popupen viser bytes sendt og mottatt', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -1017,7 +1023,7 @@ test('tokenbruk-popupen viser bytes sendt og mottatt', async ({ page }) => {
   expect(ringOffset).toBeGreaterThan(0);
 });
 
-test('komprimerer konteksten når den nærmer seg vindusgrensen', async ({ page }) => {
+test.skip('komprimerer konteksten når den nærmer seg vindusgrensen', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -1057,7 +1063,7 @@ test('komprimerer konteksten når den nærmer seg vindusgrensen', async ({ page 
   await expect(page.locator('#asLog .as-msg.notice')).toHaveCount(1);
 });
 
-test('assistenten avslutter med et svar når verktøystegene er brukt opp', async ({ page }) => {
+test.skip('assistenten avslutter med et svar når verktøystegene er brukt opp', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -1092,7 +1098,7 @@ test('assistenten avslutter med et svar når verktøystegene er brukt opp', asyn
   await expect(page.locator('#asLog .as-msg.error')).toHaveCount(0);
 });
 
-test('assistenten sender tenkningen tilbake med verktøykallet', async ({ page }) => {
+test.skip('assistenten sender tenkningen tilbake med verktøykallet', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -1125,7 +1131,7 @@ test('assistenten sender tenkningen tilbake med verktøykallet', async ({ page }
   expect(Array.isArray(withReasoning[0].tool_calls)).toBe(true);
 });
 
-test('assistenten får kommentar selv når modellen glemmer å snakke', async ({ page }) => {
+test.skip('assistenten får kommentar selv når modellen glemmer å snakke', async ({ page }) => {
   // A stand-in Web Audio API so playback counts as started without a real device.
   await page.addInitScript(() => {
     window.__speechStarts = 0;
@@ -1182,7 +1188,7 @@ test('assistenten får kommentar selv når modellen glemmer å snakke', async ({
   await expect(page.locator('#asLog .as-msg.assistant', { hasText: 'The security review is thorough.' })).toHaveCount(1);
 });
 
-test('assistenten er på som standard og filterpanelet dokker til venstre når det gjenåpnes', async ({ page }) => {
+test.skip('assistenten er på som standard og filterpanelet dokker til venstre når det gjenåpnes', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();                 // assistant enabled by default
@@ -1201,7 +1207,7 @@ test('assistenten er på som standard og filterpanelet dokker til venstre når d
   expect(sidebarWidth).toBeGreaterThan(0);
 });
 
-test('assistenten lukker bare filterpanelet når det ikke er plass til begge', async ({ page }) => {
+test.skip('assistenten lukker bare filterpanelet når det ikke er plass til begge', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await loadBundle(page);
   // With room for both, opening the assistant leaves the expanded filter panel alone.
@@ -1224,7 +1230,7 @@ test('assistenten lukker bare filterpanelet når det ikke er plass til begge', a
   await expect(page.locator('body')).toHaveClass(/\bhide-side\b/);            // no room: filters collapse
 });
 
-test('begge fanene er synlige og det ene panelet lukker det andre på små skjermer', async ({ page }) => {
+test.skip('begge fanene er synlige og det ene panelet lukker det andre på små skjermer', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await loadBundle(page);
   // A tab counts as visible when its own centre point is on screen and nothing covers it.
@@ -1256,7 +1262,7 @@ test('begge fanene er synlige og det ene panelet lukker det andre på små skjer
   await expect.poll(() => tabVisible('#sideHandle')).toBe(true);
 });
 
-test('assistentpanelet kan endres i bredde', async ({ page }) => {
+test.skip('assistentpanelet kan endres i bredde', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
@@ -1271,7 +1277,7 @@ test('assistentpanelet kan endres i bredde', async ({ page }) => {
   expect(after).toBeGreaterThan(before);
 });
 
-test('assistenten viser legend og kortstokk, og kortstokken dokker til venstre', async ({ page }) => {
+test.skip('assistenten viser legend og kortstokk, og kortstokken dokker til venstre', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   // The project bundle declares decks, so the deck column is shown.
   await page.goto(`${projectExplorer}?depth=all`);
@@ -1290,7 +1296,7 @@ test('assistenten viser legend og kortstokk, og kortstokken dokker til venstre',
   expect(legendDisplay).not.toBe('none');
 });
 
-test('assistenten: interne lenker åpner i viseren, eksterne i nettleseren', async ({ page }) => {
+test.skip('assistenten: interne lenker åpner i viseren, eksterne i nettleseren', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   // An internal bundle link opens the concept in the viewer's preview modal.
@@ -1333,7 +1339,7 @@ test('assistenten: interne lenker åpner i viseren, eksterne i nettleseren', asy
   expect(await page.evaluate(() => window.__opened)).toEqual(['https://example.com/']);
 });
 
-test('token-indikatoren ligger ved modellvelgeren med fyll-piler', async ({ page }) => {
+test.skip('token-indikatoren ligger ved modellvelgeren med fyll-piler', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   const info = await page.evaluate(() => {
@@ -1365,7 +1371,7 @@ test('token-indikatoren ligger ved modellvelgeren med fyll-piler', async ({ page
   expect(info.downTitle).toBe('Input tokens');
 });
 
-test('assistenten henter og søker i modellisten fra leverandøren', async ({ page }) => {
+test.skip('assistenten henter og søker i modellisten fra leverandøren', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -1416,7 +1422,7 @@ test('assistenten henter og søker i modellisten fra leverandøren', async ({ pa
   await expect(page.locator('#asModelList .as-model-row')).toHaveCount(4);
 });
 
-test('modellisten viser verktøystøtte og setter maks output-tokens fra modellen', async ({ page }) => {
+test.skip('modellisten viser verktøystøtte og setter maks output-tokens fra modellen', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());
@@ -1974,13 +1980,13 @@ test('preview-funksjonsbrytere huskes i nettleseren', async ({ page }) => {
   await page.locator('#aboutRuntime').click();
   await page.locator('#pvBody').getByRole('link', { name: 'Feature toggles', exact: true }).click();
   await expect(page.locator('#pvPath')).toHaveText('.runtime/features.md');
-  await expect(page.locator('#pvBody .pv-features')).toContainText('No unreleased toggles in this revision.');
+  const assistantRow = page.locator('#pvBody .pv-feature', { hasText: 'Assistant' });
+  await expect(assistantRow).toContainText('Off (hardwired)');
+  await expect(assistantRow.locator('.pv-toggle')).toHaveCount(0);
 
   const toggle = page.locator('#pvBody .pv-feature', { hasText: 'Tag recursive reveal' }).locator('.pv-toggle');
   await expect(toggle).toHaveAttribute('aria-checked', 'true');
   await expect(toggle).toHaveText('On');
-  await expect(page.locator('#pvBody .pv-feature', { hasText: 'Assistant' }).locator('.pv-toggle'))
-    .toHaveAttribute('aria-checked', 'true');
 
   await toggle.click();
   await expect(toggle).toHaveAttribute('aria-checked', 'false');
@@ -1998,17 +2004,9 @@ test('preview-funksjonsbrytere huskes i nettleseren', async ({ page }) => {
   const reloaded = page.locator('#pvBody .pv-feature', { hasText: 'Tag recursive reveal' }).locator('.pv-toggle');
   await expect(reloaded).toHaveAttribute('aria-checked', 'false');
   await expect(reloaded).toHaveText('Off');
-
-  // The assistant is a preview feature too: switching it off hides its panel at once.
-  const assistant = page.locator('#pvBody .pv-feature', { hasText: 'Assistant' }).locator('.pv-toggle');
-  await expect(assistant).toHaveAttribute('aria-checked', 'true');
-  await assistant.click();
-  await expect(page.locator('#assistant')).toBeHidden();
-  await assistant.click();
-  await expect(page.locator('#assistant')).toBeVisible();
 });
 
-test('assistant er en preview-funksjon og kan slås av', async ({ page }) => {
+test.skip('assistant er en preview-funksjon og kan slås av', async ({ page }) => {
   await page.addInitScript(() => {
     try { localStorage.setItem('okfy.features', JSON.stringify({ assistant: false })); } catch (e) {}
   });
@@ -2057,8 +2055,11 @@ test('oversetter grensesnittet og støtter høyre-til-venstre', async ({ page })
   // The layout mirrors for right-to-left: the filter sidebar and the toolbar dock to
   // the inline-start edge, and the back/forward chevrons flip.
   const vw = page.viewportSize().width;
-  const sideAr = await page.locator('#sidebar').boundingBox();
-  expect(sideAr.x).toBeLessThan(48);
+  await setFilters(page, true);
+  await expect.poll(async () => {
+    const box = await page.locator('#sidebar').boundingBox();
+    return box ? Math.round(box.x) : null;
+  }, { timeout: 3000 }).toBeLessThan(48);
   const barAr = await page.locator('.bar').boundingBox();
   expect(barAr.x).toBeGreaterThan(300);
   await expect(page.locator('#graphBack')).toHaveCSS('transform', 'matrix(-1, 0, 0, 1, 0, 0)');
@@ -2082,8 +2083,10 @@ test('oversetter grensesnittet og støtter høyre-til-venstre', async ({ page })
 
   // Left-to-right: the same panels dock to the opposite (inline-end) edge and the
   // chevrons point the other way.
-  const sideEs = await page.locator('#sidebar').boundingBox();
-  expect(sideEs.x).toBeGreaterThan(vw - 360);
+  await expect.poll(async () => {
+    const box = await page.locator('#sidebar').boundingBox();
+    return box ? Math.round(box.x) : null;
+  }, { timeout: 3000 }).toBeGreaterThan(vw - 360);
   const barEs = await page.locator('.bar').boundingBox();
   expect(barEs.x).toBeLessThan(48);
   await expect(page.locator('#graphBack')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
@@ -2332,7 +2335,7 @@ test('holder toppgruppene like høye', async ({ page }) => {
   expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(1);
 });
 
-test('assistenten kan ikke lukke eller endre fullskjermlesingen', async ({ page }) => {
+test.skip('assistenten kan ikke lukke eller endre fullskjermlesingen', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`${projectExplorer}?depth=all`);
   await expect(page.locator('#spinner')).toBeHidden();
@@ -2370,7 +2373,7 @@ test('assistenten kan ikke lukke eller endre fullskjermlesingen', async ({ page 
   await expect(page.locator('body')).toHaveClass(/\bdeck-fullscreen\b/);
 });
 
-test('assistenten markerer et avsnitt på tvers av innebygd formatering', async ({ page }) => {
+test.skip('assistenten markerer et avsnitt på tvers av innebygd formatering', async ({ page }) => {
   await loadBundle(page);
   await expect(page.locator('#assistant')).toBeVisible();
   await page.evaluate(() => document.getElementById('asSettingsBtn').click());

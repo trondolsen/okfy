@@ -32,13 +32,12 @@ Because there is no server, there is also no server-side validation, search inde
 
 # The one opt-in exception
 
-The optional [assistant](../interface/assistant.md) is the only feature that can send anything off the machine. When the user opens the panel and asks a question, the prompt and the concepts the tools return are sent to the LLM provider the user configured. Nothing is sent while the assistant is closed, and the exception is bounded in [Assistant data flow](../security/assistant-data-flow.md).
+The optional assistant is the only feature that can send anything off the machine. When the user opens the panel and asks a question, the prompt and the concepts the tools return are sent to the LLM provider the user configured. Nothing is sent while the assistant is closed, and the exception is bounded in Assistant data flow.
 
 # Connections
 
 - [Untrusted bundles](untrusted-bundles.md)
 - [URL parameters](../interface/url-parameters.md)
 - [Publishing](../interface/publishing.md)
-- [Assistant data flow](../security/assistant-data-flow.md)
 
 [^readme]: Project README, "Usage".

@@ -31,7 +31,7 @@ A malicious bundle cannot probe other hosts, read another origin, or smuggle a d
 
 # The assistant exception
 
-The optional [assistant](../interface/assistant.md) is the one path that leaves the origin: it POSTs to the LLM provider the user configures, over `https` (or `http` on loopback — a local server's bind-all address such as `0.0.0.0` is normalized to loopback `127.0.0.1` first). It does not go through the bundle fetch path, so every rule above still governs every bundle request. The assistant's own bounds are in [Assistant data flow](assistant-data-flow.md).
+The optional assistant is the one path that leaves the origin: it POSTs to the LLM provider the user configures, over `https` (or `http` on loopback — a local server's bind-all address such as `0.0.0.0` is normalized to loopback `127.0.0.1` first). It does not go through the bundle fetch path, so every rule above still governs every bundle request. The assistant's own bounds are in Assistant data flow.
 
 # Limits of the control
 
@@ -44,7 +44,6 @@ The rules constrain URLs, not the server's mapping from URLs to files. Symlinks,
 - [Publishing](../interface/publishing.md)
 - [Installable web app](../interface/installable-web-app.md)
 - [Bounded streaming and reserved capacity](streaming-and-budgets.md)
-- [Assistant data flow](assistant-data-flow.md)
 
 [^source]: `normalizeLinkPath`, `urlWithinBundle`, `bundleUrl` and `trackedFetch` in the tool source.
 [^review]: Security review, finding A2 and "Limits of the control".

@@ -2031,20 +2031,18 @@
   // Partial expansion: a directory or tag node reveals its neighbours one page at a time.
   var EXPAND_PAGE = 8;          // neighbours revealed per click, and hidden per long-press
   var DEFAULT_CONCEPTS = 50;    // concepts a directory or tag hub shows on load
-  // Feature toggles. An unreleased toggle ships inert: its entry is hardwired false here and
-  // featureOn() never returns true for it, whatever browser storage says. A preview toggle has
+  // Feature toggles. An unreleased toggle ships inert: featureOn() always returns false for it,
+  // whatever browser storage says. It is listed as hardwired off and has no switch. A preview toggle has
   // a default and is switched by the reader on the generated .runtime/features.md page; the
   // change takes effect at once and is kept in this browser.
   var FEATURES = {
     unreleased: {
-      // Add a toggle here with the value false while its feature is not ready to ship.
-    },
-    preview: {
       assistant: {
-        default: true,
         title: "Assistant",
         description: "The built-in AI assistant: chat, tools, voice and the model settings."
-      },
+      }
+    },
+    preview: {
       tagRecursiveReveal: {
         default: true,
         title: "Tag recursive reveal",
@@ -17172,7 +17170,7 @@
 
   function initAssistant() {
     if (asInited) return;
-    // The panel is a preview feature; leave everything untouched when it is off.
+    // The assistant is an unreleased toggle; leave everything untouched when it is off.
     if (!featureOn("assistant")) return;
     asInited = true;
     if (!ASSISTANT_ENABLED) {

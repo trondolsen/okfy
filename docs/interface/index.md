@@ -4,7 +4,6 @@ How a user points the tool at a bundle, and how a bundle is delivered.
 
 - [URL parameters](url-parameters.md) – `bundle`, `start` and `depth`.
 - [Languages](languages.md) – the interface translations, language selection and writing direction.
-- [Assistant](assistant.md) – the optional in-page AI agent that chats about the bundle through a provider you configure.
 - [Runtime directory](runtime.md) – the synthetic `.runtime` directory that shows the viewer's own state.
 - [Local folders](local-folders.md) – opening a folder or dropping one on the window.
 - [File, image and media preview](file-preview.md) – how non-Markdown files are shown, including images, audio and video.

@@ -42,7 +42,6 @@ The `features.md` page is interactive. Its rows come from the `FEATURES` registr
 # Connections
 
 - [Interface](index.md)
-- [Assistant](assistant.md)
 - [URL parameters](url-parameters.md)
 - [Limits and budgets](../security/limits-and-budgets.md)
 

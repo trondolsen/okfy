@@ -27,7 +27,7 @@ Nothing the tool reads is trusted:[^source]
 | The preview's own reads | images, audio, video and PDF metadata |
 | State kept in this browser | the volume, the language, the assistant's settings |
 
-The assistant's replies are a sixth input — Markdown rendered by the same renderer — and are described in [Assistant data flow](assistant-data-flow.md) rather than here. See the [input handling explainer](attachments/input-handling.svg) for the entry points, the two validations, the caps and the policy backstop.
+The assistant's replies are a sixth input — Markdown rendered by the same renderer — and are described in Assistant data flow rather than here. See the [input handling explainer](attachments/input-handling.svg) for the entry points, the two validations, the caps and the policy backstop.
 
 # Paths and URLs
 

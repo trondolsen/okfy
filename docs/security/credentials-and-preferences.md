@@ -10,9 +10,6 @@ sources:
   - id: source
     resource: ../../okfy.html
     title: okfy.html – asLoad, asSave and the storage keys
-  - id: assistant
-    resource: ../interface/assistant.md
-    title: The assistant – Settings, providers and key handling
 ---
 
 # What is kept
@@ -67,9 +64,7 @@ Storage is per **origin**, so another page served from the same origin can read 
 
 # Connections
 
-- [Assistant data flow](assistant-data-flow.md)
 - [Input handling](input-handling.md)
-- [The assistant](../interface/assistant.md)
 - [Languages](../interface/languages.md)
 - [Residual risk](residual-risk.md)
 

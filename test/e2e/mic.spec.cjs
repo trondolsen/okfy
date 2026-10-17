@@ -142,7 +142,7 @@ function installDuplexStubs() {
   });
 }
 
-test('mikrofonen lytter, strømmer transkripsjonen og sender spørsmålet', async ({ page }) => {
+test.skip('mikrofonen lytter, strømmer transkripsjonen og sender spørsmålet', async ({ page }) => {
   await page.addInitScript(installMicStubs);
 
   await page.goto(`${explorer}?depth=all`);
@@ -247,7 +247,7 @@ test('mikrofonen lytter, strømmer transkripsjonen og sender spørsmålet', asyn
   await expect(page.locator('#asMicToggle')).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('en feilende sanntidsøkt stopper mikrofonen og viser årsaken', async ({ page }) => {
+test.skip('en feilende sanntidsøkt stopper mikrofonen og viser årsaken', async ({ page }) => {
   await page.addInitScript(installMicStubs);
 
   await page.goto(`${explorer}?depth=all`);
@@ -284,7 +284,7 @@ test('en feilende sanntidsøkt stopper mikrofonen og viser årsaken', async ({ p
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('okfy.assistant')).input.model)).toBe('voxtral-mini-transcribe-realtime-2602');
 });
 
-test('en overbelastet transkripsjonstjeneste forklares kort', async ({ page }) => {
+test.skip('en overbelastet transkripsjonstjeneste forklares kort', async ({ page }) => {
   await page.addInitScript(installMicStubs);
 
   await page.goto(`${explorer}?depth=all`);
@@ -320,7 +320,7 @@ test('en overbelastet transkripsjonstjeneste forklares kort', async ({ page }) =
   await expect(page.locator('#asMicToggle')).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('brukeren kan avbryte assistentens tale med stemmen', async ({ page }) => {
+test.skip('brukeren kan avbryte assistentens tale med stemmen', async ({ page }) => {
   await page.addInitScript(installDuplexStubs);
   await page.goto(`${explorer}?depth=all`);
   await expect(page.locator('#spinner')).toBeHidden();
@@ -372,7 +372,7 @@ test('brukeren kan avbryte assistentens tale med stemmen', async ({ page }) => {
   await expect.poll(async () => chats).toBeGreaterThan(2);
 });
 
-test('et spørsmål talt mens assistenten er opptatt, stilles når turen er ferdig', async ({ page }) => {
+test.skip('et spørsmål talt mens assistenten er opptatt, stilles når turen er ferdig', async ({ page }) => {
   await page.addInitScript(installMicStubs);
   await page.goto(`${explorer}?depth=all`);
   await expect(page.locator('#spinner')).toBeHidden();
@@ -426,7 +426,7 @@ test('et spørsmål talt mens assistenten er opptatt, stilles når turen er ferd
   expect(last[last.length - 2]).toEqual({ role: 'assistant', content: 'It is thorough.' });
 });
 
-test('en brukerboble som åpnes mens assistenten snakker bryter ikke verktøykallet', async ({ page }) => {
+test.skip('en brukerboble som åpnes mens assistenten snakker bryter ikke verktøykallet', async ({ page }) => {
   await page.addInitScript(installDuplexStubs);
   await page.goto(`${explorer}?depth=all`);
   await expect(page.locator('#spinner')).toBeHidden();
@@ -480,7 +480,7 @@ test('en brukerboble som åpnes mens assistenten snakker bryter ikke verktøykal
   expect(msgs[callAt + 1]).toMatchObject({ role: 'tool', tool_call_id: 's1' });
 });
 
-test('innstillingene viser bare navngitte inndataenheter og ber om mikrofonen ellers', async ({ page }) => {
+test.skip('innstillingene viser bare navngitte inndataenheter og ber om mikrofonen ellers', async ({ page }) => {
   await page.addInitScript(installMicStubs);
   await page.goto(`${explorer}?depth=all`);
   await expect(page.locator('#spinner')).toBeHidden();
@@ -518,7 +518,7 @@ test('innstillingene viser bare navngitte inndataenheter og ber om mikrofonen el
   await expect(page.locator('#asInputDevice')).toContainText('USB microphone');
 });
 
-test('inndataenhetsvarselet kan lukkes med krysset', async ({ page }) => {
+test.skip('inndataenhetsvarselet kan lukkes med krysset', async ({ page }) => {
   await page.addInitScript(installMicStubs);
   await page.goto(`${explorer}?depth=all`);
   await expect(page.locator('#spinner')).toBeHidden();

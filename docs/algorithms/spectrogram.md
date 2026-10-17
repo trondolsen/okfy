@@ -60,7 +60,6 @@ Only **audio** draws this view. A video plays in a plain media element with the 
 # Connections
 
 - [Audio and video previews](../interface/file-preview.md)
-- [The assistant](../interface/assistant.md)
 - [Media file kinds](../design/interface-design.md)
 - [Limits and budgets](../security/limits-and-budgets.md)
 

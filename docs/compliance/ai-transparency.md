@@ -16,9 +16,6 @@ sources:
   - id: readme
     resource: ../../README.md
     title: okfy – README
-  - id: dataflow
-    resource: ../security/assistant-data-flow.md
-    title: Assistant data flow
   - id: ai-act
     resource: https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50
     title: EU AI Act, Article 50 – transparency obligations
@@ -67,8 +64,6 @@ The assistant reads the bundle and, on request, changes what the viewer shows; i
 
 # Connections
 
-- [Assistant](../interface/assistant.md)
-- [Assistant data flow](../security/assistant-data-flow.md)
 - [Local processing](../principles/local-processing.md)
 - [Untrusted bundles](../principles/untrusted-bundles.md)
 - [About this bundle](../about-this-bundle.md)

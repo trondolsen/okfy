@@ -25,7 +25,7 @@ See the [feature toggles explainer](attachments/feature-toggles.svg) for the two
 
 # The registry
 
-Toggles live in the `FEATURES` registry in `okfy.html`, split into `unreleased` and `preview`. A preview entry carries a `default`, a `title` and a `description`; an unreleased entry is listed with the value false.
+Toggles live in the `FEATURES` registry in `okfy.html`, split into `unreleased` and `preview`. A preview entry carries a `default`, a `title` and a `description`; an unreleased entry is listed as hardwired off, with no `default` and no switch. In this revision `assistant` is the unreleased entry.
 
 `featureOn(name)` is the only reader. It returns false for an unreleased or unknown name, so a typo, a retired toggle and a hardwired toggle all fail closed. For a preview name it reads the stored choice, else the default. `setFeature(name, on)` accepts preview names only.
 
@@ -58,7 +58,6 @@ A toggle is a UI boundary, not a security boundary. Turning a feature off does n
 # Connections
 
 - [Runtime directory](../interface/runtime.md)
-- [Assistant](../interface/assistant.md)
 - [Local processing](../principles/local-processing.md)
 - [Limits and budgets](../security/limits-and-budgets.md)
 

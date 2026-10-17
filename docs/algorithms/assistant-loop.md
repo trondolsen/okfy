@@ -6,7 +6,7 @@ tags: [algorithm, assistant, agent-loop, tools, context]
 okfx:
   mode: reference
   version: praxis/1
-  release: preview
+  release: unreleased
 sources:
   - id: source
     resource: ../../okfy.html

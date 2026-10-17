@@ -57,7 +57,6 @@ On release the slider's live value is read, so the head lands exactly where the 
 
 - [Audio and video previews](../interface/file-preview.md)
 - [Spectrogram](spectrogram.md)
-- [The assistant](../interface/assistant.md)
 - [Interface design](../design/interface-design.md)
 
 [^source]: `asScrubPlan`, `asScrubWindow`, `asScrubCurve` and `pvAudioScrubTick` in the tool source.

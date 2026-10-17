@@ -70,12 +70,13 @@ A page may name several decks (`decks: [Tour, Model]`), and any deck name a page
 uses becomes a deck holding every page that names it. Decks are created and filled
 in as the bundle loads, and at most eight decks are built.
 
-### Assistant (optional)
+### Assistant (unreleased)
 
-okfy includes an assistant, enabled by default on a desktop layout (open at
-startup, with the filter panel collapsed); the toolbar's **Assistant** button
-toggles it. Ask it questions about the loaded
-bundle; it calls an LLM provider you configure
+okfy includes an assistant, currently gated by an unreleased toggle and disabled
+in this revision: the panel and its toolbar button are not created. When it ships,
+it will be enabled by default on a desktop layout (open at startup, with the filter
+panel collapsed), and the toolbar's **Assistant** button will toggle it. Ask it
+questions about the loaded bundle; it calls an LLM provider you configure
 (DeepSeek, Mistral, Azure OpenAI, a local llama.cpp server, or any
 OpenAI-compatible endpoint) and can search and read concepts to ground its answers.
 
@@ -97,13 +98,12 @@ OpenAI-compatible endpoint) and can search and read concepts to ground its answe
   a short summary through a text-to-speech model it calls with a `speak` tool, and
   an inline speaker in the input prompt interrupts playback.
 
-See [Assistant](docs/interface/assistant.md) and
-[Assistant data flow](docs/security/assistant-data-flow.md).
+The assistant concepts are unreleased and are not linked from this release.
 
 ### AI transparency
 
 okfy is developed with AI assistance, under human instruction and review, and its
-optional assistant is an AI system. [AI transparency](TRANSPARENCY.md) states what
+assistant is an AI system when its unreleased toggle is enabled. [AI transparency](TRANSPARENCY.md) states what
 that means: the assistant talks to a model you configure and its answers are
 AI-generated and can be wrong, nothing is sent until you ask, and the project makes
 no automated decisions about you. The bundled documentation is AI-assisted and

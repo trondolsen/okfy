@@ -55,7 +55,6 @@ Reaching a limit rejects the load or the growth with a message, and keeps any pr
 - [Markdown preview](../algorithms/markdown-preview.md)
 - [URL and network bounds](url-and-network-bounds.md)
 - [Bounded streaming and reserved capacity](streaming-and-budgets.md)
-- [Assistant data flow](assistant-data-flow.md)
 - [Residual risk](residual-risk.md)
 
 [^review]: Security review, "Limits in revision 2-draft" and "Behavior changes".
