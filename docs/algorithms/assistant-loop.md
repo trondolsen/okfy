@@ -58,6 +58,7 @@ A request past the deadline or over the streamed-byte cap fails and is reported.
 - [Assistant](../interface/assistant.md)
 - [Assistant data flow](../security/assistant-data-flow.md)
 - [Limits and budgets](../security/limits-and-budgets.md)
+- [Large language models](large-language-models.md)
 
 [^source]: `asAgent`, `asFinalAnswer`, `asWireMessages` and `asCompactContext` in the tool source.
 [^assistant]: The assistant concept, "Tools" and the agent loop.

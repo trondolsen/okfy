@@ -1,0 +1,228 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2470" viewBox="0 0 1080 2470" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">How a large language model works — okfy algorithm explainer</title>
+  <desc id="d">What a large language model does in one call, and what its environment has to supply. The model is a next-token predictor: in one call it sees only the tokens inside its context window, and it has no memory between calls, so the harness re-sends the whole window every time — the system prompt, the conversation and the tool results. The text is split by the model's tokenizer into ids; each id becomes a learned vector and a position signal is added, because order matters. A stack of decoder-only transformer blocks then mixes information: attention lets each position weight the positions before it, a causal mask keeps anything later from leaking in, and a feed-forward network transforms each position on its own; every block keeps a residual connection and a normalisation. The final layer produces one score per token in the vocabulary, and a softmax turns those scores into a probability distribution over the next token. Sampling picks a single token from that distribution, with temperature, top-p and top-k reshaping it, appends the token to the window and runs the whole model again — so a reply is generated one token at a time, and streaming is just those tokens arriving as they are made. Generation stops at an end token, a stop sequence or the output cap. Everything else is the environment. The model cannot read a file, run a command, open a socket or remember yesterday; it can only turn tokens into tokens. The harness assembles the context, sends the request to the provider, executes any tool call the model emits, appends the result to the window and asks again, and it enforces the limits. A tool call is only text that names a tool and passes arguments matching its schema: the model never runs anything, so nothing it writes executes on its own. Because the model sees only the window, anything the harness leaves out does not exist to it, and anything it puts in is indistinguishable from instructions — which is why bundle text is treated as data.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables, so the figure reads as the
+         tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .ct { font-size: 12px; font-weight: 700; fill: #e7e9ee; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .region { fill: #1b1e26; stroke: #2e3341; stroke-width: 1.5; }
+      .fence { stroke: #5b8def; stroke-width: 2; fill: none; stroke-dasharray: 5 4; opacity: 0.6; }
+      .loop { fill: none; stroke: #5b8def; stroke-width: 2; stroke-dasharray: 5 4; }
+      .arc { fill: none; stroke: #5b8def; stroke-width: 1.5; opacity: 0.55; }
+      .brk { fill: none; stroke: #47506a; stroke-width: 2; }
+      .axis { stroke: #2e3341; stroke-width: 1.5; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="2470" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · ALGORITHM EXPLAINER</text>
+  <text x="56" y="110" class="title">How a large language model works</text>
+  <text x="56" y="148" class="subtitle">Tokens in, one token at a time out, and the harness holding the world</text>
+
+  <text x="56" y="214" class="h">1 · The context window is the whole world</text>
+  <rect x="56" y="238" width="968" height="300" rx="16" class="panel"/>
+
+  <text x="76" y="300" class="lab">One call sees only the tokens inside its context window</text>
+
+  <text x="208" y="340" class="sx" text-anchor="middle">system prompt</text>
+  <text x="480" y="340" class="sx" text-anchor="middle">the conversation</text>
+  <text x="730" y="340" class="sx" text-anchor="middle">tool results</text>
+  <text x="912" y="340" class="sx" text-anchor="middle">free</text>
+
+  <rect x="96" y="352" width="908" height="44" rx="10" fill="#1b1e26" stroke="#2e3341" stroke-width="1.5"/>
+  <rect x="96" y="352" width="224" height="44" rx="10" fill="#5b8def" fill-opacity="0.22"/>
+  <rect x="320" y="352" width="320" height="44" fill="#5b8def" fill-opacity="0.12"/>
+  <rect x="640" y="352" width="180" height="44" fill="#5b8def" fill-opacity="0.16"/>
+  <rect x="822" y="354" width="180" height="40" rx="8" fill="none" stroke="#47506a" stroke-width="1.5" stroke-dasharray="5 4"/>
+
+  <text x="96" y="418" class="sx">0 tokens</text>
+  <text x="1004" y="418" class="sx" text-anchor="end">the model's context length</text>
+
+  <text x="76" y="470" class="note">The model has no memory between calls: the harness re-sends the whole window — the system prompt, the</text>
+  <text x="76" y="494" class="note">conversation and the tool results — every time.</text>
+
+  <text x="56" y="592" class="h">2 · One forward pass</text>
+  <rect x="56" y="616" width="968" height="420" rx="16" class="panel"/>
+
+  <text x="76" y="678" class="lab">A decoder-only transformer turns the window into the next-token distribution</text>
+
+  <rect x="96" y="708" width="210" height="84" rx="10" class="card"/>
+  <text x="112" y="734" class="ct">tokens</text>
+  <text x="112" y="756" class="sx">the text is split</text>
+  <text x="112" y="774" class="sx">into ids</text>
+
+  <line x1="310" y1="750" x2="320" y2="750" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 328 750 L 319 745 L 319 755 Z" fill="#9aa2b3"/>
+
+  <rect x="328" y="708" width="210" height="84" rx="10" class="card"/>
+  <text x="344" y="734" class="ct">embed + position</text>
+  <text x="344" y="756" class="sx">each id becomes a</text>
+  <text x="344" y="774" class="sx">vector; order is added</text>
+
+  <line x1="542" y1="750" x2="552" y2="750" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 560 750 L 551 745 L 551 755 Z" fill="#9aa2b3"/>
+
+  <rect x="560" y="708" width="210" height="84" rx="10" class="card"/>
+  <text x="576" y="734" class="ct">attention + MLP</text>
+  <text x="576" y="756" class="sx">weighted mixing, then</text>
+  <text x="576" y="774" class="sx">a per-token transform</text>
+
+  <line x1="774" y1="750" x2="784" y2="750" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 792 750 L 783 745 L 783 755 Z" fill="#9aa2b3"/>
+
+  <rect x="792" y="708" width="210" height="84" rx="10" class="card"/>
+  <text x="808" y="734" class="ct">next-token logits</text>
+  <text x="808" y="756" class="sx">one score per token</text>
+  <text x="808" y="774" class="sx">in the vocabulary</text>
+
+  <path d="M 560 800 L 560 812 L 770 812 L 770 800" class="brk"/>
+  <text x="665" y="832" class="sx" text-anchor="middle">× N layers</text>
+
+  <rect x="96" y="856" width="56" height="30" rx="6" class="card"/>
+  <rect x="164" y="856" width="56" height="30" rx="6" class="card"/>
+  <rect x="232" y="856" width="56" height="30" rx="6" class="card"/>
+  <rect x="300" y="856" width="56" height="30" rx="6" class="card"/>
+  <rect x="368" y="856" width="56" height="30" rx="6" class="card"/>
+  <rect x="436" y="856" width="56" height="30" rx="6" fill="#5b8def" fill-opacity="0.28" stroke="#5b8def" stroke-width="1.5"/>
+  <text x="464" y="876" class="sx" text-anchor="middle">mat</text>
+  <text x="124" y="876" class="sx" text-anchor="middle">a</text>
+  <text x="192" y="876" class="sx" text-anchor="middle">cat</text>
+  <text x="260" y="876" class="sx" text-anchor="middle">sat</text>
+  <text x="328" y="876" class="sx" text-anchor="middle">on</text>
+  <text x="396" y="876" class="sx" text-anchor="middle">the</text>
+
+  <path d="M 464 886 Q 294 922 124 886" class="arc"/>
+  <path d="M 464 886 Q 328 918 192 886" class="arc"/>
+  <path d="M 464 886 Q 362 914 260 886" class="arc"/>
+  <path d="M 464 886 Q 396 910 328 886" class="arc"/>
+  <path d="M 464 886 Q 430 902 396 886" class="arc"/>
+
+  <text x="96" y="944" class="sx">Each token attends to itself and the tokens before it — a causal mask — so nothing later can leak in.</text>
+
+  <text x="76" y="976" class="note">The stack repeats that block: each layer keeps a residual connection and a normalisation, so the signal is</text>
+  <text x="76" y="1000" class="note">passed through and only the attention and feed-forward weights change it.</text>
+
+  <text x="56" y="1090" class="h">3 · Choosing the next token</text>
+  <rect x="56" y="1114" width="968" height="370" rx="16" class="panel"/>
+
+  <text x="76" y="1176" class="lab">The model emits one token, then the whole thing runs again</text>
+
+  <text x="300" y="1206" class="sx" text-anchor="middle">a low temperature — a sharp pick</text>
+  <text x="760" y="1206" class="sx" text-anchor="middle">a higher temperature — a wider spread</text>
+
+  <line x1="130" y1="1344" x2="470" y2="1344" class="axis"/>
+  <line x1="590" y1="1344" x2="930" y2="1344" class="axis"/>
+
+  <rect x="150" y="1243.2" width="44" height="100.8" rx="4" fill="#5b8def"/>
+  <rect x="214" y="1324.4" width="44" height="19.6" rx="4" fill="#5b8def" fill-opacity="0.7"/>
+  <rect x="278" y="1334.2" width="44" height="9.8" rx="4" fill="#5b8def" fill-opacity="0.55"/>
+  <rect x="342" y="1338.4" width="44" height="5.6" rx="3" fill="#5b8def" fill-opacity="0.45"/>
+  <rect x="406" y="1339.8" width="44" height="4.2" rx="2" fill="#5b8def" fill-opacity="0.35"/>
+
+  <rect x="610" y="1296.4" width="44" height="47.6" rx="4" fill="#5b8def"/>
+  <rect x="674" y="1306.2" width="44" height="37.8" rx="4" fill="#5b8def" fill-opacity="0.75"/>
+  <rect x="738" y="1318.8" width="44" height="25.2" rx="4" fill="#5b8def" fill-opacity="0.6"/>
+  <rect x="802" y="1327.2" width="44" height="16.8" rx="4" fill="#5b8def" fill-opacity="0.5"/>
+  <rect x="866" y="1331.4" width="44" height="12.6" rx="4" fill="#5b8def" fill-opacity="0.4"/>
+
+  <text x="172" y="1364" class="sx" text-anchor="middle">the</text>
+  <text x="236" y="1364" class="sx" text-anchor="middle">a</text>
+  <text x="300" y="1364" class="sx" text-anchor="middle">this</text>
+  <text x="364" y="1364" class="sx" text-anchor="middle">one</text>
+  <text x="428" y="1364" class="sx" text-anchor="middle">…</text>
+
+  <text x="632" y="1364" class="sx" text-anchor="middle">the</text>
+  <text x="696" y="1364" class="sx" text-anchor="middle">a</text>
+  <text x="760" y="1364" class="sx" text-anchor="middle">this</text>
+  <text x="824" y="1364" class="sx" text-anchor="middle">one</text>
+  <text x="888" y="1364" class="sx" text-anchor="middle">…</text>
+
+  <text x="76" y="1420" class="note">Sampling picks one token from that distribution — temperature, top-p and top-k reshape it — appends it to the</text>
+  <text x="76" y="1444" class="note">window, and runs the whole model again. It stops at an end token, a stop sequence or the output cap.</text>
+
+  <text x="56" y="1538" class="h">4 · The harness around it</text>
+  <rect x="56" y="1562" width="968" height="400" rx="16" class="panel"/>
+
+  <text x="76" y="1624" class="lab">The model turns tokens into tokens; everything else is supplied</text>
+
+  <rect x="96" y="1654" width="400" height="208" rx="12" class="region"/>
+  <text x="112" y="1682" class="br">the model</text>
+  <text x="112" y="1712" class="sx">sees only the context window</text>
+  <text x="112" y="1736" class="sx">no memory between calls</text>
+  <text x="112" y="1760" class="sx">no clock, files or network</text>
+  <text x="112" y="1784" class="sx">emits text, or a tool call</text>
+
+  <line x1="518" y1="1644" x2="518" y2="1872" class="fence"/>
+
+  <rect x="540" y="1654" width="464" height="208" rx="12" class="region"/>
+  <text x="556" y="1682" class="br">the harness — okfy</text>
+  <text x="556" y="1712" class="sx">assembles the context</text>
+  <text x="556" y="1736" class="sx">sends the request to the provider</text>
+  <text x="556" y="1760" class="sx">executes the tool calls</text>
+  <text x="556" y="1784" class="sx">appends the results and asks again</text>
+  <text x="556" y="1808" class="sx">enforces the limits and the budget</text>
+
+  <text x="76" y="1902" class="note">A tool call is only text: the model names a tool and passes arguments matching its schema. The harness</text>
+  <text x="76" y="1926" class="note">decides whether and how to run it, so nothing the model writes executes on its own.</text>
+
+  <text x="56" y="2016" class="h">5 · The round trip</text>
+  <rect x="56" y="2040" width="968" height="320" rx="16" class="panel"/>
+
+  <text x="76" y="2102" class="lab">One question is a round trip, repeated until the answer is done</text>
+
+  <rect x="96" y="2132" width="162" height="84" rx="10" class="card"/>
+  <text x="112" y="2158" class="ct">the question</text>
+  <text x="112" y="2180" class="sx">the user's text</text>
+
+  <line x1="262" y1="2174" x2="272" y2="2174" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 280 2174 L 271 2169 L 271 2179 Z" fill="#9aa2b3"/>
+
+  <rect x="282" y="2132" width="162" height="84" rx="10" class="card"/>
+  <text x="298" y="2158" class="ct">the request</text>
+  <text x="298" y="2180" class="sx">context + tools</text>
+
+  <line x1="448" y1="2174" x2="458" y2="2174" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 466 2174 L 457 2169 L 457 2179 Z" fill="#9aa2b3"/>
+
+  <rect x="468" y="2132" width="162" height="84" rx="10" class="card"/>
+  <text x="484" y="2158" class="ct">the reply</text>
+  <text x="484" y="2180" class="sx">text, or a call</text>
+
+  <line x1="634" y1="2174" x2="644" y2="2174" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 652 2174 L 643 2169 L 643 2179 Z" fill="#9aa2b3"/>
+
+  <rect x="654" y="2132" width="162" height="84" rx="10" class="card"/>
+  <text x="670" y="2158" class="ct">the tool runs</text>
+  <text x="670" y="2180" class="sx">in the harness</text>
+
+  <line x1="820" y1="2174" x2="830" y2="2174" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 838 2174 L 829 2169 L 829 2179 Z" fill="#9aa2b3"/>
+
+  <rect x="840" y="2132" width="162" height="84" rx="10" class="card"/>
+  <text x="856" y="2158" class="ct">the result</text>
+  <text x="856" y="2180" class="sx">and asked again</text>
+
+  <path d="M 921 2216 L 921 2246 L 363 2246 L 363 2224" class="loop"/>
+  <path d="M 358 2226 L 363 2216 L 368 2226 Z" fill="#5b8def"/>
+  <text x="642" y="2274" class="sx" text-anchor="middle">until a reply carries no tool calls</text>
+
+  <text x="76" y="2302" class="note">Because the model sees only the window, anything the harness leaves out does not exist to it — and anything</text>
+  <text x="76" y="2326" class="note">it puts in is indistinguishable from instructions, which is why bundle text is treated as data.</text>
+
+  <text x="56" y="2400" class="note">A model is a next-token predictor with no memory of its own; the assistant is the harness that gives it a</text>
+  <text x="56" y="2424" class="note">window, tools and a loop. The assistant loop and assistant data flow concepts draw those parts.</text>
+</svg>
