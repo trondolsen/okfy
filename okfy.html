@@ -6227,9 +6227,10 @@
 
     // Nodes
     // Labels render in screen space (the canvas has no world transform). Size
-    // tracks the zoom but is smaller when zoomed out, and labels stay visible
-    // over a wider zoom range, fading out only at the far end.
-    var fontScreen = clamp(11.5 * view.k, 9, 18);
+    // tracks the zoom but is smaller when zoomed out, tapering with the graph down
+    // to a 5 px floor so a label stays proportional to its shrinking node, and
+    // labels stay visible over a wider zoom range, fading out only at the far end.
+    var fontScreen = clamp(11.5 * view.k, 5, 18);
     var labelAlpha = clamp((view.k - 0.30) / 0.25, 0, 1);
     for (i = 0; i < nodes.length; i++) {
       var n = nodes[i];
@@ -10598,7 +10599,9 @@
       previewNext = previewed ? Math.max(files.length + 1, Math.ceil(files.length * 1.5)) : 2;
       var first = !previewed;
       previewed = true;
-      if (load(files.slice(), previewRoot, null, !first)) { applyBundleDecks(); autoFit = true; }
+      // Only the first preview frames the graph — load() does that for a fresh, non-preserve
+      // load. A later rebuild grows in place and must not re-zoom the view the user has set.
+      if (load(files.slice(), previewRoot, null, !first)) applyBundleDecks();
     }
     try {
       // The bundle is the page root: crawl index.md (or the ?start file) beside the page.
@@ -10607,12 +10610,13 @@
       var files = await loadBundleFromFolder(root, depth, previewFiles);
       if (request !== bundleLoadRequest) return false;
       if (files && files.length) {
-        // With previews already on screen, grow the finished graph in place and
-        // apply the bundle's declared decks; otherwise build it once as before.
+        // With previews already on screen, grow the finished graph in place — keeping the
+        // view the user has set — and apply the bundle's declared decks; otherwise build
+        // it once as before.
         var ok;
         if (previewed) {
           ok = load(files, root, null, true);
-          if (ok) { applyBundleDecks(); fitView(); autoFit = true; }
+          if (ok) applyBundleDecks();
         } else {
           ok = load(files, root);
         }

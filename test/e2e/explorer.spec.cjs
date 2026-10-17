@@ -38,7 +38,9 @@ const test = base.extend({
       };
       prototype.fillText = function (text, ...args) {
         if (this.canvas.id === 'c' && point) {
-          window.graphLabels[text] = { ...point, alpha: this.globalAlpha };
+          // `font` is recorded too: it depends only on the view's zoom, so a test can
+          // tell whether a rebuild kept the view or re-framed it.
+          window.graphLabels[text] = { ...point, alpha: this.globalAlpha, font: this.font };
         }
         return fillText.call(this, text, ...args);
       };
@@ -1778,6 +1780,27 @@ test('depth=0 laster neste nivå ved klikk, ikke ved oppstart', async ({ page })
   await expect(page.locator('#spinner')).toBeHidden();
   await clickNode(page, 'Referanse');
   await expect(page.locator('#pvTitle')).toHaveText('Referanse');
+});
+
+test('beholder zoom når noder lastes dynamisk inn i grafen', async ({ page }) => {
+  await loadBundle(page, '0');
+  await expect(page.locator('#stats')).toHaveText('1 files · 0 links');
+
+  // Zoom out, so the view is clearly not the one the auto-fit produced.
+  const canvas = await page.locator('#c').boundingBox();
+  await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
+  await page.mouse.wheel(0, 400);
+  let labels = await renderedLabels(page);
+  expect(labels['index.md'], 'Fant ikke noden «index.md»').toBeTruthy();
+  const zoomFont = labels['index.md'].font;
+
+  // Loading the next level grows the graph in place, so the view the user set must be kept:
+  // the label is drawn at the same size, rather than re-fitted to the whole graph.
+  await clickNode(page, 'index.md');
+  await expect(page.locator('#stats')).toHaveText('2 files · 1 links');
+  labels = await renderedLabels(page);
+  expect(labels['Veiledning'], 'Neste nivå skal være lastet inn').toBeTruthy();
+  expect(labels['index.md'].font).toBe(zoomFont);
 });
 
 test('viser en feilside i .runtime når pakken mangler', async ({ page }) => {

@@ -35,7 +35,7 @@ Only Markdown files are fetched and followed. Any other referenced file — non-
 
 # Progressive rendering
 
-The crawl reports each file it loads while it is still running, and the viewer rebuilds the graph from the files discovered so far. Nodes appear as they are found instead of all at once when the crawl ends, and the finished crawl grows the graph in place, keeping node positions. Declared decks are created and filled in the same way, so a deck appears when its first member page loads and its remaining members are appended as they load. The rebuilds back off geometrically, so their number grows with the logarithm of the file count, not with the file count itself.[^source]
+The crawl reports each file it loads while it is still running, and the viewer rebuilds the graph from the files discovered so far. Nodes appear as they are found instead of all at once when the crawl ends, and the finished crawl grows the graph in place, keeping node positions. Only the first build fits the graph to the viewport; every later rebuild **keeps the view**, so zooming and panning into a part of the graph while it is still loading is not undone. Declared decks are created and filled in the same way, so a deck appears when its first member page loads and its remaining members are appended as they load. The rebuilds back off geometrically, so their number grows with the logarithm of the file count, not with the file count itself.[^source]
 
 # Invariants
 
