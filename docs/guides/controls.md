@@ -89,10 +89,10 @@ of the warning.
 
 Back and Forward entries that stay inside the preview move through pages without
 a warning. At the page's first history entry, Back and the mouse's back button
-are caught every time: the viewer stays and a short notice explains that closing
-the tab or entering another address leaves. This holds in Firefox too, which
-keeps the page in its back/forward cache. Forward entries are in-app history, so
-they do not leave either.[^source]
+are caught every time: the viewer stays and the event is ignored silently.
+Closing the tab or entering another address remains an intentional exit. This
+holds in Firefox too, which keeps the page in its back/forward cache. Forward
+entries are in-app history, so they do not leave either.[^source]
 
 # Connections
 

@@ -553,15 +553,6 @@
     background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
     padding: 8px 10px; box-shadow: 0 8px 30px rgba(0,0,0,.45); display: none;
   }
-  /* A short notice shown when Back is pressed at the page's first history entry. */
-  #leaveNotice {
-    position: fixed; z-index: 30; left: 50%; bottom: 24px; transform: translateX(-50%);
-    max-width: min(420px, calc(100vw - 32px)); padding: 10px 14px;
-    border: 1px solid var(--line); border-radius: 10px;
-    background: var(--panel); color: var(--text); font-size: 13px;
-    box-shadow: 0 8px 30px rgba(0,0,0,.45); text-align: center; pointer-events: none;
-  }
-  #leaveNotice[hidden] { display: none; }
   #tip .t { font-weight: 600; margin-bottom: 2px; }
   #tip .meta { color: var(--muted); font-size: 12px; }
   #tip .desc { margin-top: 5px; }
@@ -1673,7 +1664,6 @@
   </div>
 </div>
 <div id="tip"></div>
-<div id="leaveNotice" role="status" aria-live="polite" hidden></div>
 <div id="dial" hidden>
   <svg viewBox="-132 -132 264 264" width="264" height="264" aria-hidden="true" focusable="false">
     <defs>
@@ -9777,7 +9767,6 @@
     if (!leaveGuardPushed) return;
     leaveGuardPushed = false;
     pushLeaveGuard();
-    showLeaveNotice();
   });
 
   // The page's first history entry is the only one that can lead out of okfy.
@@ -9802,16 +9791,6 @@
     // The first entry was reached without a popstate (Firefox may suppress it).
     leaveGuardPushed = false;
     pushLeaveGuard();
-    showLeaveNotice();
-  }
-  var leaveNoticeTimer = 0;
-  function showLeaveNotice() {
-    var el = document.getElementById("leaveNotice");
-    if (!el) return;
-    el.textContent = t("msg.leaveCaught", "Back stays inside okfy. Close the tab or enter another address to leave.");
-    el.hidden = false;
-    if (leaveNoticeTimer) clearTimeout(leaveNoticeTimer);
-    leaveNoticeTimer = setTimeout(function () { el.hidden = true; }, 4000);
   }
   // A bfcache restore brings the page back without a popstate event, and the forward
   // history can still hold the page the reader left for. Push a guard above the
@@ -9819,8 +9798,6 @@
   window.addEventListener("pageshow", function (e) {
     if (!e.persisted) return;
     pushLeaveGuard();
-    var notice = document.getElementById("leaveNotice");
-    if (notice) notice.hidden = true;
   });
   function handlePreviewClick(e) {
     var a = e.target && e.target.closest ? e.target.closest("a") : null;
