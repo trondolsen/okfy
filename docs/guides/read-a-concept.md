@@ -32,7 +32,9 @@ content, then click again to open it.
 - **Footnotes** jump to the note and back; a footnote that is just a URL is shown in place as an external-link marker (↗) that opens the URL in a new tab.
 - Use the **‹** and **›** buttons in the preview header, `Alt`+`←` and
   `Alt`+`→`, or the mouse's back and forward buttons to step through the pages
-  you have visited.
+  you have visited. The browser's own Back and Forward controls use the same
+  preview history, so they step through those pages instead of leaving the
+  viewer.
 
 # Jump between pages that share a tag
 

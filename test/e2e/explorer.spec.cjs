@@ -1597,6 +1597,13 @@ test('forhåndsviser Markdown og navigerer tilbake og frem', async ({ page }) =>
   await expect(page.locator('#pvTitle')).toHaveText('Veiledning');
   await page.locator('#pvFwd').click();
   await expect(page.locator('#pvTitle')).toHaveText('Referanse');
+  // The browser's own Back/Forward controls reuse the same preview history.
+  await page.evaluate(() => history.back());
+  await expect(page.locator('#pvTitle')).toHaveText('Veiledning');
+  await expect(page.locator('#pvBack')).toBeDisabled();
+  await page.evaluate(() => history.forward());
+  await expect(page.locator('#pvTitle')).toHaveText('Referanse');
+  await expect(page.locator('#pvFwd')).toBeDisabled();
   await page.locator('#pvClose').click();
   await expect(page.locator('#preview')).not.toHaveClass(/\bshow\b/);
 });
