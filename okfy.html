@@ -1810,8 +1810,13 @@
   // ---------------------------------------------------------------- state
   var W = 0, H = 0, dpr = 1;
   var nodes = [], links = [], allNodes = [], allLinks = [], statsNodes = [], dirNodes = null, fileMap = null;
+  var allHubPairs = [], hubPairs = [];   // tag hubs that share concepts (affinity, never drawn)
   var graphStack = [""], graphIndex = 0, graphFocus = "";
   var view = { k: 1, x: 0, y: 0 };
+  var viewAnim = null;      // an in-flight ease from the current view to a fitted one
+  var VIEW_EASE_MS = 420;   // how long a reset or a fresh bundle takes to settle the framing
+  var VIEW_FOLLOW = 0.14;   // per-frame easing while the load adds nodes to the graph
+  var viewTaken = false;    // the user has moved the view since this load started
   var ringGap = 160, maxDepth = 1;
   var alpha = 1;
   var autoFit = false;   // keep the view framed while a freshly built layout settles
@@ -5497,11 +5502,24 @@
       }
       return hn;
     }
+    // Two tag hubs applied to the same concept share a link. Count those overlaps so
+    // related tags can pull together in the layout and cluster instead of spreading
+    // evenly around the ring. These are not graph links: nothing is drawn, and they do
+    // not count toward degree, the link total or the graph caps.
+    var pairSeen = new Map();
+    function noteHubPair(a, b) {
+      if (a === b) return;
+      var flip = a.id > b.id, key = (flip ? b.id : a.id) + "\u0000" + (flip ? a.id : b.id);
+      var rec = pairSeen.get(key);
+      if (rec) rec.w++;
+      else pairSeen.set(key, { a: flip ? b : a, b: flip ? a : b, w: 1 });
+    }
     files.forEach(function (f) {
       if (!hubsOn) return;   // no hubs when neither the toggle nor a tag filter is active
       var node = fileMapLocal.get(f.path);
       if (!node || (node.kind !== "concept" && node.kind !== "index")) return;
       var tags = Array.isArray(node.tags) ? node.tags : [];
+      var leaves = [];
       tags.forEach(function (tag) {
         var segs = String(tag).split("/"), parent = null;
         for (var i = 1; i <= segs.length; i++) {
@@ -5522,7 +5540,12 @@
         tl.ti = parent.tagKids.length;
         parent.tagKids.push(node);
         pushGraphLink(tl, links);
+        leaves.push(parent);
       });
+      // The leaf hubs of this concept all share it, so each pair gains one point.
+      for (var x = 0; x < leaves.length; x++) {
+        for (var y = x + 1; y < leaves.length; y++) noteHubPair(leaves[x], leaves[y]);
+      }
     });
 
     tagNodes.forEach(function (tn) {
@@ -5534,7 +5557,7 @@
     nodes.forEach(function (n) { n.degree = 0; });
     links.forEach(function (l) { l.source.degree++; l.target.degree++; });
 
-    return { nodes: nodes, links: links, dirs: dirMap, files: fileMapLocal, hubsOn: hubsOn, tagMaxSegs: tagMaxSegs };
+    return { nodes: nodes, links: links, dirs: dirMap, files: fileMapLocal, hubsOn: hubsOn, tagMaxSegs: tagMaxSegs, hubPairs: Array.from(pairSeen.values()) };
   }
 
   // ---------------------------------------------------------------- layout
@@ -5568,6 +5591,7 @@
     treeDist = ringGap;
     refDist = ringGap * 1.4;
     tagDist = ringGap * 1.7;
+    hubDist = ringGap * 0.9;
     // A frame moves a node only a few percent of a ring gap, and the acceleration cap equals the
     // speed cap (see MAX_SPEED), so a busy hub stays calm enough to click while it settles.
     MAX_SPEED = clamp(ringGap * 0.05, 4, 12);
@@ -5640,6 +5664,7 @@
       if (l.kind === "tag" && l.ti != null) return nodeShown(l.target) > l.ti;
       return true;
     });
+    hubPairs = allHubPairs.filter(function (p) { return vis.has(p.a) && vis.has(p.b); });
     statsNodes = scoped;
     nodes.forEach(function (n) { n.degree = 0; });
     links.forEach(function (l) { l.source.degree++; l.target.degree++; });
@@ -5710,6 +5735,7 @@
     graphFocus = path;
     applyFocus();
     relayout();
+    fitView(true);   // ease into the new subgraph's framing
     autoFit = true;   // re-frame the new subgraph as it settles
     updateGraphNav();
     updateStats();
@@ -5772,6 +5798,7 @@
   var MIN_DIST2 = 36;                // softening distance², added to d² so a near pair pushes gently
   var treeDist = 150, refDist = 220, tagDist = 260;
   var treeStrength = 0.8, refStrength = 0.05, tagStrength = 0.03;
+  var hubDist = 150, hubStrength = 0.18;   // layout-only pull between tag hubs sharing concepts
   var radialStrength = 0.35, centerStrength = 0.003, collideStrength = 1.0;
   // The step caps are set by recomputeRadii() from the ring gap. The acceleration cap equals the
   // speed cap: physicsStep adds the half-step `0.5 * a` to the position, so a node moves at most
@@ -6018,6 +6045,14 @@
       var rest = l.kind === "tree" ? treeDist : (l.kind === "tag" ? tagDist : refDist);
       var strength = l.kind === "tree" ? treeStrength : (l.kind === "tag" ? tagStrength : refStrength);
       physicsSpring(l.source, l.target, rest, strength, alpha);
+    }
+
+    // Layout only: tag hubs that share concepts pull together, so related tags form a
+    // cluster instead of spreading evenly around the ring. Nothing here is drawn, and
+    // a pair seen on more concepts pulls harder (up to a cap).
+    for (i = 0; i < hubPairs.length; i++) {
+      var hp = hubPairs[i];
+      physicsSpring(hp.a, hp.b, hubDist, hubStrength * Math.min(1, hp.w / 3), alpha);
     }
 
     for (i = 0; i < nodes.length; i++) {
@@ -6392,11 +6427,21 @@
     // crisp. resize() only updates dpr and the canvas, so the view is kept.
     if (window.devicePixelRatio && window.devicePixelRatio !== dpr) resize();
     tick();
-    if (autoFit) {
-      // Track the settling layout so the whole graph stays in view; stop once
-      // it has mostly settled (or when the user takes over — see interaction).
-      fitView();
-      if (alpha <= 0.15) autoFit = false;
+    if (viewAnim) {
+      // A settling layout keeps moving under the transition, so keep the target fresh.
+      if (autoFit) viewAnim.to = fitTarget();
+      stepViewAnim();
+    }
+    if (autoFit && !viewAnim) {
+      // Ease the framing toward the fit instead of snapping to it, so a batch of nodes
+      // that arrives during the load glides the view out rather than jumping it. Stop
+      // once the layout has settled and the framing has caught up.
+      var fit = fitTarget();
+      view.k += (fit.k - view.k) * VIEW_FOLLOW;
+      view.x += (fit.x - view.x) * VIEW_FOLLOW;
+      view.y += (fit.y - view.y) * VIEW_FOLLOW;
+      if (alpha <= 0.15 && Math.abs(fit.k - view.k) < 0.002 &&
+          Math.abs(fit.x - view.x) < 0.5 && Math.abs(fit.y - view.y) < 0.5) autoFit = false;
     }
     draw();
     perfTick();
@@ -6414,9 +6459,8 @@
     return null;
   }
 
-  // Fit the whole graph in the viewport, zoomed out as far as needed.
-  function fitView() {
-    if (!nodes.length || !W || !H) return;
+  // The view that frames the whole graph: zoomed out as far as needed.
+  function fitTarget() {
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     nodes.forEach(function (n) {
       var r = radiusOf(n) + 26; // node radius plus room for the label
@@ -6438,9 +6482,37 @@
     var fitK = Math.min(availW / bw, availH / bh);
     // Never zoom in past 1:1 on load/reset: show everything, otherwise all the way out.
     var k = clamp(Math.min(fitK, 1), MIN_ZOOM, MAX_ZOOM);
-    view.k = k;
-    view.x = W / 2 - ((minX + maxX) / 2) * k;
-    view.y = topInset + availH / 2 - ((minY + maxY) / 2) * k;
+    return {
+      k: k,
+      x: W / 2 - ((minX + maxX) / 2) * k,
+      y: topInset + availH / 2 - ((minY + maxY) / 2) * k
+    };
+  }
+
+  function applyView(t) { viewAnim = null; view.k = t.k; view.x = t.x; view.y = t.y; }
+
+  function easeInOut(p) { return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+
+  // Advance the reset/load transition. Date.now() keeps it ticking under a fake clock
+  // in the tests, where requestAnimationFrame runs without wall-clock time passing.
+  function stepViewAnim() {
+    if (!viewAnim) return;
+    var p = (Date.now() - viewAnim.t0) / viewAnim.ms;
+    if (!(p < 1)) { applyView(viewAnim.to); return; }
+    var e = easeInOut(Math.max(0, p));
+    var f = viewAnim.from, t = viewAnim.to;
+    view.k = f.k + (t.k - f.k) * e;
+    view.x = f.x + (t.x - f.x) * e;
+    view.y = f.y + (t.y - f.y) * e;
+  }
+
+  // Fit the whole graph in the viewport. With `animate`, ease into the new framing rather
+  // than jumping to it, so a reset or a fresh bundle reads as a move and not a cut.
+  function fitView(animate) {
+    if (!nodes.length || !W || !H) return;
+    var t = fitTarget();
+    if (!animate || reduceMotion) { applyView(t); return; }
+    viewAnim = { from: { k: view.k, x: view.x, y: view.y }, to: t, t0: Date.now(), ms: VIEW_EASE_MS };
   }
 
   // ---------------------------------------------------------------- interaction
@@ -6489,6 +6561,8 @@
       var st = pinchState();
       if (st && pinchPrev) {
         autoFit = false;   // the user is taking over the view
+        viewAnim = null;
+        viewTaken = true;
         var k = clamp(view.k * (st.dist / pinchPrev.dist), MIN_ZOOM, MAX_ZOOM);
         var wx = (pinchPrev.cx - view.x) / view.k, wy = (pinchPrev.cy - view.y) / view.k;
         view.x = st.cx - wx * k;
@@ -6505,6 +6579,8 @@
     if (dragNode) {
       moved = true;
       autoFit = false;
+      viewAnim = null;
+      viewTaken = true;
       var w = toWorld(e.clientX, e.clientY);
       dragNode.fx = w.x; dragNode.fy = w.y;
       alpha = Math.max(alpha, 0.5);
@@ -6512,6 +6588,8 @@
     }
     if (panning) {
       autoFit = false;
+      viewAnim = null;
+      viewTaken = true;
       view.x = panning.vx + (e.clientX - panning.x);
       view.y = panning.vy + (e.clientY - panning.y);
       return;
@@ -6559,7 +6637,7 @@
           // Double-click is unreliable on touch, so a single tap enters the
           // directory there; on desktop a single click stays inert. Expanding and
           // collapsing live on the press-and-hold dial instead.
-          if (touch && node.path !== graphFocus) { enterDir(node.path); fitView(); }
+          if (touch && node.path !== graphFocus) { enterDir(node.path); fitView(true); }
         } else if (node.kind === "tag") {
           toggleTag(node.label);
         } else if (node.kind === "file" && node.loaded === false) {
@@ -6615,6 +6693,8 @@
   canvas.addEventListener("wheel", function (e) {
     e.preventDefault();
     autoFit = false;
+    viewAnim = null;
+    viewTaken = true;
     var factor = Math.exp(-e.deltaY * 0.0015);
     var k = clamp(view.k * factor, MIN_ZOOM, MAX_ZOOM);
     var wx = (e.clientX - view.x) / view.k, wy = (e.clientY - view.y) / view.k;
@@ -9770,7 +9850,7 @@
   document.getElementById("open").addEventListener("click", pickFolder);
   document.getElementById("reload").addEventListener("click", function () { autoLoad(true); });
   document.getElementById("resetView").addEventListener("click", function () {
-    fitView();
+    fitView(true);
   });
   document.getElementById("resetLayout").addEventListener("click", function () {
     nodes.forEach(function (n) { n.fx = null; n.fy = null; });
@@ -9778,6 +9858,7 @@
     recomputeRadii();
     initialLayout();
     alpha = 1;
+    fitView(true);   // ease into the rebuilt layout's framing
     autoFit = true;   // re-frame as the layout rebuilds
   });
   var labelsBtn = document.getElementById("labels");
@@ -9796,9 +9877,12 @@
     renderKindChips();
     updateFilterSummary();
     if (kindPop && kindPop.render) kindPop.render();
-    // Rebuild in place: the graph is unchanged while Tags is off, and hubs are
-    // seeded next to their notes when it is turned on.
-    if (bundleFiles) load(bundleFiles, bundleRootUrl, bundleKnown, true);
+    // Rebuild in place, then ease the framing out to the new graph: turning tags on adds a
+    // hub per tag and hides the directory ring, so the old frame no longer fits.
+    if (bundleFiles && load(bundleFiles, bundleRootUrl, bundleKnown, true)) {
+      fitView(true);
+      autoFit = true;   // keep it framed while the rebuilt layout settles
+    }
   }
   if (tagsBtn) tagsBtn.addEventListener("click", function () { setShowTags(!showTags); });
   graphBackBtn.addEventListener("click", graphBack);
@@ -10274,6 +10358,7 @@
       bundleKnown = known || null;
       nodes = graph.nodes; links = graph.links;
       allNodes = nodes.slice(); allLinks = links.slice();
+      allHubPairs = graph.hubPairs || [];
       dirNodes = graph.dirs; fileMap = graph.files;
       hubsOn = graph.hubsOn; tagMaxSegs = graph.tagMaxSegs;
       graphStack = [""]; graphIndex = 0; graphFocus = "";
@@ -10312,7 +10397,7 @@
         measureDepths();
         recomputeRadii();
         initialLayout();
-        fitView();
+        fitView(true);   // ease into the first framing
         autoFit = true;   // keep it framed while the layout settles
         alpha = 1;
       }
@@ -10589,6 +10674,7 @@
     }
     var depth = urlDepth();
     var request = ++bundleLoadRequest;
+    viewTaken = false;   // a fresh load may frame the graph itself as nodes arrive
     // Render the graph and decks while the crawl runs, so nodes and declared
     // decks appear as they load instead of all at once when it finishes.
     // `previewRoot` is set per branch before each crawl, and the geometric step
@@ -10600,8 +10686,12 @@
       var first = !previewed;
       previewed = true;
       // Only the first preview frames the graph — load() does that for a fresh, non-preserve
-      // load. A later rebuild grows in place and must not re-zoom the view the user has set.
-      if (load(files.slice(), previewRoot, null, !first)) applyBundleDecks();
+      // load. A later rebuild grows in place and keeps the view, unless the user has not taken
+      // the view over yet, when the framing eases out to include the new nodes.
+      if (load(files.slice(), previewRoot, null, !first)) {
+        applyBundleDecks();
+        if (!viewTaken) autoFit = true;
+      }
     }
     try {
       // The bundle is the page root: crawl index.md (or the ?start file) beside the page.
@@ -10616,7 +10706,7 @@
         var ok;
         if (previewed) {
           ok = load(files, root, null, true);
-          if (ok) applyBundleDecks();
+          if (ok) { applyBundleDecks(); if (!viewTaken) autoFit = true; }
         } else {
           ok = load(files, root);
         }

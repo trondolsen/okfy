@@ -22,6 +22,7 @@ The simulation accumulates acceleration from several forces:[^source]
 
 - **Many-body repulsion** between all nodes, approximated with a Barnes-Hut quadtree so the cost stays near `O(n log n)` instead of `O(n²)`. Each pair is softened by a small constant distance, so two nodes that nearly coincide push gently instead of with a singular force.
 - **Link forces** that pull connected nodes together, with different strengths for tree, reference and tag links.
+- A **tag affinity** while tag hubs are shown: two hubs applied to the same concept pull together with a layout-only spring — no link, no arrow, and no effect on degree or the link count — so tags that share concepts form clusters instead of spreading evenly around the ring. The pull grows with the number of concepts shared, up to a cap.
 - A weak **radial** force that gives the tree a ring structure by depth.
 - A **collision** force that prevents overlap, using a uniform grid, with a direction-normalised push so two nodes that sit on the same point separate instead of sticking together.
 - A weak **centering** force.
@@ -36,7 +37,7 @@ The force primitives (softened repulsion, link springs, centering, the accelerat
 
 # Trade-offs
 
-A continuous simulation keeps the graph alive and self-organising, but it costs CPU on every frame and never becomes pixel-stable. The tool therefore keeps the view framed while a fresh layout settles, and can skip animation when the user prefers reduced motion.
+A continuous simulation keeps the graph alive and self-organising, but it costs CPU on every frame and never becomes pixel-stable. The tool therefore keeps the view framed while a fresh layout settles, and can skip animation when the user prefers reduced motion. A reset, a fresh bundle load or entering a directory **eases** the framing into place over about 0.4 s rather than cutting to it, and any pan, zoom or drag cancels the move — with reduced motion the new framing is applied at once. While a bundle is still loading, the framing keeps easing out as nodes arrive, until the user takes the view.
 
 # Connections
 
