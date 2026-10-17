@@ -49,7 +49,7 @@ okfx:
 - No `release` field — the feature is fully released.
 - Any other value is discarded, as if the field were absent, so the feature is treated as fully released.
 - A released concept or index may link to a `preview` concept, but must not link to an `unreleased` one. The link is added in the same change that removes the field, so the released bundle never points at a page it does not carry.
-- The field mirrors `FEATURES.unreleased` and `FEATURES.preview` in [Feature toggles](devops/feature-toggles.md): an unreleased flag is inert in the released copy, a preview flag can be switched, and an unreleased concept is unlinked.
+- The field mirrors `FEATURES.unreleased` and `FEATURES.preview` in [Feature toggles](devops/feature-toggles.md): an unreleased toggle is inert in the released copy, a preview toggle can be switched, and an unreleased concept is unlinked.
 
 # Scope
 

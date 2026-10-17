@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2240" viewBox="0 0 1080 2240" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
   <title id="t">Feature toggles — okfy devops explainer</title>
-  <desc id="d">How a copy of the viewer carries feature flags. There are two categories. Unreleased flags are hardwired false in the HTML: the code ships, is never reachable, is not offered as a switch and ignores browser storage. Preview flags have a default and a switch on the generated .runtime/features.md page; a reader's choice is written to localStorage under okfy.features, applies at once and survives a reload, while the default fills in until it is changed. A single reader, featureOn(name), is the only gate: it returns false for an unreleased or unknown name, and otherwise reads the stored preview choice or the default. The path runs from the FEATURES registry in the source, through a release that leaves unreleased flags false, to the published HTML in the browser, where the preview switch and storage feed featureOn and the gated code either runs or stays inert. A reload re-reads both the copy and the stored choice; a stored key for a flag the copy no longer has is ignored. Operationally the flags give a dark launch, a kill switch a reader can throw without a redeploy, per-browser opt-in and a rollback by reverting the copy or switching the preview off. There is no flag service, no network and no telemetry: the flags are data in the file and a key in the browser, and a flag is a UI boundary, not a security boundary — URL containment, CSP and the size bounds stay in force.</desc>
+  <desc id="d">How a copy of the viewer carries feature toggles. There are two categories. Unreleased toggles are hardwired false in the HTML: the code ships, is never reachable, is not offered as a switch and ignores browser storage. Preview toggles have a default and a switch on the generated .runtime/features.md page; a reader's choice is written to localStorage under okfy.features, applies at once and survives a reload, while the default fills in until it is changed. A single reader, featureOn(name), is the only gate: it returns false for an unreleased or unknown name, and otherwise reads the stored preview choice or the default. The path runs from the FEATURES registry in the source, through a release that leaves unreleased toggles false, to the published HTML in the browser, where the preview switch and storage feed featureOn and the gated code either runs or stays inert. A reload re-reads both the copy and the stored choice; a stored key for a toggle the copy no longer has is ignored. Operationally the toggles give a dark launch, a kill switch a reader can throw without a redeploy, per-browser opt-in and a rollback by reverting the copy or switching the preview off. There is no toggle service, no network and no telemetry: the toggles are data in the file and a key in the browser, and a toggle is a UI boundary, not a security boundary — URL containment, CSP and the size bounds stay in force.</desc>
   <defs>
     <style>
       /* The viewer's own palette, matching the sibling explainers. */
@@ -38,7 +38,7 @@
   <rect width="1080" height="8" fill="#5b8def"/>
   <text x="56" y="52" class="eyebrow">OKFY · DEVOPS EXPLAINER</text>
   <text x="56" y="110" class="title">Feature toggles</text>
-  <text x="56" y="148" class="subtitle">Two flag categories, one reader, and a switch that lives in the browser</text>
+  <text x="56" y="148" class="subtitle">Two toggle categories, one reader, and a switch that lives in the browser</text>
 
   <text x="56" y="214" class="h">1 · Two categories</text>
   <rect x="56" y="238" width="968" height="300" rx="16" class="panel"/>
@@ -47,7 +47,7 @@
   <text x="120" y="308" class="lab">Unreleased</text>
   <rect x="412" y="290" width="84" height="24" rx="12" class="tagpill"/>
   <text x="454" y="307" class="sx" text-anchor="middle">hardwired</text>
-  <text x="120" y="344" class="mono">unreleased: { flag: false }</text>
+  <text x="120" y="344" class="mono">unreleased: { toggle: false }</text>
   <text x="120" y="380" class="sx">Compiled to false in the HTML.</text>
   <text x="120" y="404" class="sx">featureOn() ignores storage.</text>
   <text x="120" y="428" class="sx">No switch; the code ships inert.</text>
@@ -61,7 +61,7 @@
   <text x="572" y="404" class="sx">Kept in this browser under okfy.features.</text>
   <text x="572" y="428" class="sx">The default applies until it is changed.</text>
 
-  <text x="76" y="516" class="note">Both categories live in the same single HTML file; a flag decides whether a code path is reachable.</text>
+  <text x="76" y="516" class="note">Both categories live in the same single HTML file; a toggle decides whether a code path is reachable.</text>
 
   <text x="56" y="596" class="h">2 · One reader</text>
   <rect x="56" y="620" width="968" height="300" rx="16" class="panel"/>
@@ -135,7 +135,7 @@
   <text x="300" y="1532" class="sx">.runtime/features.md</text>
   <line x1="116" y1="1548" x2="964" y2="1548" stroke="#2e3341" stroke-width="1.5"/>
   <text x="120" y="1574" class="sec">UNRELEASED</text>
-  <text x="120" y="1596" class="sx">No unreleased flags in this revision.</text>
+  <text x="120" y="1596" class="sx">No unreleased toggles in this revision.</text>
   <text x="120" y="1626" class="sec">PREVIEW</text>
 
   <text x="120" y="1654" class="br" font-weight="600">Assistant</text>
@@ -156,7 +156,7 @@
   <rect x="96" y="1904" width="190" height="140" rx="10" class="card"/>
   <text x="112" y="1934" class="lab">Dark launch</text>
   <text x="112" y="1960" class="sx">Ship the code under an</text>
-  <text x="112" y="1979" class="sx">unreleased flag; enable</text>
+  <text x="112" y="1979" class="sx">unreleased toggle; enable</text>
   <text x="112" y="1998" class="sx">it in a later release.</text>
 
   <rect x="330" y="1904" width="190" height="140" rx="10" class="card"/>
@@ -174,8 +174,8 @@
   <text x="814" y="1960" class="sx">Revert the copy, or</text>
   <text x="814" y="1979" class="sx">switch the preview off.</text>
 
-  <text x="76" y="2084" class="note">No flag service, no network, no telemetry: the flags are data in the file and a key in the browser.</text>
-  <text x="76" y="2108" class="note">A flag is a UI boundary, not a security boundary — URL containment, CSP and the bounds stay in force.</text>
+  <text x="76" y="2084" class="note">No toggle service, no network, no telemetry: the toggles are data in the file and a key in the browser.</text>
+  <text x="76" y="2108" class="note">A toggle is a UI boundary, not a security boundary — URL containment, CSP and the bounds stay in force.</text>
 
-  <text x="56" y="2196" class="note">A copy without a flag does not list it; a stored value for a missing flag is ignored.</text>
+  <text x="56" y="2196" class="note">A copy without a toggle does not list it; a stored value for a missing toggle is ignored.</text>
 </svg>

@@ -48,7 +48,7 @@ This directory tree is the project's **OKF v0.2 bundle**. It explains what the o
 
 ## DevOps
 
-- [DevOps](docs/devops/index.md) – release and runtime controls: the feature flags compiled into a copy.
+- [DevOps](docs/devops/index.md) – release and runtime controls: the feature toggles compiled into a copy.
 
 ## Reviews
 

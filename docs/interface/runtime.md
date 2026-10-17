@@ -26,7 +26,7 @@ The viewer adds a synthetic directory, `.runtime/`, that is not part of the bund
 - `graph.md` – how the graph is composed: nodes and links by kind, and concepts by type.
 - `performance.md` – the CPU, GPU, memory, timing and network data the browser exposes, with SVG trend charts.
 - `limits.md` – the bounds the viewer enforces, and the budget in use.
-- `features.md` – the compiled feature flags: unreleased flags are hardwired off, and preview flags are switches the reader can change.
+- `features.md` – the compiled feature toggles: unreleased toggles are hardwired off, and preview toggles are switches the reader can change.
 - `transparency.md` – the AI transparency statement, embedded as a generated page (a copy of the repository's `TRANSPARENCY.md`).
 - `assistant.md` – the built-in assistant's session statistics: the chat and audio providers and models (never the keys), whether audio output and the microphone are on, token usage with the model's maximum output tokens and the session token budget, the bytes sent and received, the transcript and per-tool call counts.
 - `AGENTS.md` – the instructions the viewer gives to the assistant on startup,[^source] written in the AGENTS.md convention.[^agents]
@@ -37,7 +37,7 @@ The path uses a dot-directory, which the bundle rules reject, so it can never co
 
 The pages are generated at read time and are not written to disk or cached. While a `.runtime` page is open, changing a filter, searching, loading more of the bundle or navigating regenerates it in place, keeping the scroll position, so the page reflects the current state as you read it. The `performance.md` page also refreshes about once a second while it is open and draws its frame rate, JS heap and blocking time as SVG time-series charts — one sample per second, up to a minute, oldest to newest — because those values move continuously. The `assistant.md` page refreshes on the same cadence, so its token and activity totals keep up with a chat in progress. Browsers hide most CPU and GPU accounting, so the performance page reports the closest proxy the browser offers and says when a value is unavailable.
 
-The `features.md` page is interactive. Its rows come from the `FEATURES` registry in `okfy.html`: an **unreleased** entry is hardwired off and is shown as such, while a **preview** entry has a default and a switch. A switch takes effect at once and the choice is kept in this browser under `okfy.features`, so it survives a reload; changing a flag does not write anything to the bundle. Adding a flag is one registry entry plus the code that calls `featureOn(name)`.[^source]
+The `features.md` page is interactive. Its rows come from the `FEATURES` registry in `okfy.html`: an **unreleased** entry is hardwired off and is shown as such, while a **preview** entry has a default and a switch. A switch takes effect at once and the choice is kept in this browser under `okfy.features`, so it survives a reload; changing a toggle does not write anything to the bundle. Adding a toggle is one registry entry plus the code that calls `featureOn(name)`.[^source]
 
 # Connections
 

@@ -1974,7 +1974,7 @@ test('preview-funksjonsbrytere huskes i nettleseren', async ({ page }) => {
   await page.locator('#aboutRuntime').click();
   await page.locator('#pvBody').getByRole('link', { name: 'Feature toggles', exact: true }).click();
   await expect(page.locator('#pvPath')).toHaveText('.runtime/features.md');
-  await expect(page.locator('#pvBody .pv-features')).toContainText('No unreleased flags in this revision.');
+  await expect(page.locator('#pvBody .pv-features')).toContainText('No unreleased toggles in this revision.');
 
   const toggle = page.locator('#pvBody .pv-feature', { hasText: 'Tag recursive reveal' }).locator('.pv-toggle');
   await expect(toggle).toHaveAttribute('aria-checked', 'true');

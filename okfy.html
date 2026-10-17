@@ -190,7 +190,7 @@
     background: var(--panel); border-inline-start: 1px solid var(--line);
     transform: translateX(var(--panel-off-end));
   }
-  /* A preview flag can switch the whole assistant feature off; its panel and edge tab go too. */
+  /* A preview toggle can switch the whole assistant feature off; its panel and edge tab go too. */
   body.as-disabled #assistant { display: none; }
   body.as-open #assistant { transform: translateX(0); }
   /* Assistant tab: attached to the panel's inner edge, above the filters tab (whose top follows it;
@@ -2031,13 +2031,13 @@
   // Partial expansion: a directory or tag node reveals its neighbours one page at a time.
   var EXPAND_PAGE = 8;          // neighbours revealed per click, and hidden per long-press
   var DEFAULT_CONCEPTS = 50;    // concepts a directory or tag hub shows on load
-  // Feature toggles. An unreleased flag ships inert: its entry is hardwired false here and
-  // featureOn() never returns true for it, whatever browser storage says. A preview flag has
+  // Feature toggles. An unreleased toggle ships inert: its entry is hardwired false here and
+  // featureOn() never returns true for it, whatever browser storage says. A preview toggle has
   // a default and is switched by the reader on the generated .runtime/features.md page; the
   // change takes effect at once and is kept in this browser.
   var FEATURES = {
     unreleased: {
-      // Add a flag here with the value false while its feature is not ready to ship.
+      // Add a toggle here with the value false while its feature is not ready to ship.
     },
     preview: {
       assistant: {
@@ -7983,7 +7983,7 @@
     { id: "limits.md", title: "Limits",
       description: "The bounds the viewer enforces, and the budget in use." },
     { id: "features.md", title: "Feature toggles",
-      description: "Unreleased and preview flags compiled into this copy of the viewer." },
+      description: "Unreleased and preview toggles compiled into this copy of the viewer." },
     { id: "transparency.md", title: "AI transparency",
       description: "The AI components, the transparency rules and what okfy discloses." },
     { id: "assistant.md", title: "Assistant statistics",
@@ -8279,8 +8279,8 @@
     else pvBody.insertBefore(box, pvBody.firstChild);
   }
 
-  // Mount the feature flags into the open .runtime/features.md page. The static body only
-  // introduces the page; the rows are built from the registry, so adding a flag is one entry.
+  // Mount the feature toggles into the open .runtime/features.md page. The static body only
+  // introduces the page; the rows are built from the registry, so adding a toggle is one entry.
   function mountFeatureToggles() {
     if (!pvBody) return;
     var old = pvBody.querySelector(".pv-features");
@@ -8346,9 +8346,9 @@
     }
 
     section("Unreleased", Object.keys(FEATURES.unreleased), false,
-      "No unreleased flags in this revision.");
+      "No unreleased toggles in this revision.");
     section("Preview", Object.keys(FEATURES.preview), true,
-      "No preview flags in this revision.");
+      "No preview toggles in this revision.");
     pvBody.appendChild(box);
   }
 
@@ -8399,7 +8399,7 @@
       out += "- [Graph](graph.md) \u2014 how the graph is composed\n";
       out += "- [Performance](performance.md) \u2014 CPU, GPU, memory and timing\n";
       out += "- [Limits](limits.md) \u2014 the bounds the viewer enforces\n";
-      out += "- [Feature toggles](features.md) \u2014 unreleased and preview flags\n";
+      out += "- [Feature toggles](features.md) \u2014 unreleased and preview toggles\n";
       out += "- [AI transparency](transparency.md) \u2014 the AI components, the transparency rules and what okfy discloses\n";
       out += "- [Assistant statistics](assistant.md) \u2014 token usage and activity of the assistant\n";
       out += "- [Agent instructions](AGENTS.md) \u2014 the instructions given to the assistant\n";
@@ -8573,8 +8573,8 @@
     if (page === "AGENTS.md") return asAgentsMd() + "\n";
     if (page === "features.md") {
       out += "# Feature toggles\n\n";
-      out += "Flags are compiled into this copy of the viewer. **Unreleased** flags ship " +
-        "inert and cannot be changed here. **Preview** flags can be switched below; the " +
+      out += "Toggles are compiled into this copy of the viewer. **Unreleased** toggles ship " +
+        "inert and cannot be changed here. **Preview** toggles can be switched below; the " +
         "change takes effect at once and is remembered in this browser.\n";
       return out;
     }

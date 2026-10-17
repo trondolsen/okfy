@@ -26,6 +26,22 @@ These instructions apply to everything in this repository.
 - Cite real sources with relative paths and footnotes. Never invent sources, timestamps or `verified` status, and do not claim verification you did not perform.
 - Validate before finishing: the YAML parses, `type` is present, `okfx` is valid, internal links resolve, `sources` exist, and footnotes are balanced.
 
+### Unreleased documents
+
+- A concept that documents a feature which is not released yet sets `okfx.release: unreleased` under `okfx`:
+
+  ```yaml
+  okfx:
+    mode: how-to
+    version: praxis/1
+    release: unreleased
+  ```
+
+- `okfx.release` takes only `unreleased` or `preview`; any other value is discarded. A preview feature is released behind a switch, so its concepts use `preview` and are linked normally. No field means fully released.
+- A released concept or `index.md` must not link to an unreleased concept. Unreleased concepts may link to each other. Do not add an unreleased concept to `docs/*/index.md` or the root `index.md`.
+- When the feature ships, remove the `release` field and add the links from released concepts and the index in the same change.
+- `docs/devops/local-development.md` is the current example: it sets `release: unreleased` and is not linked from `docs/devops/index.md`.
+
 ## Tests
 
 Run from the repository root. Full setup and coverage are in `test/README.md`.

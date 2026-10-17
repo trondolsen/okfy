@@ -1,8 +1,8 @@
 ---
 type: Explanation
 title: Feature toggles
-description: The unreleased and preview flag categories, the single reader that gates a feature, and the browser-persisted switches in .runtime.
-tags: [devops, feature-flags, release, preview]
+description: The unreleased and preview toggle categories, the single reader that gates a feature, and the browser-persisted switches in .runtime.
+tags: [devops, feature-toggles, release, preview]
 okfx:
   mode: explanation
   version: praxis/1
@@ -14,7 +14,7 @@ sources:
 
 # What it is
 
-A feature toggle lets one copy of the viewer carry a code path that is not active yet, and lets a reader opt into a preview behaviour without a new build. The flags are compiled into the same single HTML file.[^source]
+A feature toggle lets one copy of the viewer carry a code path that is not active yet, and lets a reader opt into a preview behaviour without a new build. The toggles are compiled into the same single HTML file.[^source]
 
 There are two categories:
 
@@ -25,25 +25,25 @@ See the [feature toggles explainer](attachments/feature-toggles.svg) for the two
 
 # The registry
 
-Flags live in the `FEATURES` registry in `okfy.html`, split into `unreleased` and `preview`. A preview entry carries a `default`, a `title` and a `description`; an unreleased entry is listed with the value false.
+Toggles live in the `FEATURES` registry in `okfy.html`, split into `unreleased` and `preview`. A preview entry carries a `default`, a `title` and a `description`; an unreleased entry is listed with the value false.
 
-`featureOn(name)` is the only reader. It returns false for an unreleased or unknown name, so a typo, a retired flag and a hardwired flag all fail closed. For a preview name it reads the stored choice, else the default. `setFeature(name, on)` accepts preview names only.
+`featureOn(name)` is the only reader. It returns false for an unreleased or unknown name, so a typo, a retired toggle and a hardwired toggle all fail closed. For a preview name it reads the stored choice, else the default. `setFeature(name, on)` accepts preview names only.
 
-Adding a flag is one registry entry plus a `featureOn(name)` check at the feature boundary. There is no flag service, no environment lookup and no network request: the flags are data in the file.
+Adding a toggle is one registry entry plus a `featureOn(name)` check at the feature boundary. There is no toggle service, no environment lookup and no network request: the toggles are data in the file.
 
 # The path through a copy
 
 1. **Source** — the registry is part of the HTML. Unreleased entries are false.
-2. **Release** — the copy is published as it is; no build step rewrites the flags.
-3. **Browser** — the published copy loads and starts the code paths allowed by its flags.
+2. **Release** — the copy is published as it is; no build step rewrites the toggles.
+3. **Browser** — the published copy loads and starts the code paths allowed by its toggles.
 4. **Runtime** — `.runtime/features.md` lists both categories. The preview rows are switches; an unreleased row, when a copy has one, is read-only and shown as hardwired off.
-5. **Storage** — a switch writes `okfy.features` in `localStorage` and the feature changes immediately. Only booleans for flags that exist in `preview` are read back, so a stored key for a flag the copy no longer has is ignored.
-6. **Reload** — the copy supplies its hardwired unreleased values and the stored preview choices supply the rest. Clearing site data returns every preview flag to its default.
+5. **Storage** — a switch writes `okfy.features` in `localStorage` and the feature changes immediately. Only booleans for toggles that exist in `preview` are read back, so a stored key for a toggle the copy no longer has is ignored.
+6. **Reload** — the copy supplies its hardwired unreleased values and the stored preview choices supply the rest. Clearing site data returns every preview toggle to its default.
 
 # Operating it
 
-- **Dark launch** — ship a feature behind an unreleased flag: the code is deployed but inert. Enable it by changing the source in a later release.
-- **Mark preview docs** — a concept that documents a preview feature sets `okfx.release: preview`; it stays in the released bundle and is linked normally, because the feature ships behind a switch. Where the preview behaviour is only part of a concept, name the flag in the prose instead.
+- **Dark launch** — ship a feature behind an unreleased toggle: the code is deployed but inert. Enable it by changing the source in a later release.
+- **Mark preview docs** — a concept that documents a preview feature sets `okfx.release: preview`; it stays in the released bundle and is linked normally, because the feature ships behind a switch. Where the preview behaviour is only part of a concept, name the toggle in the prose instead.
 - **Withhold the docs** — a concept that documents a dark-launched feature sets `okfx.release: unreleased`, and released concepts and indexes do not link to it. Remove the field and add the links in the same change that ships the feature; the rule is in [About this bundle](../about-this-bundle.md#release-state).
 - **Two values only** — `okfx.release` accepts `unreleased` and `preview`; any other value is discarded, as if the field were absent.
 - **Kill switch** — switch a preview feature off in `.runtime/features.md`; the panel or behaviour disappears at once, without a redeploy.
@@ -53,7 +53,7 @@ Adding a flag is one registry entry plus a `featureOn(name)` check at the featur
 
 # Safety and limits
 
-A flag is a UI boundary, not a security boundary. Turning a feature off does not relax URL containment, the Content Security Policy, the size limits or the streaming bounds; those apply to every copy and every flag state. Unreleased entries can never be turned on from the interface or from storage, and an unknown name is false. Preview choices stay in this browser and are never sent anywhere.
+A toggle is a UI boundary, not a security boundary. Turning a feature off does not relax URL containment, the Content Security Policy, the size limits or the streaming bounds; those apply to every copy and every toggle state. Unreleased entries can never be turned on from the interface or from storage, and an unknown name is false. Preview choices stay in this browser and are never sent anywhere.
 
 # Connections
 
