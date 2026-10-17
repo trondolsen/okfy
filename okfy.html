@@ -2006,9 +2006,12 @@
   var tagMaxSegs = 1;     // deepest namespace level among tag hubs (for sizing)
   // Partial expansion: a directory or tag node reveals its neighbours one page at a time.
   var EXPAND_PAGE = 8;          // neighbours revealed per click, and hidden per long-press
-  var AUTO_EXPAND_MAX = 16;     // fan-out above which a tag hub starts partially expanded
-  var DEFAULT_CONCEPTS = 50;    // concepts a directory shows on load, before its first page
+  var DEFAULT_CONCEPTS = 50;    // concepts a directory or tag hub shows on load
   var expandState = new Map();  // node id -> shown count, kept across graph rebuilds
+  // Tag hubs a tag-recursive expand has pulled in from outside the current tag filter.
+  // Scoped to that filter: a change to the tag filter clears the reveal.
+  var tagReveal = new Set(), tagRevealKey = "";
+  var drawnNodes = new Set();   // the node set of the last applyFocus, for held-back tests
   var query = "";
   var searchField = "";
   var tagInclude = new Set(), tagExclude = new Set();
@@ -5265,11 +5268,19 @@
   // A directory or tag node shows its neighbours one bounded page at a time. `kids` is the
   // ordered pageable neighbour list (child directories first); `shown` is how many are drawn.
   function expandableNode(n) { return !!n && !n.runtime && (n.kind === "dir" || n.kind === "tag"); }
+  // A tag filter's identity, used to scope tag reveals to the filter they were made under.
+  function tagFilterKey() {
+    return Array.from(tagInclude).sort().join("\u0000") + "|" + Array.from(tagExclude).sort().join("\u0000");
+  }
   // A search or an attribute filter is a lens: while one is active the whole focused subtree
   // is drawn, so a match is never held back inside a directory that has not been expanded yet.
   function lensActive() {
+    // The Tags toggle hides the directory ring by excluding that kind. That is a view mode,
+    // not a lens: if it counted, tag hubs would bypass their expansion page and never show
+    // their dashed "held back" ring. Any other include or exclude is a real lens.
+    var excludedKinds = kindExclude.size - (showTags && kindExclude.has("Directory") ? 1 : 0);
     return query !== "" || tagInclude.size || tagExclude.size || kindInclude.size ||
-      kindExclude.size || typeInclude.size || typeExclude.size || statusInclude.size || statusExclude.size;
+      excludedKinds > 0 || typeInclude.size || typeExclude.size || statusInclude.size || statusExclude.size;
   }
   // A neighbour is "collapsed" only while the expansion page is in effect; under a lens the
   // page is bypassed, so nothing is held back and the dashed cue is not drawn.
@@ -5280,7 +5291,8 @@
   function defaultShown(kids) {
     // On load a directory shows its whole skeleton — every child directory and index file —
     // and up to 50 of its concepts. Its files are held back, so a folder of assets does not
-    // flood the graph. `kids` is ordered so this count is a prefix of it.
+    // flood the graph. A tag hub uses the same rule: its index pages first, then up to 50
+    // concepts. `kids` is ordered so this count is a prefix of it.
     var dirs = 0, indexes = 0, concepts = 0;
     for (var i = 0; i < kids.length; i++) {
       var k = kids[i].kind;
@@ -5289,6 +5301,11 @@
       else if (k === "concept") concepts++;
     }
     return dirs + indexes + Math.min(concepts, DEFAULT_CONCEPTS);
+  }
+  // Tag kids are pages, so they have no directories or files: index pages come first, then
+  // concepts, matching the directory page order.
+  function tagKidRank(p) {
+    return p.kind === "index" ? 0 : p.kind === "concept" ? 1 : 2;
   }
   // The children the layout positions: everything non-pageable (tag hubs), plus pageable
   // children within `shown`.
@@ -5520,8 +5537,9 @@
       if (!node || (node.kind !== "concept" && node.kind !== "index")) return;
       var tags = Array.isArray(node.tags) ? node.tags : [];
       var leaves = [];
+      var linked = new Set();
       tags.forEach(function (tag) {
-        var segs = String(tag).split("/"), parent = null;
+        var segs = String(tag).split("/"), parent = null, path = [];
         for (var i = 1; i <= segs.length; i++) {
           var name = segs.slice(0, i).join("/");
           var hn = hubFor(name);
@@ -5535,11 +5553,21 @@
             tagRoot.children.push(hn);   // top-level namespace gets a ring slot
           }
           parent = hn;
+          path.push(hn);
         }
-        var tl = { source: node, target: parent, kind: "tag" };   // node -> leaf tag
-        tl.ti = parent.tagKids.length;
-        parent.tagKids.push(node);
-        pushGraphLink(tl, links);
+        // A page belongs to every namespace on its tag's path, not only the leaf: each split
+        // tag gets its own link and its own entry in that hub's neighbour page, so a
+        // namespaced tag does not leave its prefixes unconnected.
+        path.forEach(function (hub) {
+          if (linked.has(hub)) return;   // the page may reach this hub by another tag
+          linked.add(hub);
+          var tl = { source: node, target: hub, kind: "tag" };
+          tl.ti = hub.tagKids.length;
+          hub.tagKids.push(node);
+          if (!hub.tagLinkOf) hub.tagLinkOf = new Map();
+          hub.tagLinkOf.set(node, tl);
+          pushGraphLink(tl, links);
+        });
         leaves.push(parent);
       });
       // The leaf hubs of this concept all share it, so each pair gains one point.
@@ -5549,9 +5577,16 @@
     });
 
     tagNodes.forEach(function (tn) {
-      tn.kids = tn.tagKids;
+      // Order the hub's pages like a directory: index pages first, then concepts, so the
+      // default page is a prefix (see defaultShown). Each tag link keeps its position in
+      // that order, because the link is drawn only while the hub's page covers it.
+      tn.kids = tn.tagKids.sort(function (a, b) { return tagKidRank(a) - tagKidRank(b); });
+      if (tn.tagLinkOf) {
+        tn.kids.forEach(function (page, i) { tn.tagLinkOf.get(page).ti = i; });
+        delete tn.tagLinkOf;
+      }
       tn.shown = expandState.has(tn.id) ? Math.min(expandState.get(tn.id), tn.kids.length)
-        : (tn.kids.length > AUTO_EXPAND_MAX ? EXPAND_PAGE : tn.kids.length);
+        : defaultShown(tn.kids);
     });
 
     nodes.forEach(function (n) { n.degree = 0; });
@@ -5625,6 +5660,10 @@
   // further narrowed by the sidebar's attribute filters.
   function applyFocus() {
     var f = graphFocus, prefix = f ? f + "/" : "";
+    // A tag reveal belongs to the tag filter it was made under; any change to that filter
+    // drops it again, so a hub pulled in by recursive expand cannot leak into another scope.
+    var revealKey = tagFilterKey();
+    if (revealKey !== tagRevealKey) { tagReveal.clear(); tagRevealKey = revealKey; }
     // Expansion: walk the focused directory's tree, revealing each node's pageable children
     // only up to its `shown` count. Tag hubs are added afterwards, not through this walk.
     var revealed = new Set();
@@ -5638,6 +5677,17 @@
           if (c.kind === "dir") walk(c); else revealed.add(c);
         }
       })(root);
+    }
+    // Tag view hides the directory ring, so a tag hub's page is the authority for its pages:
+    // a page a hub draws is drawn even when its directory page holds it back. Without this, a
+    // full hub could report every neighbour shown while its edges fell away because the page
+    // nodes themselves were never revealed.
+    if (f === "" && hubsOn) {
+      allNodes.forEach(function (n) {
+        if (n.kind !== "tag") return;
+        var kids = n.kids || [], lim = nodeShown(n);
+        for (var i = 0; i < lim; i++) revealed.add(kids[i]);
+      });
     }
     // The set the focus and the attribute filters describe, before the expansion page: the
     // stats line counts it, and a lens draws it whole (see lensActive).
@@ -5654,11 +5704,36 @@
       if (n.kind === "dir") return (n.path === f) || n.path.indexOf(prefix) === 0;
       return n.path.indexOf(prefix) === 0;
     });
-    // Without a lens the expansion page decides: a node is drawn only once its directory (or
-    // tag hub) has revealed it. With a lens every scoped node is drawn.
-    nodes = lensActive() ? scoped : scoped.filter(function (n) { return revealed.has(n); });
+    // Without a lens the expansion page decides: a node is drawn only once its directory has
+    // revealed it. Tag hubs are not part of that walk — their own page bounds their tag edges
+    // below — so they are always drawn while they are scoped. With a lens every scoped node
+    // is drawn.
+    nodes = lensActive() ? scoped : scoped.filter(function (n) {
+      return n.kind === "tag" || revealed.has(n);
+    });
+    drawnNodes = new Set(nodes);
+    // A tag hub also carries the cue when one of its drawn pages still has a tag edge held back
+    // — by a page, or by the tag filter removing the other hub — so recursive work is visible
+    // before the dial is opened. Cache the flag here: the draw loop runs every frame.
+    allNodes.forEach(function (n) { if (n.kind === "tag") n.tagCue = false; });
+    if (hubsOn) {
+      var linksByPage = new Map();
+      allLinks.forEach(function (l) {
+        if (l.kind !== "tag" || l.ti == null || !drawnNodes.has(l.source)) return;
+        var list = linksByPage.get(l.source);
+        if (!list) linksByPage.set(l.source, list = []);
+        list.push(l);
+      });
+      allLinks.forEach(function (l) {
+        if (l.kind !== "tag" || l.ti == null || !drawnNodes.has(l.source)) return;
+        if (drawnNodes.has(l.target) && nodeShown(l.target) > l.ti) return;   // edge drawn
+        var list = linksByPage.get(l.source);
+        if (!list) return;
+        list.forEach(function (e) { e.target.tagCue = true; });
+      });
+    }
     // A tag edge is paged by its hub's own page; every other link needs both ends visible.
-    var vis = new Set(nodes);
+    var vis = drawnNodes;
     links = allLinks.filter(function (l) {
       if (!vis.has(l.source) || !vis.has(l.target)) return false;
       if (l.kind === "tag" && l.ti != null) return nodeShown(l.target) > l.ti;
@@ -6168,7 +6243,7 @@
       // Keep a tag hub when it is selected, a descendant of a selection, or an
       // ancestor of one, so the namespace chain stays visible.
       var t = tags[0] || n.label || "";
-      if (tagInclude.size && !(tagInSet(t, tagInclude) || tagHasIncludedDescendant(t))) return false;
+      if (tagInclude.size && !(tagInSet(t, tagInclude) || tagHasIncludedDescendant(t) || tagReveal.has(n.id))) return false;
       if (tagExclude.size && tagHitAny(tags, tagExclude)) return false;
       return true;
     }
@@ -6277,7 +6352,7 @@
       var unloaded = n.loaded === false;                  // file placeholder
       var missing = !unloaded && hasLoadableMissing(n);   // page with unloaded references
       var ancestorTag = n.kind === "tag" && tagIsAncestor(n);  // namespace ancestor of a selected tag
-      var hidden = nodeCollapsed(n);                       // expansion: neighbours still held back
+      var hidden = nodeCollapsed(n) || (n.kind === "tag" && n.tagCue);   // expansion: neighbours still held back
       var hollow = hidden && nodeShown(n) === 0;           // nothing shown yet
       ctx.beginPath();
       ctx.arc(px, py, r, 0, Math.PI * 2);
@@ -6716,6 +6791,7 @@
     links.forEach(function (l) { if (l.kind === "ref" && l.source === n) out++; if (l.kind === "ref" && l.target === n) inc++; });
     if (n.kind === "concept") html += '<div class="meta" style="margin-top:4px">' + inc + " incoming · " + out + " outgoing links</div>";
     if (nodeCollapsed(n)) html += '<div class="meta" style="margin-top:4px">' + nodeShown(n) + " of " + pageableKids(n).length + " shown · press and hold for modes</div>";
+    else if (n.kind === "tag" && n.tagCue) html += '<div class="meta" style="margin-top:4px">tags of its pages are held back · press and hold for modes</div>';
     tip.innerHTML = html;
     tip.style.display = "block";
     positionTip(x, y);
@@ -9869,6 +9945,7 @@
   var tagsBtn = document.getElementById("tags");
   function setShowTags(on) {
     showTags = !!on;
+    tagReveal.clear(); tagRevealKey = "";   // the tag scope is rebuilt below
     if (tagsBtn) tagsBtn.setAttribute("aria-pressed", showTags ? "true" : "false");
     // Tag hubs read best without the directory ring: disable Directories while
     // tags are shown, and re-enable them when tags are hidden again.
@@ -10236,6 +10313,7 @@
   });
   document.getElementById("clearFilters").addEventListener("click", function () {
     query = ""; searchEl.value = ""; searchField = ""; searchFieldEl.value = "";
+    tagReveal.clear(); tagRevealKey = "";
     tagPop.clear();
     kindPop.clear();
     typePop.clear();
@@ -10351,7 +10429,7 @@
     try {
       var graph = buildGraph(files, known);
       if (runtimeOn) injectRuntimeInto(graph);
-      if (!preserve) { bundleGeneration++; resetBundleResources(); legendFilter.clear(); loadErrors.length = 0; expandState.clear(); }
+      if (!preserve) { bundleGeneration++; resetBundleResources(); legendFilter.clear(); loadErrors.length = 0; expandState.clear(); tagReveal.clear(); tagRevealKey = ""; }
       bundleBudget = nextBudget;
       bundleFiles = files;
       bundleRootUrl = rootUrl || null;
@@ -11809,13 +11887,39 @@
     }
     return false;
   }
+  // The pages under a tag hub's recursive subtree: the hub's own pageable kids plus those of
+  // its namespace descendants.
+  function tagChildPages(n) {
+    var pages = new Set();
+    (function walk(d) {
+      pageableKids(d).forEach(function (p) { pages.add(p); });
+      for (var i = 0; i < d.children.length; i++) {
+        var c = d.children[i];
+        if (c.kind === "dir" || c.kind === "tag") walk(c);
+      }
+    })(n);
+    return pages;
+  }
+  // True while any of those pages still has a tag edge held back by another hub's page.
+  // Recursive mode opens those tags too, so it has work even when every hub is already full.
+  function tagChildTagHeldBack(n) {
+    var pages = tagChildPages(n);
+    for (var i = 0; i < allLinks.length; i++) {
+      var l = allLinks[i];
+      if (l.kind !== "tag" || l.ti == null || !pages.has(l.source) || !drawnNodes.has(l.source)) continue;
+      if (!drawnNodes.has(l.target) || nodeShown(l.target) <= l.ti) return true;
+    }
+    return false;
+  }
   // A mode is offered when there is something for it to do.
   function dialAvailability(n) {
     var room = nodeShown(n) < pageableKids(n).length;
+    var recursive = anyDir(n, function (d) { return nodeShown(d) < pageableKids(d).length; });
+    if (n.kind === "tag") recursive = recursive || tagChildTagHeldBack(n);
     return {
       more: room,
       all: room,
-      recursive: anyDir(n, function (d) { return nodeShown(d) < pageableKids(d).length; }),
+      recursive: recursive,
       collapsed: anyDir(n, function (d) { return nodeShown(d) > 0; })
     };
   }
@@ -11908,6 +12012,22 @@
         if (c.kind === "dir" || c.kind === "tag") walk(c);
       }
     })(n);
+    // A tag hub's recursive mode also opens the tags of the pages it reveals: each child
+    // page's other hubs are paged far enough to include that page, so its whole tag
+    // neighbourhood appears in one move. Edges already within a page are skipped.
+    if (mode === "recursive" && n.kind === "tag") {
+      var pages = tagChildPages(n);
+      for (var i = 0; i < allLinks.length; i++) {
+        var l = allLinks[i];
+        if (l.kind !== "tag" || l.ti == null || !pages.has(l.source) || !drawnNodes.has(l.source)) continue;
+        // A hub the tag filter removed is not drawn at all; reveal it so the edge can appear.
+        if (!drawnNodes.has(l.target)) { tagReveal.add(l.target.id); changed = true; }
+        if (nodeShown(l.target) > l.ti) continue;
+        l.target.shown = l.ti + 1;
+        expandState.set(l.target.id, l.ti + 1);
+        changed = true;
+      }
+    }
     if (changed) updateView();
   }
 
@@ -13617,6 +13737,7 @@
   function asClearFilters(withLegends) {
     query = ""; if (searchEl) searchEl.value = "";
     searchField = ""; if (searchFieldEl) searchFieldEl.value = "";
+    tagReveal.clear(); tagRevealKey = "";
     tagInclude.clear(); tagExclude.clear();
     kindInclude.clear(); kindExclude.clear();
     typeInclude.clear(); typeExclude.clear();

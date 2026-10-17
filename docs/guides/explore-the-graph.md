@@ -37,9 +37,11 @@ you want to see.[^model]
 # Expand or collapse a directory or tag hub
 
 A directory or a tag hub draws only a **page** of its neighbours at first. A node
-with more to show carries a dashed ring; a collapsed one is drawn hollow. A plain
-click never changes what is drawn — it keeps the node's own action (enter a
-directory, open a page, toggle a tag).
+with more to show carries a dashed ring; a collapsed one is drawn hollow. A tag
+hub also keeps the ring while its pages still have held-back tag edges —
+**Recursive expand all** opens those tags. A plain click never changes what is
+drawn — it keeps the node's own action (enter a directory, open a page, toggle a
+tag).
 
 1. **Press and hold** the node. A ring fills as the hold completes and the
    **expansion dial** opens around the node.
@@ -49,7 +51,7 @@ directory, open a page, toggle a tag).
 | Sector | Mode | What it does |
 | --- | --- | --- |
 | top | Expand all | Show every neighbour of this node. |
-| right | Recursive expand all | Open the whole subtree below. |
+| right | Recursive expand all | Open the whole subtree below; on a tag hub, also open the tags of the pages it reveals, including tags a tag filter hid. |
 | bottom | Collapsed | Hold the neighbours and the subtree back. |
 | left | Expand more | Reveal the next page of neighbours. |
 
@@ -74,7 +76,10 @@ Every directory starts showing **all of its sub-directories and index files and 
 
 - **Labels** show or hide the node labels; they are on by default.
 - **Tags** add tag-hub nodes so a tag and its concepts cluster together. While it
-  is on, the Directory kind is hidden to keep the hubs readable.
+  is on, the Directory kind is hidden to keep the hubs readable. This is a view
+  mode, not a filter, so a tag hub starts with the same page as a directory — its
+  index pages and up to 50 concepts — and carries the dashed ring when more are
+  held back.
 
 # Connections
 

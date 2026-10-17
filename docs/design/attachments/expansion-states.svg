@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1650" viewBox="0 0 1080 1650" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
   <title id="t">Expansion states of a directory or tag node — okfy design proposal</title>
-  <desc id="d">A directory or tag node shows its neighbours one page at a time. Its fill says whether any neighbour is drawn — hollow when none is, filled once at least one is — and a dashed accent ring hugging the node says more neighbours are still held back. On load a directory draws every child directory and index file and up to 50 concepts, holding its files back; a tag hub opens fully unless it has more than 16 neighbours, when it starts as a first page; the bundle root always opens fully. A press and hold opens the expansion dial that changes the page, and a plain click keeps the node's own action.</desc>
+  <desc id="d">A directory or tag node shows its neighbours one page at a time. Its fill says whether any neighbour is drawn — hollow when none is, filled once at least one is — and a dashed accent ring hugging the node says more neighbours are still held back, or, on a tag hub, that some of its pages still have a held-back tag. On load a directory draws every child directory and index file and up to 50 concepts, holding its files back; a tag hub pages like a directory, drawing its index pages first and then up to 50 concepts; the bundle root always opens fully. A press and hold opens the expansion dial that changes the page, and a plain click keeps the node's own action.</desc>
   <defs>
     <style>
       /* The viewer's own palette: the dark theme's CSS variables and the node colours from the
@@ -117,8 +117,8 @@
   <circle cx="666" cy="1030" r="7" class="faded"/>
   <circle cx="700" cy="1030" r="7" class="faded"/>
   <circle cx="734" cy="1030" r="7" class="faded"/>
-  <text x="770" y="1036" class="note">8 shown of 200</text>
-  <text x="196" y="1110" class="note">A tag hub opens fully unless it has more than 16 neighbours, when it starts as a first page.</text>
+  <text x="770" y="1036" class="note">a first page of 200 shown</text>
+  <text x="196" y="1110" class="note">A tag hub pages like a directory: its index pages first, then up to 50 concepts.</text>
   <text x="196" y="1136" class="note">The bundle root always opens fully.</text>
 
   <text x="56" y="1198" class="h">4 · The gesture</text>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2360" viewBox="0 0 1080 2360" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
   <title id="t">Graph construction — okfy algorithm explainer</title>
-  <desc id="d">How the loaded file set becomes the drawn graph. One pass builds the skeleton. Every directory a file path implies gets a dir node, collected from the paths, sorted and created root-down, so a missing ancestor is created with its child; a directory that holds only files still gets its own node, so a folder of assets is not left loose at the bundle root. The kind comes from the name: index.md at any depth is an index, any other Markdown file is a concept, and anything else is a file, which the graph never parses for links. Each node then hangs off its directory with a tree link. There are five kinds: Directory, Index file, Concept, File and Tag. A concept takes the colour of its OKF type and falls back to purple; a tag hub shares the Directory colour. Only index and concept nodes get links, and their targets come from the body's Markdown links and from the frontmatter's sources, at most 256 sources per file. A target that is already loaded becomes one ref link, drawn curved with an arrowhead. A non-Markdown file becomes a visible placeholder node, drawn at half opacity with a dashed ring and fetched only when it is opened. An embedded image is drawn inline in the preview and gets no node, unless the image is already a loaded file. Markdown that is not loaded is kept as missing and loaded on demand when clicked. One ref link exists per concept-and-target pair, a concept is never linked to itself, and a mutual pair keeps two links but draws one straight edge with an arrowhead at each end. Tag hubs are built only while the tags toggle is on or a tag filter is active: one hub per tag and per namespace prefix, so a/b nests under a, namespace to child namespace is a solid link, a node to its leaf tag is dashed with the arrowhead at the hub, and a top-level hub is a child of the root with no link of its own. Every directory and tag hub gets an ordered neighbour list — child directories, then index files, then concepts, then files — and a page saying how many are drawn. A directory opens with its whole skeleton, every child directory and index file plus up to 50 concepts, so its files are held back; a tag hub opens fully unless it has more than 16 neighbours, when it opens one page of 8; the bundle root always opens fully. The expansion dial, opened by pressing and holding a node, changes the page, and a page set by hand survives a rebuild. A search or a filter is a lens that draws the whole subtree anyway. Graph size is capped at 32 000 nodes and 80 000 links, and a graph that would exceed the caps is rejected whole, so a bad bundle can never replace a good one.</desc>
+  <desc id="d">How the loaded file set becomes the drawn graph. One pass builds the skeleton. Every directory a file path implies gets a dir node, collected from the paths, sorted and created root-down, so a missing ancestor is created with its child; a directory that holds only files still gets its own node, so a folder of assets is not left loose at the bundle root. The kind comes from the name: index.md at any depth is an index, any other Markdown file is a concept, and anything else is a file, which the graph never parses for links. Each node then hangs off its directory with a tree link. There are five kinds: Directory, Index file, Concept, File and Tag. A concept takes the colour of its OKF type and falls back to purple; a tag hub shares the Directory colour. Only index and concept nodes get links, and their targets come from the body's Markdown links and from the frontmatter's sources, at most 256 sources per file. A target that is already loaded becomes one ref link, drawn curved with an arrowhead. A non-Markdown file becomes a visible placeholder node, drawn at half opacity with a dashed ring and fetched only when it is opened. An embedded image is drawn inline in the preview and gets no node, unless the image is already a loaded file. Markdown that is not loaded is kept as missing and loaded on demand when clicked. One ref link exists per concept-and-target pair, a concept is never linked to itself, and a mutual pair keeps two links but draws one straight edge with an arrowhead at each end. Tag hubs are built only while the tags toggle is on or a tag filter is active: one hub per tag and per namespace prefix, so a/b nests under a, namespace to child namespace is a solid link, a node to every hub on its tag's path is dashed with the arrowhead at the hub, and a top-level hub is a child of the root with no hierarchy link of its own. Every directory and tag hub gets an ordered neighbour list — child directories, then index files, then concepts, then files — and a page saying how many are drawn. A directory opens with its whole skeleton, every child directory and index file plus up to 50 concepts, so its files are held back; a tag hub pages like a directory: its index pages first, then up to 50 concepts; the bundle root always opens fully. The expansion dial, opened by pressing and holding a node, changes the page, and a page set by hand survives a rebuild. A search or a filter is a lens that draws the whole subtree anyway. Graph size is capped at 32 000 nodes and 80 000 links, and a graph that would exceed the caps is rejected whole, so a bad bundle can never replace a good one.</desc>
   <defs>
     <style>
       /* The viewer's own palette: the dark theme's CSS variables and the node colours from
@@ -135,6 +135,8 @@
   <path d="M 403 1580 L 391 1574.5 L 391 1585.5 Z" fill="#7d8698"/>
   <line x1="305.9" y1="1674.6" x2="396.7" y2="1592.1" class="tagld"/>
   <path d="M 404.8 1584.7 L 400.4 1596.2 L 393 1588 Z" fill="#7d8698"/>
+  <line x1="297.7" y1="1672.3" x2="275" y2="1596.8" class="tagld"/>
+  <path d="M 272 1586.7 L 271.2 1597.9 L 278.8 1595.7 Z" fill="#7d8698"/>
 
   <circle cx="130" cy="1580" r="9" fill="#8b93a7" stroke="#cfd5e2" stroke-width="1.5"/>
   <circle cx="270" cy="1580" r="8" fill="#8b93a7" stroke="#cfd5e2" stroke-width="1.5"/>
@@ -153,8 +155,8 @@
   <text x="628" y="1608" class="sx">namespace to namespace, solid</text>
   <line x1="560" y1="1634" x2="602" y2="1634" class="tagld"/>
   <path d="M 609 1634 L 597 1628.5 L 597 1639.5 Z" fill="#7d8698"/>
-  <text x="628" y="1638" class="sx">a node to its leaf tag, dashed</text>
-  <text x="560" y="1674" class="sx">A top-level hub is a child of the root, with no link of its own.</text>
+  <text x="628" y="1638" class="sx">a node to each hub on its tag's path, dashed</text>
+  <text x="560" y="1674" class="sx">A top-level hub is a child of the root, with no hierarchy link.</text>
   <text x="560" y="1706" class="sx">Hubs are built only while the tags toggle is on or a tag filter</text>
   <text x="560" y="1728" class="sx">is active; otherwise the graph is unchanged.</text>
 
@@ -182,8 +184,8 @@
   <text x="480" y="1972" class="sx">directory and index file, plus up to 50 concepts.</text>
   <text x="480" y="1994" class="sx">Its files stay held back, so a folder of assets does</text>
   <text x="480" y="2016" class="sx">not flood the graph.</text>
-  <text x="480" y="2046" class="sx">A tag hub opens fully unless it has more than 16</text>
-  <text x="480" y="2068" class="sx">neighbours, when it opens one page of 8.</text>
+  <text x="480" y="2046" class="sx">A tag hub pages like a directory: its index pages</text>
+  <text x="480" y="2068" class="sx">first, then up to 50 concepts.</text>
   <text x="480" y="2098" class="sx">The bundle root always opens fully.</text>
   <text x="480" y="2120" class="sx">A page you set by hand survives the next rebuild.</text>
 

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1500" viewBox="0 0 1080 1500" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
   <title id="t">A dial for expanding and collapsing directories and tags — okfy design proposal</title>
-  <desc id="d">Press and hold a directory or tag node and a radial dial opens around it with four expansion modes, each drawn as a small graph pictogram of nodes and links instead of words: expand more adds one more neighbour, expand all shows every neighbour, recursive expand all opens the whole subtree below, and collapsed holds everything back into the single node. Dashed rings are held-back neighbours. Modes that do not apply are drawn faded. A drag to a mode and release applies it; releasing in the middle cancels.</desc>
+  <desc id="d">Press and hold a directory or tag node and a radial dial opens around it with four expansion modes, each drawn as a small graph pictogram of nodes and links instead of words: expand more adds one more neighbour, expand all shows every neighbour, recursive expand all opens the whole subtree below — and on a tag hub also opens the tags of the pages it reveals — and collapsed holds everything back into the single node. Dashed rings are held-back neighbours. Modes that do not apply are drawn faded. A drag to a mode and release applies it; releasing in the middle cancels.</desc>
   <defs>
     <style>
       /* The viewer's own palette: the dark theme's CSS variables and the node colours from
@@ -200,5 +200,5 @@ tool. */
 
   <text x="56" y="1400" class="note">Replaces the current click-to-page and press-and-hold-to-collapse: the dial is one gesture for both.</text>
   <text x="56" y="1432" class="note">A plain click keeps the node's own action; press and hold a concept still starts a deck card.</text>
-  <text x="56" y="1464" class="note">Tag hubs use the same dial; the recursive mode differs only for directories.</text>
+  <text x="56" y="1464" class="note">Tag hubs use the same dial; on a tag, recursive expand also opens the tags of its pages.</text>
 </svg>

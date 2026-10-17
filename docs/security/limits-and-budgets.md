@@ -27,7 +27,7 @@ The tool enforces these caps while loading and rendering a bundle:[^review]
 | Local directory depth | 12; deeper trees are rejected |
 | Stored file path | 2 048 characters and 24 path segments |
 | Graph links | 80 000 |
-| Node fan-out (expansion) | on load a directory draws all of its child directories and index files and up to 50 concepts; one page of 8 neighbours per *Expand more*; a tag hub over 16 neighbours starts as a first page |
+| Node fan-out (expansion) | on load a directory draws all of its child directories and index files and up to 50 concepts; a tag hub draws its index pages and up to 50 concept pages; one page of 8 neighbours per *Expand more* |
 | References from a Markdown body | 256 per file; frontmatter `sources` has its own limit of 256 |
 | Tags | 64 per file, at most 256 characters and 16 namespace segments per tag |
 | HTTP | 4 concurrent requests through body reading; at most 64 pending; 30-second timeout after a slot is granted |
