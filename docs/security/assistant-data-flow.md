@@ -6,6 +6,7 @@ tags: [security, assistant, privacy, network, oauth, residual-risk]
 okfx:
   mode: explanation
   version: praxis/1
+  release: preview
 sources:
   - id: source
     resource: ../../okfy.html

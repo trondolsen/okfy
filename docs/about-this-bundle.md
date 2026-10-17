@@ -1,7 +1,7 @@
 ---
 type: Reference
 title: About this bundle
-description: The OKF version, the OKF Praxis extension, the scope and the sources of this knowledge bundle.
+description: The OKF version, the OKF Praxis extension, the release-state field, the scope and the sources of this knowledge bundle.
 tags: [okf, meta, bundle]
 okfx:
   mode: explanation
@@ -32,6 +32,24 @@ The concepts use **OKF v0.2**: UTF-8 Markdown files with YAML frontmatter, where
 # Provenance
 
 The concepts are derived from the project's own files, named in each concept's `sources`. The most important are the README, the tool's single HTML file and the security review.[^readme][^source][^review] No concept claims verification it does not have: the `verified` field is absent, so the content is unverified.
+
+# Release state
+
+The bundle follows the tool's release split. `okfx.release` is only for a feature that is not fully released; it accepts `unreleased` or `preview`.
+
+```yaml
+okfx:
+  mode: reference
+  version: praxis/1
+  release: preview
+```
+
+- `unreleased` — the concept is not part of the released bundle; it is withheld from the released copy. Unreleased concepts may link to each other.
+- `preview` — the concept is part of the released bundle and is linked normally. The feature ships, but a reader can switch it off in `.runtime/features.md`.
+- No `release` field — the feature is fully released.
+- Any other value is discarded, as if the field were absent, so the feature is treated as fully released.
+- A released concept or index may link to a `preview` concept, but must not link to an `unreleased` one. The link is added in the same change that removes the field, so the released bundle never points at a page it does not carry.
+- The field mirrors `FEATURES.unreleased` and `FEATURES.preview` in [Feature toggles](devops/feature-toggles.md): an unreleased flag is inert in the released copy, a preview flag can be switched, and an unreleased concept is unlinked.
 
 # Scope
 

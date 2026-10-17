@@ -55,6 +55,8 @@ tag).
 | bottom | Collapsed | Hold the neighbours and the subtree back. |
 | left | Expand more | Reveal the next page of neighbours. |
 
+The tag-hub part of **Recursive expand all** is the preview flag `tagRecursiveReveal`; switch it off in [`.runtime/features.md`](../interface/runtime.md) to leave those tags closed.
+
 The dial carries **no text**: each mode is a small pictogram built from the graph's
 own vocabulary — a solid node is shown, a dashed ring or a dashed outlined node is
 held back, an arrowhead is

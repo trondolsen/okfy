@@ -43,6 +43,9 @@ Adding a flag is one registry entry plus a `featureOn(name)` check at the featur
 # Operating it
 
 - **Dark launch** — ship a feature behind an unreleased flag: the code is deployed but inert. Enable it by changing the source in a later release.
+- **Mark preview docs** — a concept that documents a preview feature sets `okfx.release: preview`; it stays in the released bundle and is linked normally, because the feature ships behind a switch. Where the preview behaviour is only part of a concept, name the flag in the prose instead.
+- **Withhold the docs** — a concept that documents a dark-launched feature sets `okfx.release: unreleased`, and released concepts and indexes do not link to it. Remove the field and add the links in the same change that ships the feature; the rule is in [About this bundle](../about-this-bundle.md#release-state).
+- **Two values only** — `okfx.release` accepts `unreleased` and `preview`; any other value is discarded, as if the field were absent.
 - **Kill switch** — switch a preview feature off in `.runtime/features.md`; the panel or behaviour disappears at once, without a redeploy.
 - **Opt in** — preview defaults decide what a first visit sees; each browser can then choose differently.
 - **Roll back** — publish the previous copy, or switch the preview off while the copy stays in place.

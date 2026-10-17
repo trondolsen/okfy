@@ -6,6 +6,7 @@ tags: [interface, assistant, ai, agent, tools, providers]
 okfx:
   mode: reference
   version: praxis/1
+  release: preview
 sources:
   - id: source
     resource: ../../okfy.html
