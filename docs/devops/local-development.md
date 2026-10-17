@@ -41,7 +41,7 @@ Opening `okfy.html` from `file://` does not auto-load a bundle. Use the browser'
 
 # Bootstrap local Git
 
-The repository uses two remotes and two local branches. The current local configuration is:
+The repository uses two remotes and two local branches. This one-time setup recreates the current local configuration:
 
 | Remote | URL | Push refspec |
 | --- | --- | --- |
@@ -74,14 +74,7 @@ The `origin-live` push refspec names a local `main`, which does not exist in thi
 git push origin-live live:main
 ```
 
-To let `git status` compare `live` with the live remote, fetch it and set the upstream:
-
-```sh
-git fetch origin-live
-git branch --set-upstream-to=origin-live/main live
-```
-
-Check the result with `git remote -v` and `git branch -vv`: `draft` should track `origin-draft/main`. `live` has no upstream unless you ran the optional step above.
+Check the result with `git remote -v` and `git branch -vv`: `draft` should track `origin-draft/main`, and `live` should have no upstream.
 
 # Run the tests
 
@@ -121,7 +114,7 @@ The documentation carries the same split: `okfx.release: preview` for a preview 
 
 # Draft and live
 
-The working model is two remotes: `origin-draft` for unreleased work and `origin-live` for the released copy. Develop and test against the draft, and move a change to live only when it ships.
+There is one developer. `draft` is the working branch, `origin-draft` is its backup, and `origin-live` only receives the published copy. The local branches are authoritative, so routine work does not fetch or merge from either remote. Develop and test on `draft`, and move a change to `live` only when it ships.
 
 A preview feature belongs to live: its code is present and a reader can switch it on, and its concept sets `okfx.release: preview`. An unreleased feature stays in draft, with `okfx.release: unreleased`, until its flag is enabled in the source.
 
@@ -158,11 +151,9 @@ Before pushing, check the live tree:
 git grep -n -E '^[[:space:]]+release:[[:space:]]+unreleased' -- docs
 ```
 
-No output means no unreleased concept is present. Then review and push:
+No output means no unreleased concept is present. Then publish:
 
 ```sh
-git fetch origin-live
-git diff --stat origin-live/main..live
 git push origin-live live:main
 ```
 
@@ -183,18 +174,11 @@ Save it as `.git/hooks/pre-push` and make it executable with `chmod +x .git/hook
 
 Use a temporary release branch when more than one commit moves to live. It keeps `live` untouched until the batch passes the checks.
 
-Sync both sides and list the candidates, oldest first:
+List the candidates, oldest first:
 
 ```sh
-git fetch origin-draft origin-live
-git switch draft
-git pull --ff-only
-git switch live
-git merge --ff-only origin-live/main
 git log --reverse --oneline live..draft
 ```
-
-If `live` has local commits that are not on `origin-live/main`, merge them first; the fast-forward above only works when `live` is behind the remote.
 
 Inspect each candidate before choosing it:
 
@@ -203,12 +187,52 @@ git show --stat <sha>
 git show <sha>
 ```
 
-Create the release branch and cherry-pick the chosen commits in order:
+Classify the commits by the files they change. A commit is skipped when it adds, modifies or deletes a file carrying `okfx.release: unreleased`:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+base=live
+tip=draft
+safe_list=.git/safe-commits
+: > "$safe_list"
+
+git rev-list --reverse --no-merges "$base".."$tip" | while read -r c; do
+  unsafe=
+  while IFS= read -r -d '' f; do
+    if { git cat-file -e "$c:$f" 2>/dev/null &&
+         git show "$c:$f" | grep -qE '^[[:space:]]+release:[[:space:]]+unreleased'; } ||
+       { git cat-file -e "$c^:$f" 2>/dev/null &&
+         git show "$c^:$f" | grep -qE '^[[:space:]]+release:[[:space:]]+unreleased'; }; then
+      unsafe=$f
+      break
+    fi
+  done < <(git diff-tree --no-commit-id --name-only -z -r "$c")
+
+  if [ -n "$unsafe" ]; then
+    printf 'SKIP %s  %s  [%s]\n' "$c" "$(git log -1 --format=%s "$c")" "$unsafe"
+  else
+    printf '%s\n' "$c" >> "$safe_list"
+    printf 'SAFE %s  %s\n' "$c" "$(git log -1 --format=%s "$c")"
+  fi
+done
+
+printf '\nSafe commits: %s\n' "$safe_list"
+```
+
+The classifier writes the safe commits to `.git/safe-commits` and prints a `SAFE` or `SKIP` line for each. It checks changed files only, so it does not catch a released file that links to an unreleased concept, a dependency on a skipped commit, or the commit that removes `release: unreleased`; handle those separately. Review the `SAFE` and `SKIP` lines before cherry-picking: the script is conservative, not a substitute for the review above. Run the classification once per release: a cherry-picked commit keeps its original SHA in `draft`, so a later run lists it again.
+
+Create the release branch and cherry-pick the safe list in order:
 
 ```sh
 git switch --create release/next live
-git cherry-pick <sha1> <sha2> <sha3>
+while read -r c; do
+  git cherry-pick -x "$c" || break
+done < .git/safe-commits
 ```
+
+If a cherry-pick stops on a conflict, resolve it before continuing with the next hash in `.git/safe-commits`.
 
 Promote only commits that are wholly release-ready. A commit is safe when it touches only released files, adds no `release: unreleased` file and adds no link to one. A commit that also touches an unreleased file is mixed: split it on `draft` first, then cherry-pick only the released part.
 
@@ -230,7 +254,6 @@ Verify the release branch with the `git grep` check above, confirm that no relea
 ```sh
 git switch live
 git merge --ff-only release/next
-git diff --stat origin-live/main..live
 git push origin-live live:main
 ```
 
