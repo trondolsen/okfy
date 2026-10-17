@@ -190,6 +190,8 @@
     background: var(--panel); border-inline-start: 1px solid var(--line);
     transform: translateX(var(--panel-off-end));
   }
+  /* A preview flag can switch the whole assistant feature off; its panel and edge tab go too. */
+  body.as-disabled #assistant { display: none; }
   body.as-open #assistant { transform: translateX(0); }
   /* Assistant tab: attached to the panel's inner edge, above the filters tab (whose top follows it;
      see layoutPanelTabs). Like the filters tab it uses physical properties, because its writing mode
@@ -925,6 +927,28 @@
     vector-effect: non-scaling-stroke;
   }
   #pvBody .pv-chart .pv-area { stroke: none; opacity: .16; }
+  /* Feature toggles on the generated .runtime/features.md page. */
+  #pvBody .pv-features { margin: 6px 0 14px; }
+  #pvBody .pv-features h2 { margin: 16px 0 6px; }
+  #pvBody .pv-feature {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    padding: 9px 0; border-top: 1px solid var(--line);
+  }
+  #pvBody .pv-feature:first-of-type { border-top: 0; }
+  #pvBody .pv-feature-title { font-weight: 600; }
+  #pvBody .pv-feature-desc { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  #pvBody .pv-feature-state { color: var(--muted); font-size: 12px; white-space: nowrap; padding-top: 2px; }
+  #pvBody .pv-toggle {
+    flex: none; min-width: 54px; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--muted);
+    font: inherit; font-size: 12px; cursor: pointer;
+  }
+  #pvBody .pv-toggle[aria-checked="true"] {
+    border-color: var(--accent); color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+  #pvBody .pv-toggle:hover { border-color: var(--accent); }
+  #pvBody .pv-toggle:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent); outline-offset: 1px; }
   #pvBody .pv-sec { margin: 18px 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   #pvBody .pv-sec:first-of-type { margin-top: 4px; }
 
@@ -2007,6 +2031,72 @@
   // Partial expansion: a directory or tag node reveals its neighbours one page at a time.
   var EXPAND_PAGE = 8;          // neighbours revealed per click, and hidden per long-press
   var DEFAULT_CONCEPTS = 50;    // concepts a directory or tag hub shows on load
+  // Feature toggles. An unreleased flag ships inert: its entry is hardwired false here and
+  // featureOn() never returns true for it, whatever browser storage says. A preview flag has
+  // a default and is switched by the reader on the generated .runtime/features.md page; the
+  // change takes effect at once and is kept in this browser.
+  var FEATURES = {
+    unreleased: {
+      // Add a flag here with the value false while its feature is not ready to ship.
+    },
+    preview: {
+      assistant: {
+        default: true,
+        title: "Assistant",
+        description: "The built-in AI assistant: chat, tools, voice and the model settings."
+      },
+      tagRecursiveReveal: {
+        default: true,
+        title: "Tag recursive reveal",
+        description: "Recursive expand on a tag hub also opens the tags of the pages it reveals."
+      }
+    }
+  };
+  var FEATURE_STORE = "okfy.features";
+  var featurePrefs = readFeaturePrefs();
+  function readFeaturePrefs() {
+    var out = {};
+    try {
+      var raw = JSON.parse(localStorage.getItem(FEATURE_STORE) || "{}");
+      if (raw && typeof raw === "object") {
+        Object.keys(FEATURES.preview).forEach(function (name) {
+          if (typeof raw[name] === "boolean") out[name] = raw[name];
+        });
+      }
+    } catch (e) {}
+    return out;
+  }
+  function featureOn(name) {
+    if (Object.prototype.hasOwnProperty.call(FEATURES.unreleased, name)) return false;
+    var spec = FEATURES.preview[name];
+    if (!spec) return false;
+    return Object.prototype.hasOwnProperty.call(featurePrefs, name) ? !!featurePrefs[name] : !!spec.default;
+  }
+  function setFeature(name, on) {
+    if (!Object.prototype.hasOwnProperty.call(FEATURES.preview, name)) return false;
+    featurePrefs[name] = !!on;
+    try { localStorage.setItem(FEATURE_STORE, JSON.stringify(featurePrefs)); } catch (e) {}
+    return true;
+  }
+  // Side effects of a feature toggle, applied when the reader flips it.
+  function applyFeature(name) {
+    if (name === "tagRecursiveReveal" && !featureOn(name)) {
+      tagReveal.clear(); tagRevealKey = tagFilterKey();
+    }
+    if (name === "assistant") applyAssistantFeature();
+  }
+  function applyAssistantFeature() {
+    var on = featureOn("assistant");
+    document.body.classList.toggle("as-disabled", !on);
+    if (on) {
+      if (!asInited) initAssistant();
+      return;
+    }
+    if (!asInited) return;   // nothing was initialised, so there is nothing to stop
+    try { asStop(); } catch (e) {}
+    try { asStopSpeaking(); } catch (e) {}
+    try { asSetPanelOpen(false); } catch (e) {}
+  }
   var expandState = new Map();  // node id -> shown count, kept across graph rebuilds
   // Tag hubs a tag-recursive expand has pulled in from outside the current tag filter.
   // Scoped to that filter: a change to the tag filter clears the reveal.
@@ -5716,7 +5806,7 @@
     // — by a page, or by the tag filter removing the other hub — so recursive work is visible
     // before the dial is opened. Cache the flag here: the draw loop runs every frame.
     allNodes.forEach(function (n) { if (n.kind === "tag") n.tagCue = false; });
-    if (hubsOn) {
+    if (hubsOn && featureOn("tagRecursiveReveal")) {
       var linksByPage = new Map();
       allLinks.forEach(function (l) {
         if (l.kind !== "tag" || l.ti == null || !drawnNodes.has(l.source)) return;
@@ -6243,7 +6333,7 @@
       // Keep a tag hub when it is selected, a descendant of a selection, or an
       // ancestor of one, so the namespace chain stays visible.
       var t = tags[0] || n.label || "";
-      if (tagInclude.size && !(tagInSet(t, tagInclude) || tagHasIncludedDescendant(t) || tagReveal.has(n.id))) return false;
+      if (tagInclude.size && !(tagInSet(t, tagInclude) || tagHasIncludedDescendant(t) || (featureOn("tagRecursiveReveal") && tagReveal.has(n.id)))) return false;
       if (tagExclude.size && tagHitAny(tags, tagExclude)) return false;
       return true;
     }
@@ -7892,6 +7982,8 @@
       description: "CPU, GPU, memory and timing data the browser exposes." },
     { id: "limits.md", title: "Limits",
       description: "The bounds the viewer enforces, and the budget in use." },
+    { id: "features.md", title: "Feature toggles",
+      description: "Unreleased and preview flags compiled into this copy of the viewer." },
     { id: "transparency.md", title: "AI transparency",
       description: "The AI components, the transparency rules and what okfy discloses." },
     { id: "assistant.md", title: "Assistant statistics",
@@ -8187,6 +8279,79 @@
     else pvBody.insertBefore(box, pvBody.firstChild);
   }
 
+  // Mount the feature flags into the open .runtime/features.md page. The static body only
+  // introduces the page; the rows are built from the registry, so adding a flag is one entry.
+  function mountFeatureToggles() {
+    if (!pvBody) return;
+    var old = pvBody.querySelector(".pv-features");
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var box = document.createElement("div");
+    box.className = "pv-features";
+
+    function row(name, spec, toggleable) {
+      var r = document.createElement("div");
+      r.className = "pv-feature";
+      var text = document.createElement("div");
+      var t = document.createElement("div");
+      t.className = "pv-feature-title";
+      t.textContent = (spec && spec.title) || name;
+      text.appendChild(t);
+      if (spec && spec.description) {
+        var d = document.createElement("div");
+        d.className = "pv-feature-desc";
+        d.textContent = spec.description;
+        text.appendChild(d);
+      }
+      r.appendChild(text);
+      if (!toggleable) {
+        var s = document.createElement("span");
+        s.className = "pv-feature-state";
+        s.textContent = "Off (hardwired)";
+        r.appendChild(s);
+        return r;
+      }
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "pv-toggle";
+      b.setAttribute("role", "switch");
+      var on = featureOn(name);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.textContent = on ? "On" : "Off";
+      b.addEventListener("click", function () {
+        var next = !featureOn(name);
+        if (!setFeature(name, next)) return;
+        applyFeature(name);
+        b.setAttribute("aria-checked", next ? "true" : "false");
+        b.textContent = next ? "On" : "Off";
+        updateView();
+      });
+      r.appendChild(b);
+      return r;
+    }
+
+    function section(title, names, toggleable, emptyNote) {
+      var h = document.createElement("h2");
+      h.textContent = title;
+      box.appendChild(h);
+      if (!names.length) {
+        var p = document.createElement("p");
+        p.className = "pv-note";
+        p.textContent = emptyNote;
+        box.appendChild(p);
+        return;
+      }
+      names.forEach(function (name) {
+        box.appendChild(row(name, toggleable ? FEATURES.preview[name] : FEATURES.unreleased[name], toggleable));
+      });
+    }
+
+    section("Unreleased", Object.keys(FEATURES.unreleased), false,
+      "No unreleased flags in this revision.");
+    section("Preview", Object.keys(FEATURES.preview), true,
+      "No preview flags in this revision.");
+    pvBody.appendChild(box);
+  }
+
   // The AI transparency statement, embedded as a generated .runtime page. It mirrors the
   // repository's TRANSPARENCY.md; the bundle-relative link in that file is not kept, because
   // this page lives in the synthetic directory.
@@ -8234,6 +8399,7 @@
       out += "- [Graph](graph.md) \u2014 how the graph is composed\n";
       out += "- [Performance](performance.md) \u2014 CPU, GPU, memory and timing\n";
       out += "- [Limits](limits.md) \u2014 the bounds the viewer enforces\n";
+      out += "- [Feature toggles](features.md) \u2014 unreleased and preview flags\n";
       out += "- [AI transparency](transparency.md) \u2014 the AI components, the transparency rules and what okfy discloses\n";
       out += "- [Assistant statistics](assistant.md) \u2014 token usage and activity of the assistant\n";
       out += "- [Agent instructions](AGENTS.md) \u2014 the instructions given to the assistant\n";
@@ -8405,6 +8571,13 @@
       return "# Assistant statistics\n\nNo assistant state is available.\n";
     }
     if (page === "AGENTS.md") return asAgentsMd() + "\n";
+    if (page === "features.md") {
+      out += "# Feature toggles\n\n";
+      out += "Flags are compiled into this copy of the viewer. **Unreleased** flags ship " +
+        "inert and cannot be changed here. **Preview** flags can be switched below; the " +
+        "change takes effect at once and is remembered in this browser.\n";
+      return out;
+    }
     // limits.md
     out += "# Limits\n\n";
     out += rtLine("Bundle files", MAX_BUNDLE_FILES + "");
@@ -8568,6 +8741,7 @@
         renderMarkdown(node.body || "");
     }
     if (node.runtime && node.runtimePage === "performance.md") mountPerfCharts();
+    if (node.runtime && node.runtimePage === "features.md") mountFeatureToggles();
     // Declare the language of the content, not just the interface: a concept may
     // carry its own language in frontmatter, and the generated runtime pages are
     // English. Unknown content inherits the interface language.
@@ -11915,7 +12089,7 @@
   function dialAvailability(n) {
     var room = nodeShown(n) < pageableKids(n).length;
     var recursive = anyDir(n, function (d) { return nodeShown(d) < pageableKids(d).length; });
-    if (n.kind === "tag") recursive = recursive || tagChildTagHeldBack(n);
+    if (n.kind === "tag" && featureOn("tagRecursiveReveal")) recursive = recursive || tagChildTagHeldBack(n);
     return {
       more: room,
       all: room,
@@ -12015,7 +12189,7 @@
     // A tag hub's recursive mode also opens the tags of the pages it reveals: each child
     // page's other hubs are paged far enough to include that page, so its whole tag
     // neighbourhood appears in one move. Edges already within a page are skipped.
-    if (mode === "recursive" && n.kind === "tag") {
+    if (mode === "recursive" && n.kind === "tag" && featureOn("tagRecursiveReveal")) {
       var pages = tagChildPages(n);
       for (var i = 0; i < allLinks.length; i++) {
         var l = allLinks[i];
@@ -12807,6 +12981,7 @@
   var AS_SPEAK_TOOL = { name: "speak", description: "Speak a short piece of commentary about your reply aloud through the audio output model. Use it only while audio output is on — the runtime note says when it is off — and then on every reply, not only the important ones. Comment on the answer — its meaning, what you did in the viewer, what to look at next — instead of reading it out. Write for the ear: plain sentences, no Markdown or links, numbers spelled out. Playback is streamed and the user can interrupt it.", inputSchema: { type: "object", properties: { text: { type: "string", description: "The commentary to say aloud." } }, required: ["text"], additionalProperties: false } };
 
   var asCfg = null, asMessages = [], asBusy = false, asPendingAsk = false, asAbort = null, asOpen = false, asSettings = false;
+  var asInited = false;
   var asTokens = { input: 0, output: 0, calls: 0, lastIn: 0, lastOut: 0, context: 0, inLimit: 0, sent: 0, recv: 0, lastSent: 0, lastRecv: 0 };
   // Context compactification: when the prompt nears the model's context length the older
   // conversation is summarized into asCompaction.summary and replayed only from asCompaction.upto,
@@ -16996,6 +17171,10 @@
   }
 
   function initAssistant() {
+    if (asInited) return;
+    // The panel is a preview feature; leave everything untouched when it is off.
+    if (!featureOn("assistant")) return;
+    asInited = true;
     if (!ASSISTANT_ENABLED) {
       // The assistant is switched off in this file. Remove its panel — and with it its edge tab —
       // so no part of the assistant remains in the interface, then leave it uninitialised.
@@ -17420,7 +17599,8 @@
   pvLoadVolume();   // the audio and video previews share one remembered volume
   initMascot();
   initDeck();
-  initAssistant();
+  if (featureOn("assistant")) initAssistant();
+  else document.body.classList.add("as-disabled");
   applyLang(resolveLang());
   // A leftover ?lang in the URL (from before the parameter was removed) is dropped, so an
   // old link is cleaned up rather than leaving an inert parameter in the address bar.

@@ -1968,6 +1968,56 @@ test('åpner .runtime fra Om-panelet og oppdaterer siden mens den leses', async 
   await expect(page.locator('#pvBody')).toContainText('Search: guide');
 });
 
+test('preview-funksjonsbrytere huskes i nettleseren', async ({ page }) => {
+  await loadBundle(page);
+  await page.locator('#titleBtn').click();
+  await page.locator('#aboutRuntime').click();
+  await page.locator('#pvBody').getByRole('link', { name: 'Feature toggles', exact: true }).click();
+  await expect(page.locator('#pvPath')).toHaveText('.runtime/features.md');
+  await expect(page.locator('#pvBody .pv-features')).toContainText('No unreleased flags in this revision.');
+
+  const toggle = page.locator('#pvBody .pv-feature', { hasText: 'Tag recursive reveal' }).locator('.pv-toggle');
+  await expect(toggle).toHaveAttribute('aria-checked', 'true');
+  await expect(toggle).toHaveText('On');
+  await expect(page.locator('#pvBody .pv-feature', { hasText: 'Assistant' }).locator('.pv-toggle'))
+    .toHaveAttribute('aria-checked', 'true');
+
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-checked', 'false');
+  await expect(toggle).toHaveText('Off');
+  expect(JSON.parse(await page.evaluate(() => localStorage.getItem('okfy.features'))))
+    .toEqual({ tagRecursiveReveal: false });
+
+  // The choice survives a reload: read it back from the generated page.
+  await page.reload();
+  await expect(page.locator('#spinner')).toBeHidden();
+  await page.keyboard.press('Escape');
+  await page.locator('#titleBtn').click();
+  await page.locator('#aboutRuntime').click();
+  await page.locator('#pvBody').getByRole('link', { name: 'Feature toggles', exact: true }).click();
+  const reloaded = page.locator('#pvBody .pv-feature', { hasText: 'Tag recursive reveal' }).locator('.pv-toggle');
+  await expect(reloaded).toHaveAttribute('aria-checked', 'false');
+  await expect(reloaded).toHaveText('Off');
+
+  // The assistant is a preview feature too: switching it off hides its panel at once.
+  const assistant = page.locator('#pvBody .pv-feature', { hasText: 'Assistant' }).locator('.pv-toggle');
+  await expect(assistant).toHaveAttribute('aria-checked', 'true');
+  await assistant.click();
+  await expect(page.locator('#assistant')).toBeHidden();
+  await assistant.click();
+  await expect(page.locator('#assistant')).toBeVisible();
+});
+
+test('assistant er en preview-funksjon og kan slås av', async ({ page }) => {
+  await page.addInitScript(() => {
+    try { localStorage.setItem('okfy.features', JSON.stringify({ assistant: false })); } catch (e) {}
+  });
+  await loadBundle(page);
+  await expect(page.locator('#assistant')).toBeHidden();
+  await expect(page.locator('#asHandle')).toBeHidden();
+  await expect(page.locator('#stats')).toContainText('files');
+});
+
 test('agentinstruksjonene følger språkinnstillingen', async ({ page }) => {
   await loadBundle(page);
   // Choose French from the About picker, then read the generated agent instructions.

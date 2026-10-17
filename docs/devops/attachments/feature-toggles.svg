@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2240" viewBox="0 0 1080 2240" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">Feature toggles — okfy devops explainer</title>
+  <desc id="d">How a copy of the viewer carries feature flags. There are two categories. Unreleased flags are hardwired false in the HTML: the code ships, is never reachable, is not offered as a switch and ignores browser storage. Preview flags have a default and a switch on the generated .runtime/features.md page; a reader's choice is written to localStorage under okfy.features, applies at once and survives a reload, while the default fills in until it is changed. A single reader, featureOn(name), is the only gate: it returns false for an unreleased or unknown name, and otherwise reads the stored preview choice or the default. The path runs from the FEATURES registry in the source, through a release that leaves unreleased flags false, to the published HTML in the browser, where the preview switch and storage feed featureOn and the gated code either runs or stays inert. A reload re-reads both the copy and the stored choice; a stored key for a flag the copy no longer has is ignored. Operationally the flags give a dark launch, a kill switch a reader can throw without a redeploy, per-browser opt-in and a rollback by reverting the copy or switching the preview off. There is no flag service, no network and no telemetry: the flags are data in the file and a key in the browser, and a flag is a UI boundary, not a security boundary — URL containment, CSP and the size bounds stay in force.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette, matching the sibling explainers. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .bx { font-size: 13px; font-weight: 700; fill: #e7e9ee; }
+      .bxs { font-size: 11px; fill: #9aa2b3; }
+      .sec { font-size: 11px; letter-spacing: 1.2px; fill: #9aa2b3; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .code { fill: #1b1e27; stroke: #2e3341; stroke-width: 1.5; }
+      .pill { fill: #5b8def; fill-opacity: .16; stroke: #5b8def; stroke-opacity: .55; stroke-width: 1.5; }
+      .tagpill { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .pilltext { font-size: 12px; fill: #5b8def; }
+      .edge { stroke: #5a6274; stroke-width: 2; fill: none; }
+      .acc { stroke: #5b8def; stroke-width: 2; fill: none; }
+    </style>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5a6274"/>
+    </marker>
+    <marker id="ara" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5b8def"/>
+    </marker>
+  </defs>
+
+  <rect width="1080" height="2240" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · DEVOPS EXPLAINER</text>
+  <text x="56" y="110" class="title">Feature toggles</text>
+  <text x="56" y="148" class="subtitle">Two flag categories, one reader, and a switch that lives in the browser</text>
+
+  <text x="56" y="214" class="h">1 · Two categories</text>
+  <rect x="56" y="238" width="968" height="300" rx="16" class="panel"/>
+
+  <rect x="96" y="274" width="420" height="196" rx="12" class="card"/>
+  <text x="120" y="308" class="lab">Unreleased</text>
+  <rect x="412" y="290" width="84" height="24" rx="12" class="tagpill"/>
+  <text x="454" y="307" class="sx" text-anchor="middle">hardwired</text>
+  <text x="120" y="344" class="mono">unreleased: { flag: false }</text>
+  <text x="120" y="380" class="sx">Compiled to false in the HTML.</text>
+  <text x="120" y="404" class="sx">featureOn() ignores storage.</text>
+  <text x="120" y="428" class="sx">No switch; the code ships inert.</text>
+
+  <rect x="548" y="274" width="420" height="196" rx="12" class="card"/>
+  <text x="572" y="308" class="lab">Preview</text>
+  <rect x="872" y="290" width="72" height="24" rx="12" class="tagpill"/>
+  <text x="908" y="307" class="sx" text-anchor="middle">switch</text>
+  <text x="572" y="344" class="mono">preview: { assistant: { default: true } }</text>
+  <text x="572" y="380" class="sx">A switch in .runtime/features.md.</text>
+  <text x="572" y="404" class="sx">Kept in this browser under okfy.features.</text>
+  <text x="572" y="428" class="sx">The default applies until it is changed.</text>
+
+  <text x="76" y="516" class="note">Both categories live in the same single HTML file; a flag decides whether a code path is reachable.</text>
+
+  <text x="56" y="596" class="h">2 · One reader</text>
+  <rect x="56" y="620" width="968" height="300" rx="16" class="panel"/>
+
+  <rect x="96" y="656" width="470" height="204" rx="10" class="code"/>
+  <text x="116" y="690" class="mono">FEATURES = {</text>
+  <text x="116" y="714" class="mono">  unreleased: { …: false },</text>
+  <text x="116" y="738" class="mono">  preview:    { assistant: { default: true } },</text>
+  <text x="116" y="762" class="mono">};</text>
+  <text x="116" y="796" class="mono">featureOn("assistant")   // true or false</text>
+
+  <line x1="566" y1="756" x2="610" y2="756" class="acc" marker-end="url(#ara)"/>
+  <rect x="616" y="730" width="180" height="52" rx="10" class="card"/>
+  <text x="706" y="754" class="br" text-anchor="middle" font-weight="600">featureOn(name)</text>
+  <text x="706" y="774" class="sx" text-anchor="middle">the only reader</text>
+
+  <polyline points="796,750 820,750 820,713 836,713" class="edge" marker-end="url(#ar)"/>
+  <polyline points="796,762 820,762 820,809 836,809" class="edge" marker-end="url(#ar)"/>
+  <rect x="840" y="686" width="184" height="54" rx="10" class="card"/>
+  <text x="932" y="712" class="br" text-anchor="middle" font-weight="600">initAssistant()</text>
+  <text x="932" y="732" class="bxs" text-anchor="middle">on → runs · off → inert</text>
+  <rect x="840" y="782" width="184" height="54" rx="10" class="card"/>
+  <text x="932" y="808" class="br" text-anchor="middle" font-weight="600">tagRecursiveReveal</text>
+  <text x="932" y="828" class="bxs" text-anchor="middle">on → runs · off → inert</text>
+
+  <text x="76" y="884" class="note">An unknown or retired name is false, so a typo and a stale key both fail closed.</text>
+  <text x="76" y="906" class="note">Unreleased is checked first: a stored value can never turn it on.</text>
+
+  <text x="56" y="978" class="h">3 · From the copy to the browser</text>
+  <rect x="56" y="1002" width="968" height="380" rx="16" class="panel"/>
+
+  <rect x="96" y="1066" width="168" height="68" rx="10" class="card"/>
+  <text x="180" y="1090" class="bx" text-anchor="middle">FEATURES</text>
+  <text x="180" y="1110" class="bxs" text-anchor="middle">in the source</text>
+  <rect x="294" y="1066" width="168" height="68" rx="10" class="card"/>
+  <text x="378" y="1090" class="bx" text-anchor="middle">Release</text>
+  <text x="378" y="1110" class="bxs" text-anchor="middle">unreleased: false</text>
+  <rect x="492" y="1066" width="168" height="68" rx="10" class="card"/>
+  <text x="576" y="1090" class="bx" text-anchor="middle">Published copy</text>
+  <text x="576" y="1110" class="bxs" text-anchor="middle">one HTML file</text>
+  <rect x="690" y="1066" width="168" height="68" rx="10" class="card"/>
+  <text x="774" y="1090" class="bx" text-anchor="middle">.runtime</text>
+  <text x="774" y="1110" class="bxs" text-anchor="middle">features.md switch</text>
+  <rect x="888" y="1066" width="168" height="68" rx="10" class="card"/>
+  <text x="972" y="1090" class="bx" text-anchor="middle">localStorage</text>
+  <text x="972" y="1110" class="bxs" text-anchor="middle">okfy.features</text>
+
+  <line x1="266" y1="1100" x2="290" y2="1100" class="edge" marker-end="url(#ar)"/>
+  <line x1="464" y1="1100" x2="488" y2="1100" class="edge" marker-end="url(#ar)"/>
+  <line x1="662" y1="1100" x2="686" y2="1100" class="edge" marker-end="url(#ar)"/>
+  <line x1="860" y1="1100" x2="884" y2="1100" class="edge" marker-end="url(#ar)"/>
+
+  <polyline points="180,1134 180,1170 420,1170 420,1192" class="edge" marker-end="url(#ar)"/>
+  <polyline points="972,1134 972,1170 660,1170 660,1192" class="edge" marker-end="url(#ar)"/>
+  <rect x="396" y="1196" width="288" height="56" rx="10" class="card"/>
+  <text x="540" y="1222" class="br" text-anchor="middle" font-weight="600">featureOn(name)</text>
+  <text x="540" y="1242" class="sx" text-anchor="middle">reads the copy and the stored choice</text>
+
+  <line x1="540" y1="1252" x2="540" y2="1284" class="edge" marker-end="url(#ar)"/>
+  <rect x="396" y="1288" width="288" height="56" rx="10" class="card"/>
+  <text x="540" y="1312" class="br" text-anchor="middle" font-weight="600">the gated path runs</text>
+  <text x="540" y="1332" class="sx" text-anchor="middle">or stays inert</text>
+
+  <text x="76" y="1364" class="note">A reload re-reads both: hardwired unreleased values from the copy, preview choices from storage.</text>
+
+  <text x="56" y="1440" class="h">4 · The switches</text>
+  <rect x="56" y="1464" width="968" height="300" rx="16" class="panel"/>
+
+  <rect x="96" y="1500" width="888" height="232" rx="10" class="card"/>
+  <text x="120" y="1532" class="br" font-weight="700" font-size="14">Feature toggles</text>
+  <text x="300" y="1532" class="sx">.runtime/features.md</text>
+  <line x1="116" y1="1548" x2="964" y2="1548" stroke="#2e3341" stroke-width="1.5"/>
+  <text x="120" y="1574" class="sec">UNRELEASED</text>
+  <text x="120" y="1596" class="sx">No unreleased flags in this revision.</text>
+  <text x="120" y="1626" class="sec">PREVIEW</text>
+
+  <text x="120" y="1654" class="br" font-weight="600">Assistant</text>
+  <text x="120" y="1674" class="sx">The built-in AI assistant: chat, tools, voice and the model settings.</text>
+  <rect x="900" y="1640" width="56" height="24" rx="12" class="pill"/>
+  <text x="928" y="1657" class="pilltext" text-anchor="middle">On</text>
+
+  <text x="120" y="1698" class="br" font-weight="600">Tag recursive reveal</text>
+  <text x="120" y="1718" class="sx">Recursive expand also opens the tags of the pages it reveals.</text>
+  <rect x="900" y="1684" width="56" height="24" rx="12" class="pill"/>
+  <text x="928" y="1701" class="pilltext" text-anchor="middle">On</text>
+
+  <text x="76" y="1786" class="note">A switch writes the key and applies at once; it never writes to the bundle.</text>
+
+  <text x="56" y="1840" class="h">5 · Operating it</text>
+  <rect x="56" y="1864" width="968" height="280" rx="16" class="panel"/>
+
+  <rect x="96" y="1904" width="190" height="140" rx="10" class="card"/>
+  <text x="112" y="1934" class="lab">Dark launch</text>
+  <text x="112" y="1960" class="sx">Ship the code under an</text>
+  <text x="112" y="1979" class="sx">unreleased flag; enable</text>
+  <text x="112" y="1998" class="sx">it in a later release.</text>
+
+  <rect x="330" y="1904" width="190" height="140" rx="10" class="card"/>
+  <text x="346" y="1934" class="lab">Kill switch</text>
+  <text x="346" y="1960" class="sx">Switch a preview off;</text>
+  <text x="346" y="1979" class="sx">no redeploy needed.</text>
+
+  <rect x="564" y="1904" width="190" height="140" rx="10" class="card"/>
+  <text x="580" y="1934" class="lab">Opt in</text>
+  <text x="580" y="1960" class="sx">Preview defaults apply;</text>
+  <text x="580" y="1979" class="sx">each browser chooses.</text>
+
+  <rect x="798" y="1904" width="190" height="140" rx="10" class="card"/>
+  <text x="814" y="1934" class="lab">Roll back</text>
+  <text x="814" y="1960" class="sx">Revert the copy, or</text>
+  <text x="814" y="1979" class="sx">switch the preview off.</text>
+
+  <text x="76" y="2084" class="note">No flag service, no network, no telemetry: the flags are data in the file and a key in the browser.</text>
+  <text x="76" y="2108" class="note">A flag is a UI boundary, not a security boundary — URL containment, CSP and the bounds stay in force.</text>
+
+  <text x="56" y="2196" class="note">A copy without a flag does not list it; a stored value for a missing flag is ignored.</text>
+</svg>

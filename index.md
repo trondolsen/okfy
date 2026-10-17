@@ -46,6 +46,10 @@ This directory tree is the project's **OKF v0.2 bundle**. It explains what the o
 
 - [Maintenance](docs/maintenance/index.md) – the test suite and where the knowledge comes from.
 
+## DevOps
+
+- [DevOps](docs/devops/index.md) – release and runtime controls: the feature flags compiled into a copy.
+
 ## Reviews
 
 - [Reviews](docs/reviews/index.md) – dated review documents from the development cycle.
