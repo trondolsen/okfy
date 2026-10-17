@@ -87,7 +87,7 @@ A preview feature belongs to live: its code is present and a reader can switch i
 
 # Feature toggles
 
-An unreleased toggle is hardwired false in the `FEATURES` registry. `featureOn()` never returns true for it, browser storage is ignored and the interface offers no switch. A preview toggle has a default and a switch on the generated `.runtime/features.md` page; the choice applies at once and is kept in this browser under `okfy.features`.[^source]
+An unreleased toggle is hardwired false in the `FEATURES` registry. `featureOn()` never returns true for it, browser storage is ignored and the interface offers no switch. A preview toggle has a switch on the generated `.runtime/features.md` page and applies its stored choice, its default, or off when it is opt-in; the choice is kept in this browser under `okfy.features`.[^source]
 
 Adding a toggle is one registry entry plus a `featureOn(name)` check at the feature boundary. A toggle is a UI boundary, not a security boundary: turning a feature off does not relax URL containment, the Content Security Policy, the size limits or the streaming bounds. See [Feature toggles](feature-toggles.md).
 

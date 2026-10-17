@@ -1985,14 +1985,14 @@ test('preview-funksjonsbrytere huskes i nettleseren', async ({ page }) => {
   await expect(assistantRow.locator('.pv-toggle')).toHaveCount(0);
 
   const toggle = page.locator('#pvBody .pv-feature', { hasText: 'Tag recursive reveal' }).locator('.pv-toggle');
-  await expect(toggle).toHaveAttribute('aria-checked', 'true');
-  await expect(toggle).toHaveText('On');
-
-  await toggle.click();
   await expect(toggle).toHaveAttribute('aria-checked', 'false');
   await expect(toggle).toHaveText('Off');
+
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-checked', 'true');
+  await expect(toggle).toHaveText('On');
   expect(JSON.parse(await page.evaluate(() => localStorage.getItem('okfy.features'))))
-    .toEqual({ tagRecursiveReveal: false });
+    .toEqual({ tagRecursiveReveal: true });
 
   // The choice survives a reload: read it back from the generated page.
   await page.reload();
@@ -2002,8 +2002,8 @@ test('preview-funksjonsbrytere huskes i nettleseren', async ({ page }) => {
   await page.locator('#aboutRuntime').click();
   await page.locator('#pvBody').getByRole('link', { name: 'Feature toggles', exact: true }).click();
   const reloaded = page.locator('#pvBody .pv-feature', { hasText: 'Tag recursive reveal' }).locator('.pv-toggle');
-  await expect(reloaded).toHaveAttribute('aria-checked', 'false');
-  await expect(reloaded).toHaveText('Off');
+  await expect(reloaded).toHaveAttribute('aria-checked', 'true');
+  await expect(reloaded).toHaveText('On');
 });
 
 test.skip('assistant er en preview-funksjon og kan slås av', async ({ page }) => {

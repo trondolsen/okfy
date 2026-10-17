@@ -2031,23 +2031,20 @@
   // Partial expansion: a directory or tag node reveals its neighbours one page at a time.
   var EXPAND_PAGE = 8;          // neighbours revealed per click, and hidden per long-press
   var DEFAULT_CONCEPTS = 50;    // concepts a directory or tag hub shows on load
-  // Feature toggles. An unreleased toggle ships inert: featureOn() always returns false for it,
-  // whatever browser storage says. It is listed as hardwired off and has no switch. A preview toggle has
-  // a default and is switched by the reader on the generated .runtime/features.md page; the
-  // change takes effect at once and is kept in this browser.
+  // Feature toggles. Each entry has a status: "unreleased" ships inert and featureOn()
+  // always returns false for it; "preview" is switched on the generated .runtime/features.md
+  // page. A preview with optin starts off until the reader turns it on.
   var FEATURES = {
-    unreleased: {
-      assistant: {
-        title: "Assistant",
-        description: "The built-in AI assistant: chat, tools, voice and the model settings."
-      }
+    assistant: {
+      status: "unreleased",
+      title: "Assistant",
+      description: "The built-in AI assistant: chat, tools, voice and the model settings."
     },
-    preview: {
-      tagRecursiveReveal: {
-        default: true,
-        title: "Tag recursive reveal",
-        description: "Recursive expand on a tag hub also opens the tags of the pages it reveals."
-      }
+    tagRecursiveReveal: {
+      status: "preview",
+      optin: true,
+      title: "Tag recursive reveal",
+      description: "Recursive expand on a tag hub also opens the tags of the pages it reveals."
     }
   };
   var FEATURE_STORE = "okfy.features";
@@ -2057,21 +2054,22 @@
     try {
       var raw = JSON.parse(localStorage.getItem(FEATURE_STORE) || "{}");
       if (raw && typeof raw === "object") {
-        Object.keys(FEATURES.preview).forEach(function (name) {
-          if (typeof raw[name] === "boolean") out[name] = raw[name];
+        Object.keys(FEATURES).forEach(function (name) {
+          if (FEATURES[name].status === "preview" && typeof raw[name] === "boolean") out[name] = raw[name];
         });
       }
     } catch (e) {}
     return out;
   }
   function featureOn(name) {
-    if (Object.prototype.hasOwnProperty.call(FEATURES.unreleased, name)) return false;
-    var spec = FEATURES.preview[name];
-    if (!spec) return false;
-    return Object.prototype.hasOwnProperty.call(featurePrefs, name) ? !!featurePrefs[name] : !!spec.default;
+    var spec = FEATURES[name];
+    if (!spec || spec.status !== "preview") return false;
+    if (Object.prototype.hasOwnProperty.call(featurePrefs, name)) return !!featurePrefs[name];
+    return spec.optin ? false : !!spec.default;
   }
   function setFeature(name, on) {
-    if (!Object.prototype.hasOwnProperty.call(FEATURES.preview, name)) return false;
+    var spec = FEATURES[name];
+    if (!spec || spec.status !== "preview") return false;
     featurePrefs[name] = !!on;
     try { localStorage.setItem(FEATURE_STORE, JSON.stringify(featurePrefs)); } catch (e) {}
     return true;
@@ -8286,7 +8284,7 @@
     var box = document.createElement("div");
     box.className = "pv-features";
 
-    function row(name, spec, toggleable) {
+    function row(name, spec) {
       var r = document.createElement("div");
       r.className = "pv-feature";
       var text = document.createElement("div");
@@ -8301,7 +8299,7 @@
         text.appendChild(d);
       }
       r.appendChild(text);
-      if (!toggleable) {
+      if (spec.status !== "preview") {
         var s = document.createElement("span");
         s.className = "pv-feature-state";
         s.textContent = "Off (hardwired)";
@@ -8327,7 +8325,13 @@
       return r;
     }
 
-    function section(title, names, toggleable, emptyNote) {
+    function namesByStatus(status) {
+      return Object.keys(FEATURES).filter(function (name) {
+        return FEATURES[name].status === status;
+      });
+    }
+
+    function section(title, names, emptyNote) {
       var h = document.createElement("h2");
       h.textContent = title;
       box.appendChild(h);
@@ -8339,13 +8343,13 @@
         return;
       }
       names.forEach(function (name) {
-        box.appendChild(row(name, toggleable ? FEATURES.preview[name] : FEATURES.unreleased[name], toggleable));
+        box.appendChild(row(name, FEATURES[name]));
       });
     }
 
-    section("Unreleased", Object.keys(FEATURES.unreleased), false,
+    section("Unreleased", namesByStatus("unreleased"),
       "No unreleased toggles in this revision.");
-    section("Preview", Object.keys(FEATURES.preview), true,
+    section("Preview", namesByStatus("preview"),
       "No preview toggles in this revision.");
     pvBody.appendChild(box);
   }

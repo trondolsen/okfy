@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2240" viewBox="0 0 1080 2240" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
   <title id="t">Feature toggles — okfy devops explainer</title>
-  <desc id="d">How a copy of the viewer carries feature toggles. There are two categories. Unreleased toggles are hardwired false in the HTML: the code ships, is never reachable, is not offered as a switch and ignores browser storage. Preview toggles have a default and a switch on the generated .runtime/features.md page; a reader's choice is written to localStorage under okfy.features, applies at once and survives a reload, while the default fills in until it is changed. A single reader, featureOn(name), is the only gate: it returns false for an unreleased or unknown name, and otherwise reads the stored preview choice or the default. The path runs from the FEATURES registry in the source, through a release that leaves unreleased toggles false, to the published HTML in the browser, where the preview switch and storage feed featureOn and the gated code either runs or stays inert. A reload re-reads both the copy and the stored choice; a stored key for a toggle the copy no longer has is ignored. Operationally the toggles give a dark launch, a kill switch a reader can throw without a redeploy, per-browser opt-in and a rollback by reverting the copy or switching the preview off. There is no toggle service, no network and no telemetry: the toggles are data in the file and a key in the browser, and a toggle is a UI boundary, not a security boundary — URL containment, CSP and the size bounds stay in force.</desc>
+  <desc id="d">How a copy of the viewer carries feature toggles. There are two categories. Unreleased toggles are hardwired false in the HTML: the code ships, is never reachable, is not offered as a switch and ignores browser storage. Preview toggles have a switch on the generated .runtime/features.md page and start from a default, or off when they are opt-in; a reader's choice is written to localStorage under okfy.features, applies at once and survives a reload, while the default or opt-in start fills in until it is changed. A single reader, featureOn(name), is the only gate: it returns false for an unreleased or unknown name, and otherwise reads the stored preview choice, the default, or false when the entry is opt-in. The path runs from the FEATURES registry in the source, through a release that leaves unreleased toggles false, to the published HTML in the browser, where the preview switch and storage feed featureOn and the gated code either runs or stays inert. A reload re-reads both the copy and the stored choice; a stored key for a toggle the copy no longer has is ignored. Operationally the toggles give a dark launch, a kill switch a reader can throw without a redeploy, per-browser opt-in and a rollback by reverting the copy or switching the preview off. There is no toggle service, no network and no telemetry: the toggles are data in the file and a key in the browser, and a toggle is a UI boundary, not a security boundary — URL containment, CSP and the size bounds stay in force.</desc>
   <defs>
     <style>
       /* The viewer's own palette, matching the sibling explainers. */
@@ -47,8 +47,8 @@
   <text x="120" y="308" class="lab">Unreleased</text>
   <rect x="412" y="290" width="84" height="24" rx="12" class="tagpill"/>
   <text x="454" y="307" class="sx" text-anchor="middle">hardwired</text>
-  <text x="120" y="344" class="mono">unreleased: { toggle: false }</text>
-  <text x="120" y="380" class="sx">Compiled to false in the HTML.</text>
+  <text x="120" y="344" class="mono">assistant: { status: "unreleased" }</text>
+  <text x="120" y="380" class="sx">Hardwired off in the HTML.</text>
   <text x="120" y="404" class="sx">featureOn() ignores storage.</text>
   <text x="120" y="428" class="sx">No switch; the code ships inert.</text>
 
@@ -56,10 +56,10 @@
   <text x="572" y="308" class="lab">Preview</text>
   <rect x="872" y="290" width="72" height="24" rx="12" class="tagpill"/>
   <text x="908" y="307" class="sx" text-anchor="middle">switch</text>
-  <text x="572" y="344" class="mono">preview: { assistant: { default: true } }</text>
+  <text x="572" y="344" class="mono">tagRecursiveReveal: { status: "preview", optin: true }</text>
   <text x="572" y="380" class="sx">A switch in .runtime/features.md.</text>
   <text x="572" y="404" class="sx">Kept in this browser under okfy.features.</text>
-  <text x="572" y="428" class="sx">The default applies until it is changed.</text>
+  <text x="572" y="428" class="sx">It starts off until the reader changes it.</text>
 
   <text x="76" y="516" class="note">Both categories live in the same single HTML file; a toggle decides whether a code path is reachable.</text>
 
@@ -68,10 +68,11 @@
 
   <rect x="96" y="656" width="470" height="204" rx="10" class="code"/>
   <text x="116" y="690" class="mono">FEATURES = {</text>
-  <text x="116" y="714" class="mono">  unreleased: { …: false },</text>
-  <text x="116" y="738" class="mono">  preview:    { assistant: { default: true } },</text>
+  <text x="116" y="714" class="mono">  assistant:       { status: "unreleased" },</text>
+  <text x="116" y="738" class="mono">  tagRecursiveReveal: { status: "preview", optin: true },</text>
   <text x="116" y="762" class="mono">};</text>
-  <text x="116" y="796" class="mono">featureOn("assistant")   // true or false</text>
+  <text x="116" y="796" class="mono">featureOn("assistant")   // false (unreleased)</text>
+  <text x="116" y="820" class="mono">featureOn("tagRecursiveReveal") // false until opt-in</text>
 
   <line x1="566" y1="756" x2="610" y2="756" class="acc" marker-end="url(#ara)"/>
   <rect x="616" y="730" width="180" height="52" rx="10" class="card"/>
@@ -143,7 +144,7 @@
   <text x="120" y="1674" class="br" font-weight="600">Tag recursive reveal</text>
   <text x="120" y="1694" class="sx">Recursive expand also opens the tags of the pages it reveals.</text>
   <rect x="900" y="1660" width="56" height="24" rx="12" class="pill"/>
-  <text x="928" y="1677" class="pilltext" text-anchor="middle">On</text>
+  <text x="928" y="1677" class="pilltext" text-anchor="middle">Off</text>
 
   <text x="76" y="1786" class="note">A preview switch writes the key and applies at once; it never writes to the bundle.</text>
 
