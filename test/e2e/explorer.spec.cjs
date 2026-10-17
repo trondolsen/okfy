@@ -1473,6 +1473,59 @@ test('laster testpakken med tre filer og tre lenker', async ({ page }) => {
   await expect(page.locator('#legendBody')).toContainText('Reference');
 });
 
+test('varsler før nettleseren forlater siden når en pakke er åpen', async ({ page }) => {
+  await loadBundle(page);
+  const prevented = await page.evaluate(() => {
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  expect(prevented).toBe(true);
+});
+
+test('varsler ikke før en pakke er lastet', async ({ page }) => {
+  await page.goto(fixtureExplorer('missing'));
+  await expect(page.locator('#spinner')).toBeHidden();
+  const prevented = await page.evaluate(() => {
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  expect(prevented).toBe(false);
+});
+
+test('fanger nettleserens tilbake ved første historikkinnslag', async ({ page }) => {
+  await loadBundle(page);
+  await page.evaluate(() => history.back());
+  await expect(page.locator('#leaveNotice')).toBeVisible();
+  await expect(page.locator('#leaveNotice')).toContainText('Back stays inside okfy');
+  // The viewer is still there; the first Back stepped to the page's first entry.
+  await expect(page.locator('#stats')).toContainText('files');
+  await expect.poll(() => page.evaluate(() => !!(history.state && history.state.okfGuard))).toBe(true);
+  // The guard was restored, so another Back stays as well.
+  await page.evaluate(() => history.back());
+  await expect(page.locator('#stats')).toContainText('files');
+  await expect.poll(() => page.evaluate(() => !!(history.state && history.state.okfGuard))).toBe(true);
+});
+
+test('fanger tilbake også før pakken er ferdig lastet', async ({ page }) => {
+  await page.goto(explorer);
+  await page.evaluate(() => history.back());
+  // The guard entry is pushed before the crawl, so the first Back stays in the
+  // document even when no interaction has taken place yet.
+  await expect(page.locator('#stats')).toBeAttached();
+  await expect(page.locator('#leaveNotice')).toBeVisible();
+});
+
+test('gjenoppretter vakten når popstate blir undertrykt', async ({ page }) => {
+  await loadBundle(page);
+  // Simulate a traversal that reaches the first entry without a popstate event.
+  await page.evaluate(() => history.replaceState(null, '', location.href));
+  await page.clock.runFor(100);   // let the guard's short poll run
+  await expect.poll(() => page.evaluate(() => !!(history.state && history.state.okfGuard))).toBe(true);
+  await expect(page.locator('#leaveNotice')).toBeVisible();
+});
+
 test('søker i valgt felt og demper noder som ikke passer', async ({ page }) => {
   await loadBundle(page);
   await setFilters(page, true);   // the filter panel starts collapsed

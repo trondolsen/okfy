@@ -553,6 +553,15 @@
     background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
     padding: 8px 10px; box-shadow: 0 8px 30px rgba(0,0,0,.45); display: none;
   }
+  /* A short notice shown when Back is pressed at the page's first history entry. */
+  #leaveNotice {
+    position: fixed; z-index: 30; left: 50%; bottom: 24px; transform: translateX(-50%);
+    max-width: min(420px, calc(100vw - 32px)); padding: 10px 14px;
+    border: 1px solid var(--line); border-radius: 10px;
+    background: var(--panel); color: var(--text); font-size: 13px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.45); text-align: center; pointer-events: none;
+  }
+  #leaveNotice[hidden] { display: none; }
   #tip .t { font-weight: 600; margin-bottom: 2px; }
   #tip .meta { color: var(--muted); font-size: 12px; }
   #tip .desc { margin-top: 5px; }
@@ -1664,6 +1673,7 @@
   </div>
 </div>
 <div id="tip"></div>
+<div id="leaveNotice" role="status" aria-live="polite" hidden></div>
 <div id="dial" hidden>
   <svg viewBox="-132 -132 264 264" width="264" height="264" aria-hidden="true" focusable="false">
     <defs>
@@ -1847,6 +1857,8 @@
   var bundleFiles = null;      // currently visible file set, for on-demand expansion
   var bundleRootUrl = null;    // base URL used to fetch deeper content on demand
   var bundleKnown = null;      // Map(path->file) of locally loaded files not yet shown
+  var leaveGuardBypass = false;   // set before a navigation the reader asked for, such as sign-in
+  var leaveGuardPushed = false;   // a guard entry above the page's first history entry
   var attemptedUrls = new Set();
   var prefetchLimited = false;  // true when ?depth limited the crawl (deeper markdown loads on demand)
 
@@ -6935,7 +6947,10 @@
     decks = [{ name: "Deck 1", items: [] }]; useDeck(0); closeDeckMenu(); cancelCardDrag(); renderDeck();
     pvBody.textContent = "";
     hidePreview();
-    try { history.replaceState(null, "", location.href); } catch (e) {}
+    // Keep the leave guard on the current entry; a bundle reload must not turn Back
+    // into an exit before the guard is restored.
+    var keptState = history.state && history.state.okfGuard ? history.state : { okfGeneration: bundleGeneration };
+    try { history.replaceState(keptState, "", location.href); } catch (e) {}
   }
   async function imageSrcFor(path, src, generation, root) {
     if (generation !== bundleGeneration) return null;
@@ -9747,11 +9762,65 @@
       return;
     }
     var st = e.state;
+    if (st && st.okfGuard) {
+      leaveGuardPushed = true;
+      hidePreview();
+      return;
+    }
     if (st && st.okfGeneration === bundleGeneration && typeof st.okfPv === "number" && st.okfPv >= 0 && st.okfPv < pvStack.length) {
       showPreviewAt(st.okfPv);
-    } else {
-      hidePreview(); // navigated back before the first preview entry
+      return;
     }
+    hidePreview();
+    if (st !== null || leaveGuardBypass) return;   // an in-app reset entry, not the exit
+    if (history.state && history.state.okfGuard) { leaveGuardPushed = true; return; }
+    if (!leaveGuardPushed) return;
+    leaveGuardPushed = false;
+    pushLeaveGuard();
+    showLeaveNotice();
+  });
+
+  // The page's first history entry is the only one that can lead out of okfy.
+  // A guard entry above it turns Back and the mouse's back button into a
+  // same-document step. The guard is restored on every attempt, so history
+  // navigation never leaves the site; popstate is unavailable in some browsers
+  // until the page is interacted with, so a short poll restores it there too.
+  function pushLeaveGuard() {
+    try {
+      history.pushState({ okfGuard: true, okfGeneration: bundleGeneration }, "", location.href);
+      leaveGuardPushed = true;
+      return true;
+    } catch (e) { return false; }   // e.g. file://
+  }
+  function armLeaveGuard() {
+    if (leaveGuardPushed) return;
+    pushLeaveGuard();
+  }
+  function watchLeaveGuard() {
+    if (!leaveGuardPushed || leaveGuardBypass) return;
+    if (history.state !== null) return;   // a guard, preview or in-app reset entry
+    // The first entry was reached without a popstate (Firefox may suppress it).
+    leaveGuardPushed = false;
+    pushLeaveGuard();
+    showLeaveNotice();
+  }
+  var leaveNoticeTimer = 0;
+  function showLeaveNotice() {
+    var el = document.getElementById("leaveNotice");
+    if (!el) return;
+    el.textContent = t("msg.leaveCaught", "Back stays inside okfy. Close the tab or enter another address to leave.");
+    el.hidden = false;
+    if (leaveNoticeTimer) clearTimeout(leaveNoticeTimer);
+    leaveNoticeTimer = setTimeout(function () { el.hidden = true; }, 4000);
+  }
+  // A bfcache restore brings the page back without a popstate event, and the forward
+  // history can still hold the page the reader left for. Push a guard above the
+  // restored entry: it truncates that forward history and hides an old notice.
+  window.addEventListener("pageshow", function (e) {
+    if (!e.persisted) return;
+    pushLeaveGuard();
+    var notice = document.getElementById("leaveNotice");
+    if (notice) notice.hidden = true;
   });
   function handlePreviewClick(e) {
     var a = e.target && e.target.closest ? e.target.closest("a") : null;
@@ -10573,6 +10642,19 @@
   });
   window.addEventListener("dragover", function (e) { e.preventDefault(); });
 
+  // Trap the browser events that would leave the page once a bundle is open: closing
+  // the tab, reloading, typing another address, or going back or forward to another
+  // document. Same-document history (the preview's own back and forward) does not
+  // unload the page, so it stays free. The browser supplies its own wording; the
+  // message is used only where a browser still shows it.
+  window.addEventListener("beforeunload", function (e) {
+    if (leaveGuardBypass || !bundleFiles || !bundleFiles.length) return;
+    var msg = t("msg.leaveConfirm", "Leave okfy? The loaded bundle and your place in it will be lost.");
+    e.preventDefault();
+    e.returnValue = msg;
+    return msg;
+  });
+
   // Record unexpected errors so they are available on the .runtime/errors.md page,
   // without interrupting the reader (bundle load failures show that page directly).
   window.addEventListener("error", function (e) {
@@ -10608,6 +10690,7 @@
       if (!preserve) { bundleGeneration++; resetBundleResources(); legendFilter.clear(); loadErrors.length = 0; expandState.clear(); tagReveal.clear(); tagRevealKey = ""; }
       bundleBudget = nextBudget;
       bundleFiles = files;
+      armLeaveGuard();
       bundleRootUrl = rootUrl || null;
       bundleKnown = known || null;
       nodes = graph.nodes; links = graph.links;
@@ -16980,6 +17063,7 @@
     u.searchParams.set("state", state);
     u.searchParams.set("code_challenge", challenge);
     u.searchParams.set("code_challenge_method", "S256");
+    leaveGuardBypass = true;   // the reader chose to sign in; do not warn about leaving
     location.assign(u.href);
   }
   // The exp claim of a JWT access token, in ms. The browser cannot verify the
@@ -17615,6 +17699,10 @@
   } catch (e) {}
   // Start on the About panel. It stays until the user interacts with the
   // interface, while auto-loading runs underneath.
+  // The guard must exist before the first bundle arrives: a reader can press Back
+  // as soon as the page paints, before the crawl has finished.
+  armLeaveGuard();
+  setInterval(watchLeaveGuard, 25);
   openAbout();
   autoLoad(false);
 })();

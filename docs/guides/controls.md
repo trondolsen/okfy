@@ -81,6 +81,19 @@ There are no other global shortcuts.[^source]
 On screens narrower than 760px the toolbar collapses behind the **☰** button and
 the two panels slide behind their **Filters** and **Legend** tabs.[^design]
 
+# Leaving the page
+
+Once a bundle is loaded, the browser warns before it unloads the page: closing
+the tab, reloading, or entering another address. The browser supplies the wording
+of the warning.
+
+Back and Forward entries that stay inside the preview move through pages without
+a warning. At the page's first history entry, Back and the mouse's back button
+are caught every time: the viewer stays and a short notice explains that closing
+the tab or entering another address leaves. This holds in Firefox too, which
+keeps the page in its back/forward cache. Forward entries are in-app history, so
+they do not leave either.[^source]
+
 # Connections
 
 - [Find a concept](find-a-concept.md)
@@ -89,5 +102,5 @@ the two panels slide behind their **Filters** and **Legend** tabs.[^design]
 - [Interface design](../design/interface-design.md)
 - [Build a deck of cards](../interface/deck.md)
 
-[^source]: The pointer, keyboard and control handlers in the tool source.
+[^source]: The pointer, keyboard and control handlers in the tool source, including the `beforeunload` and history-entry guards.
 [^design]: Interface design.
