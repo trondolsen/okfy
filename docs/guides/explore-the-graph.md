@@ -56,7 +56,8 @@ tag).
 | left | Expand more | Reveal the next page of neighbours. |
 
 The dial carries **no text**: each mode is a small pictogram built from the graph's
-own vocabulary — a solid node is shown, a dashed ring is held back, an arrowhead is
+own vocabulary — a solid node is shown, a dashed ring or a dashed outlined node is
+held back, an arrowhead is
 a neighbour appearing, and an extra level of nodes marks the recursive mode. A mode
 with nothing to do is drawn faded and cannot be chosen, so the dial teaches the
 whole vocabulary without changing anything.[^controls]

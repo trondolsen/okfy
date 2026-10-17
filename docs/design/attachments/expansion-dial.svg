@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1500" viewBox="0 0 1080 1500" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
   <title id="t">A dial for expanding and collapsing directories and tags — okfy design proposal</title>
-  <desc id="d">Press and hold a directory or tag node and a radial dial opens around it with four expansion modes, each drawn as a small graph pictogram of nodes and links instead of words: expand more adds one more neighbour, expand all shows every neighbour, recursive expand all opens the whole subtree below — and on a tag hub also opens the tags of the pages it reveals — and collapsed holds everything back into the single node. Dashed rings are held-back neighbours. Modes that do not apply are drawn faded. A drag to a mode and release applies it; releasing in the middle cancels.</desc>
+  <desc id="d">Press and hold a directory or tag node and a radial dial opens around it with four expansion modes, each drawn as a small graph pictogram of nodes and links instead of words: expand more adds one more neighbour while the node below it stays collapsed, drawn as a dashed grey outline, expand all shows every neighbour, recursive expand all opens the whole subtree below — and on a tag hub also opens the tags of the pages it reveals — and collapsed holds everything back into the single node. Dashed rings and dashed outlined nodes are held-back neighbours. Modes that do not apply are drawn faded. A drag to a mode and release applies it; releasing in the middle cancels.</desc>
   <defs>
     <style>
       /* The viewer's own palette: the dark theme's CSS variables and the node colours from
@@ -32,14 +32,14 @@ tool. */
     </marker>
 
     <g id="ip1">
-      <line x1="-16" y1="0" x2="4" y2="-9" stroke="#6a7488" stroke-width="2"/>
-      <line x1="-16" y1="0" x2="4" y2="9" stroke="#6a7488" stroke-width="2"/>
-      <line x1="-16" y1="0" x2="18" y2="0" stroke="#5b8def" stroke-width="2"/>
-      <path d="M 12 0 L 6.5 -3.5 L 6.5 3.5 Z" fill="#5b8def"/>
+      <line x1="-16" y1="0" x2="6" y2="-11" stroke="#6a7488" stroke-width="2"/>
+      <line x1="-16" y1="0" x2="1.5" y2="8.8" stroke="#6a7488" stroke-width="2"/>
+      <line x1="-16" y1="0" x2="12" y2="0" stroke="#5b8def" stroke-width="2"/>
+      <path d="M 7 0 L 1.5 -3.5 L 1.5 3.5 Z" fill="#5b8def"/>
       <circle cx="-16" cy="0" r="5" fill="#8b93a7" stroke="#6f7b92" stroke-width="1.5"/>
-      <circle cx="4" cy="-9" r="5" fill="#8b93a7" stroke="#6f7b92" stroke-width="1.5"/>
-      <circle cx="4" cy="9" r="5" fill="#8b93a7" stroke="#6f7b92" stroke-width="1.5"/>
-      <circle cx="18" cy="0" r="5" fill="#5b8def" stroke="#4a6fa5" stroke-width="1.5"/>
+      <circle cx="6" cy="-11" r="5" fill="#8b93a7" stroke="#6f7b92" stroke-width="1.5"/>
+      <circle cx="6" cy="11" r="5" fill="none" stroke="#8b93a7" stroke-width="2" stroke-dasharray="2.5 2"/>
+      <circle cx="12" cy="0" r="5" fill="#5b8def" stroke="#4a6fa5" stroke-width="1.5"/>
     </g>
     <g id="ip2">
       <line x1="-16" y1="0" x2="6" y2="-11" stroke="#6a7488" stroke-width="2"/>
@@ -140,10 +140,11 @@ tool. */
 
   <use href="#ip1" transform="translate(584,891) scale(0.9)"/>
   <text x="624" y="898" class="nn">Expand more</text>
-  <text x="624" y="920" class="note">reveal the next page of neighbours</text>
+  <text x="624" y="920" class="note">reveal the next page; more stay held back</text>
 
   <text x="624" y="950" class="note">A mode that does not apply is drawn faded.</text>
   <text x="624" y="974" class="note">Release in the middle, or press Esc, to cancel.</text>
+  <text x="624" y="998" class="note">Expand more leaves one more node outlined.</text>
 
   <text x="56" y="1056" class="h">3 · When each mode applies</text>
   <rect x="56" y="1080" width="968" height="280" rx="16" class="panel"/>
