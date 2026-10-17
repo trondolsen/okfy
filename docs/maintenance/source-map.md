@@ -58,6 +58,7 @@ sources:
 | [`attachments/streaming-and-budgets.svg`](../security/attachments/streaming-and-budgets.svg) | The bounded streaming and reserved capacity explainer — the bounded reader, reserve and release, the fetch slot and the rollback — shown in the bounded streaming and reserved capacity concept |
 | [`attachments/resource-lifecycle.svg`](../security/attachments/resource-lifecycle.svg) | The resource lifecycle explainer — the bundle generation, the six rules, the teardown and the refused late result — shown in the resource lifecycle concept |
 | [`attachments/assistant-data-flow.svg`](../security/attachments/assistant-data-flow.svg) | The assistant data flow explainer — what leaves the page, the CSP fence, the two authentication paths, the microphone token and the bounds — shown in the assistant data flow concept |
+| [`attachments/browser-integration.svg`](../architecture/attachments/browser-integration.svg) | The browser integration explainer — the page in the browser, the features used, the three file routes, the network fence and the input and output devices — shown in the browser integration concept |
 | [`favicons/`](../../favicons/) | The icon assets the tool references: the SVG and ICO sources (embedded in the page), the Android icons and `site.webmanifest` with the app name, scope, icons and screenshot |
 | [`apple-touch-icon.png`](../../apple-touch-icon.png) | The iOS home-screen icon, kept at the site root where iOS looks for it |
 | [`okfy-sw.js`](../../okfy-sw.js) | The optional service worker that keeps the app shell available offline |

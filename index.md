@@ -18,6 +18,10 @@ This directory tree is the project's **OKF v0.2 bundle**. It explains what the o
 
 - [Principles](docs/principles/index.md) – the durable properties the tool is built on: local processing, untrusted bundles and link-driven discovery.
 
+## Architecture
+
+- [Architecture](docs/architecture/index.md) – how the single page integrates with the browser: features, file access, networking and input and output devices.
+
 ## Model
 
 - [Model](docs/model/index.md) – how an OKF bundle and its concepts map to the graph the tool draws.

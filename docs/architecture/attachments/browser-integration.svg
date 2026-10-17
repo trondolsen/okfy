@@ -1,0 +1,371 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="3560" viewBox="0 0 1080 3560" role="img" aria-labelledby="arch-title arch-desc" lang="en" xml:lang="en">
+  <title id="arch-title">Browser integration — okfy architecture explainer</title>
+  <desc id="arch-desc">How okfy, one HTML document with inline CSS and JavaScript, runs inside the browser. The page uses DOM and CSS, Canvas 2D with requestAnimationFrame and inline SVG to draw; the History API, popstate, beforeunload and pageshow to navigate and guard the page; localStorage, sessionStorage and URLSearchParams to remember; a service worker, the Cache API and a web app manifest to install and run offline; a Content-Security-Policy, URL containment and bounded streams to enforce its rules; the Fetch API, ReadableStream and AbortController to read a served bundle; the File System Access API, a directory input, File and Blob plus drag-and-drop to read a folder chosen from disk; TextDecoder, TextEncoder, DecompressionStream and blob URLs to decode; Web Audio, HTML media elements, getUserMedia and an AnalyserNode to play and analyse media; and Intl, matchMedia, devicePixelRatio and navigator values to follow the device. A served bundle is fetched same-origin, with no credentials and no redirects, and never leaves its origin. A local folder is read in place and never uploaded. A preview file is read only when opened. The service worker caches only the app shell, never bundle bytes. The optional, unreleased assistant is the one path off the page: when configured and asked, it may POST to an LLM provider over https or loopback http, list models, call a speech endpoint, open a realtime transcription WebSocket over wss or loopback ws, or redirect for OAuth, all gated by the policy's connect-src. Input comes from pointer and mouse, touch, the wheel, the keyboard, a context menu, a folder drag-and-drop, a folder picker and the microphone; output goes to the canvas, the DOM, Web Audio, media elements, synthesized speech and an installed standalone window. Chosen files do not leave the page, and there is no analytics, telemetry, CDN, external font or external image.</desc>
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 21px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 16px; font-weight: 700; fill: #e7e9ee; }
+      .cardtitle { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .ct { font-size: 12px; font-weight: 700; fill: #e7e9ee; }
+      .body { font-size: 13px; fill: #c8cdd8; }
+      .body2 { font-size: 12px; fill: #aeb5c4; }
+      .note { font-size: 14px; fill: #9aa2b3; }
+      .small { font-size: 12px; fill: #9aa2b3; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #9aa2b3; }
+      .accent { fill: #5b8def; }
+      .bad { fill: #e0575b; }
+      .perm { fill: #d9a441; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .region { fill: #1b1e26; stroke: #2e3341; stroke-width: 1.5; }
+      .noc { fill: #232734; stroke: #e0575b; stroke-opacity: 0.5; stroke-width: 1.5; }
+      .permission { fill: #232734; stroke: #d9a441; stroke-opacity: 0.55; stroke-width: 1.5; }
+      .line { stroke: #333948; stroke-width: 1.5; fill: none; }
+      .flow { stroke: #5b8def; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .flowbad { stroke: #e0575b; stroke-width: 2; fill: none; marker-end: url(#arrowbad); }
+      .fence { stroke: #5b8def; stroke-width: 2; fill: none; stroke-dasharray: 6 5; opacity: 0.65; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5b8def"/>
+    </marker>
+    <marker id="arrowbad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e0575b"/>
+    </marker>
+  </defs>
+
+  <rect width="1080" height="3560" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+
+  <text x="56" y="52" class="eyebrow">OKFY · ARCHITECTURE EXPLAINER</text>
+  <text x="56" y="110" class="title">Browser integration</text>
+  <text x="56" y="148" class="subtitle">How one HTML document runs inside the browser — features, files, network and devices</text>
+  <circle cx="61" cy="180" r="5" fill="#5b8def"/>
+  <text x="74" y="185" class="small">in-page / same-origin</text>
+  <circle cx="236" cy="180" r="5" fill="#d9a441"/>
+  <text x="249" y="185" class="small">permission-gated</text>
+  <circle cx="410" cy="180" r="5" fill="#e0575b"/>
+  <text x="423" y="185" class="small">leaves the page</text>
+  <text x="1024" y="185" class="small" text-anchor="end">no build · no server · no SDK</text>
+
+  <!-- 1 · The page in the browser -->
+  <text x="56" y="236" class="h">1 · The page in the browser</text>
+  <rect x="56" y="260" width="968" height="470" rx="16" class="panel"/>
+  <text x="80" y="296" class="lab">The browser is the runtime</text>
+  <text x="80" y="320" class="note">One document; every capability is a browser API.</text>
+
+  <rect x="80" y="336" width="920" height="370" rx="14" class="region"/>
+  <text x="100" y="362" class="small">BROWSER — desktop, mobile or installed PWA</text>
+
+  <rect x="104" y="376" width="424" height="306" rx="12" class="card"/>
+  <rect x="104" y="376" width="6" height="306" rx="3" fill="#5b8def"/>
+  <text x="128" y="410" class="lab">okfy.html</text>
+  <text x="128" y="434" class="body2">one HTML document · inline CSS + JavaScript</text>
+  <circle cx="132" cy="466" r="3" fill="#5b8def"/>
+  <text x="146" y="470" class="body">Graph canvas + force layout</text>
+  <circle cx="132" cy="498" r="3" fill="#5b8def"/>
+  <text x="146" y="502" class="body">Markdown preview + media player</text>
+  <circle cx="132" cy="530" r="3" fill="#5b8def"/>
+  <text x="146" y="534" class="body">File reader + assistant (unreleased)</text>
+  <circle cx="132" cy="562" r="3" fill="#5b8def"/>
+  <text x="146" y="566" class="body">History guard + Content-Security-Policy</text>
+  <circle cx="132" cy="594" r="3" fill="#5b8def"/>
+  <text x="146" y="598" class="body">localStorage + service worker</text>
+  <circle cx="132" cy="626" r="3" fill="#5b8def"/>
+  <text x="146" y="630" class="body">No framework · no build · no SDK</text>
+  <text x="128" y="664" class="mono">one IIFE · one &lt;script&gt; · no external code</text>
+
+  <text x="540" y="526" class="accent" font-size="20" text-anchor="middle">↔</text>
+
+  <rect x="552" y="376" width="424" height="306" rx="12" class="card"/>
+  <text x="576" y="410" class="lab">Browser APIs it calls</text>
+  <text x="576" y="434" class="body2">the primitives behind those parts</text>
+  <circle cx="580" cy="466" r="3" fill="#5b8def"/>
+  <text x="594" y="470" class="body">DOM + CSS · Canvas 2D · requestAnimationFrame</text>
+  <circle cx="580" cy="498" r="3" fill="#5b8def"/>
+  <text x="594" y="502" class="body">History · popstate · beforeunload · pageshow</text>
+  <circle cx="580" cy="530" r="3" fill="#5b8def"/>
+  <text x="594" y="534" class="body">fetch · ReadableStream · AbortController</text>
+  <circle cx="580" cy="562" r="3" fill="#5b8def"/>
+  <text x="594" y="566" class="body">File System Access · File / Blob</text>
+  <circle cx="580" cy="594" r="3" fill="#5b8def"/>
+  <text x="594" y="598" class="body">Web Audio · getUserMedia · AnalyserNode</text>
+  <circle cx="580" cy="626" r="3" fill="#5b8def"/>
+  <text x="594" y="630" class="body">Storage · Cache API · service worker</text>
+  <circle cx="580" cy="658" r="3" fill="#5b8def"/>
+  <text x="594" y="662" class="body">CSP · manifest · beforeinstallprompt</text>
+
+  <text x="80" y="724" class="note">The page is the runtime: no process, no install, no server-side application.</text>
+
+  <!-- 2 · Features used -->
+  <text x="56" y="792" class="h">2 · Features used</text>
+  <text x="56" y="820" class="note">Grouped by what the page asks the browser to do.</text>
+
+  <rect x="56" y="844" width="300" height="112" rx="12" class="card"/>
+  <text x="76" y="872" class="cardtitle accent">Render</text>
+  <text x="76" y="898" class="body2">DOM + CSS · Canvas 2D</text>
+  <text x="76" y="918" class="body2">requestAnimationFrame</text>
+  <text x="76" y="938" class="body2">inline SVG marks</text>
+
+  <rect x="390" y="844" width="300" height="112" rx="12" class="card"/>
+  <text x="410" y="872" class="cardtitle accent">Navigate</text>
+  <text x="410" y="898" class="body2">History API · pushState</text>
+  <text x="410" y="918" class="body2">popstate · beforeunload</text>
+  <text x="410" y="938" class="body2">pageshow (back/forward cache)</text>
+
+  <rect x="724" y="844" width="300" height="112" rx="12" class="card"/>
+  <text x="744" y="872" class="cardtitle accent">Remember</text>
+  <text x="744" y="898" class="body2">localStorage · sessionStorage</text>
+  <text x="744" y="918" class="body2">URLSearchParams</text>
+  <text x="744" y="938" class="body2">no cookie · no IndexedDB</text>
+
+  <rect x="56" y="972" width="300" height="112" rx="12" class="card"/>
+  <text x="76" y="1000" class="cardtitle accent">Deliver</text>
+  <text x="76" y="1026" class="body2">service worker + Cache API</text>
+  <text x="76" y="1046" class="body2">web app manifest</text>
+  <text x="76" y="1066" class="body2">beforeinstallprompt</text>
+
+  <rect x="390" y="972" width="300" height="112" rx="12" class="card"/>
+  <text x="410" y="1000" class="cardtitle accent">Guard</text>
+  <text x="410" y="1026" class="body2">Content-Security-Policy</text>
+  <text x="410" y="1046" class="body2">URL containment</text>
+  <text x="410" y="1066" class="body2">bounded streams</text>
+
+  <rect x="724" y="972" width="300" height="112" rx="12" class="card"/>
+  <text x="744" y="1000" class="cardtitle accent">Encode</text>
+  <text x="744" y="1026" class="body2">Blob + object URL</text>
+  <text x="744" y="1046" class="body2">TextDecoder / TextEncoder</text>
+  <text x="744" y="1066" class="body2">DecompressionStream</text>
+
+  <rect x="56" y="1100" width="300" height="112" rx="12" class="card"/>
+  <text x="76" y="1128" class="cardtitle accent">Read</text>
+  <text x="76" y="1154" class="body2">File System Access</text>
+  <text x="76" y="1174" class="body2">File / Blob · directory input</text>
+  <text x="76" y="1194" class="body2">drag-and-drop</text>
+
+  <rect x="390" y="1100" width="300" height="112" rx="12" class="card"/>
+  <text x="410" y="1128" class="cardtitle accent">Play</text>
+  <text x="410" y="1154" class="body2">Web Audio · HTMLMediaElement</text>
+  <text x="410" y="1174" class="body2">getUserMedia · AnalyserNode</text>
+  <text x="410" y="1194" class="body2">decodeAudioData</text>
+
+  <rect x="724" y="1100" width="300" height="112" rx="12" class="card"/>
+  <text x="744" y="1128" class="cardtitle accent">Inspect</text>
+  <text x="744" y="1154" class="body2">Intl · matchMedia</text>
+  <text x="744" y="1174" class="body2">devicePixelRatio</text>
+  <text x="744" y="1194" class="body2">navigator.* telemetry</text>
+
+  <!-- 3 · File access -->
+  <text x="56" y="1264" class="h">3 · File access — three routes</text>
+  <text x="56" y="1292" class="note">Each route has its own reader, its own limits and the same rule: chosen files are never uploaded.</text>
+
+  <rect x="56" y="1320" width="300" height="54" rx="10" class="card"/>
+  <rect x="56" y="1320" width="6" height="54" rx="3" fill="#5b8def"/>
+  <text x="76" y="1344" class="lab">Served bundle</text>
+  <text x="76" y="1364" class="body2">the page root is the bundle</text>
+
+  <rect x="390" y="1320" width="300" height="54" rx="10" class="permission"/>
+  <rect x="390" y="1320" width="6" height="54" rx="3" fill="#d9a441"/>
+  <text x="410" y="1344" class="lab">Local folder</text>
+  <text x="410" y="1364" class="body2">picked or dropped by you</text>
+
+  <rect x="724" y="1320" width="300" height="54" rx="10" class="card"/>
+  <rect x="724" y="1320" width="6" height="54" rx="3" fill="#5b8def"/>
+  <text x="744" y="1344" class="lab">Preview reads</text>
+  <text x="744" y="1364" class="body2">only when a node is opened</text>
+
+  <rect x="56" y="1390" width="300" height="62" rx="10" class="card"/>
+  <text x="76" y="1414" class="ct">index.md</text>
+  <text x="76" y="1434" class="body2">the crawl entry</text>
+  <rect x="56" y="1462" width="300" height="62" rx="10" class="card"/>
+  <text x="76" y="1486" class="ct">same-origin fetch</text>
+  <text x="76" y="1506" class="body2">no credentials · no redirects</text>
+  <rect x="56" y="1534" width="300" height="62" rx="10" class="card"/>
+  <text x="76" y="1558" class="ct">Markdown crawl</text>
+  <text x="76" y="1578" class="body2">links followed, level by level</text>
+  <rect x="56" y="1606" width="300" height="62" rx="10" class="card"/>
+  <text x="76" y="1630" class="ct">other files</text>
+  <text x="76" y="1650" class="body2">loaded only when clicked</text>
+  <rect x="56" y="1678" width="300" height="62" rx="10" class="card"/>
+  <text x="76" y="1702" class="ct">caps</text>
+  <text x="76" y="1722" class="body2">512 KiB/file · 8000 files · 128 MiB</text>
+
+  <rect x="390" y="1390" width="300" height="62" rx="10" class="permission"/>
+  <text x="410" y="1414" class="ct">showDirectoryPicker</text>
+  <text x="410" y="1434" class="body2">File System Access · user gesture</text>
+  <rect x="390" y="1462" width="300" height="62" rx="10" class="permission"/>
+  <text x="410" y="1486" class="ct">directory input</text>
+  <text x="410" y="1506" class="body2">webkitdirectory fallback</text>
+  <rect x="390" y="1534" width="300" height="62" rx="10" class="permission"/>
+  <text x="410" y="1558" class="ct">FileSystemDirectoryHandle</text>
+  <text x="410" y="1578" class="body2">or a File list from a drop</text>
+  <rect x="390" y="1606" width="300" height="62" rx="10" class="permission"/>
+  <text x="410" y="1630" class="ct">bounded reads</text>
+  <text x="410" y="1650" class="body2">Markdown at open, files on click</text>
+  <rect x="390" y="1678" width="300" height="62" rx="10" class="permission"/>
+  <text x="410" y="1702" class="ct">in-memory graph</text>
+  <text x="410" y="1722" class="body2">never uploaded · no auto-load on file://</text>
+
+  <rect x="724" y="1390" width="300" height="62" rx="10" class="card"/>
+  <text x="744" y="1414" class="ct">image</text>
+  <text x="744" y="1434" class="body2">blob URL · 8 MiB each</text>
+  <rect x="724" y="1462" width="300" height="62" rx="10" class="card"/>
+  <text x="744" y="1486" class="ct">audio</text>
+  <text x="744" y="1506" class="body2">Web Audio or object URL</text>
+  <rect x="724" y="1534" width="300" height="62" rx="10" class="card"/>
+  <text x="744" y="1558" class="ct">video</text>
+  <text x="744" y="1578" class="body2">media element + object URL</text>
+  <rect x="724" y="1606" width="300" height="62" rx="10" class="card"/>
+  <text x="744" y="1630" class="ct">PDF</text>
+  <text x="744" y="1650" class="body2">bounded bytes + DecompressionStream</text>
+  <rect x="724" y="1678" width="300" height="62" rx="10" class="card"/>
+  <text x="744" y="1702" class="ct">VTT</text>
+  <text x="744" y="1722" class="body2">text + cues · 16 MiB images total</text>
+
+  <line x1="56" y1="1776" x2="1024" y2="1776" class="fence"/>
+  <text x="56" y="1806" class="note">No file chosen from disk is uploaded. A served bundle stays on its origin.</text>
+
+  <!-- 4 · Networking -->
+  <text x="56" y="1862" class="h">4 · Networking — one fence, one exception</text>
+  <text x="56" y="1890" class="note">Bundle traffic stays same-origin. Only the assistant, when configured and asked, leaves the page.</text>
+
+  <rect x="56" y="1916" width="600" height="520" rx="16" class="panel"/>
+  <text x="76" y="1950" class="lab">Same-origin fence</text>
+  <text x="76" y="1974" class="body2">every bundle request passes trackedFetch</text>
+  <rect x="76" y="1990" width="560" height="350" rx="12" class="fence"/>
+
+  <rect x="92" y="2006" width="252" height="62" rx="10" class="card"/>
+  <text x="108" y="2030" class="ct">no credentials</text>
+  <text x="108" y="2050" class="body2">cookies are never sent</text>
+  <rect x="360" y="2006" width="260" height="62" rx="10" class="card"/>
+  <text x="376" y="2030" class="ct">redirects rejected</text>
+  <text x="376" y="2050" class="body2">a response cannot bounce</text>
+  <rect x="92" y="2080" width="252" height="62" rx="10" class="card"/>
+  <text x="108" y="2104" class="ct">4 slots · 30 s</text>
+  <text x="108" y="2124" class="body2">bounded body · 64 queue</text>
+  <rect x="360" y="2080" width="260" height="62" rx="10" class="card"/>
+  <text x="376" y="2104" class="ct">response URL rechecked</text>
+  <text x="376" y="2124" class="body2">404 only tries the next path</text>
+
+  <line x1="92" y1="2160" x2="620" y2="2160" class="line"/>
+  <circle cx="100" cy="2188" r="4" fill="#5b8def"/>
+  <text x="116" y="2192" class="body">bundle root — Markdown, images, media, VTT</text>
+  <circle cx="100" cy="2222" r="4" fill="#5b8def"/>
+  <text x="116" y="2226" class="body">manifest icons — same-origin install assets</text>
+  <circle cx="100" cy="2256" r="4" fill="#5b8def"/>
+  <text x="116" y="2260" class="body">app shell — service-worker cache, never bundle bytes</text>
+  <text x="76" y="2310" class="note">The fence is checked on the URL and again on the response.</text>
+
+  <rect x="680" y="1916" width="344" height="520" rx="16" class="noc"/>
+  <text x="700" y="1950" class="lab bad">The one exception</text>
+  <text x="700" y="1974" class="body2">the assistant you configure (unreleased)</text>
+
+  <text x="700" y="2018" class="ct">chat</text>
+  <text x="700" y="2038" class="body2">POST https, or http on loopback</text>
+  <text x="700" y="2072" class="ct">models</text>
+  <text x="700" y="2092" class="body2">GET the provider's own list</text>
+  <text x="700" y="2126" class="ct">speech</text>
+  <text x="700" y="2146" class="body2">POST the TTS endpoint</text>
+  <text x="700" y="2180" class="ct">realtime</text>
+  <text x="700" y="2200" class="body2">wss, or ws on loopback</text>
+  <text x="700" y="2234" class="ct">sign-in</text>
+  <text x="700" y="2254" class="body2">OAuth redirect + PKCE</text>
+  <line x1="700" y1="2288" x2="1004" y2="2288" class="line"/>
+  <text x="700" y="2318" class="note">CSP connect-src is the gate.</text>
+  <text x="700" y="2342" class="note">Nothing is sent until you ask.</text>
+
+  <path d="M 660 2188 H 676" class="flowbad"/>
+
+  <text x="56" y="2474" class="note">The service worker caches only the app shell; bundle bytes are never stored or intercepted.</text>
+
+  <!-- 5 · Input and output -->
+  <text x="56" y="2540" class="h">5 · Input and output devices</text>
+  <text x="56" y="2568" class="note">Pointer, touch, keyboard, a folder drop and the microphone on one side; canvas, DOM, media and speech on the other.</text>
+
+  <rect x="56" y="2594" width="600" height="540" rx="16" class="panel"/>
+  <text x="76" y="2628" class="lab">Input</text>
+
+  <rect x="76" y="2644" width="264" height="70" rx="10" class="card"/>
+  <text x="92" y="2672" class="ct">Pointer / mouse</text>
+  <text x="92" y="2694" class="body2">click · hover · drag</text>
+  <text x="92" y="2712" class="body2">side buttons step history</text>
+  <rect x="356" y="2644" width="264" height="70" rx="10" class="card"/>
+  <text x="372" y="2672" class="ct">Touch</text>
+  <text x="372" y="2694" class="body2">tap · drag · pinch</text>
+  <text x="372" y="2712" class="body2">press and hold</text>
+
+  <rect x="76" y="2724" width="264" height="70" rx="10" class="card"/>
+  <text x="92" y="2752" class="ct">Wheel</text>
+  <text x="92" y="2774" class="body2">zoom about the pointer</text>
+  <rect x="356" y="2724" width="264" height="70" rx="10" class="card"/>
+  <text x="372" y="2752" class="ct">Keyboard</text>
+  <text x="372" y="2774" class="body2">Escape · Alt+arrows · typing</text>
+
+  <rect x="76" y="2804" width="264" height="70" rx="10" class="card"/>
+  <text x="92" y="2832" class="ct">Context menu</text>
+  <text x="92" y="2854" class="body2">microphone device picker</text>
+  <rect x="356" y="2804" width="264" height="70" rx="10" class="card"/>
+  <text x="372" y="2832" class="ct">Drag and drop</text>
+  <text x="372" y="2854" class="body2">a folder onto the window</text>
+
+  <rect x="76" y="2884" width="264" height="70" rx="10" class="permission"/>
+  <text x="92" y="2912" class="ct">Microphone</text>
+  <text x="92" y="2934" class="body2">getUserMedia · enumerateDevices</text>
+  <text x="92" y="2952" class="body2">AnalyserNode · realtime socket</text>
+  <rect x="356" y="2884" width="264" height="70" rx="10" class="permission"/>
+  <text x="372" y="2912" class="ct">File picker</text>
+  <text x="372" y="2934" class="body2">folder input</text>
+  <text x="372" y="2952" class="body2">same permission as the picker</text>
+
+  <text x="76" y="2998" class="note">Microphone: secure context + permission.</text>
+  <text x="76" y="3022" class="note">AudioContext resumes on a user gesture.</text>
+  <text x="76" y="3046" class="note">Hover, width and reduced motion follow matchMedia.</text>
+
+  <rect x="680" y="2594" width="344" height="540" rx="16" class="panel"/>
+  <text x="700" y="2628" class="lab">Output</text>
+
+  <text x="700" y="2668" class="ct">Canvas</text>
+  <text x="700" y="2688" class="body2">graph + spectrogram</text>
+  <text x="700" y="2722" class="ct">DOM</text>
+  <text x="700" y="2742" class="body2">panels, preview, controls</text>
+  <text x="700" y="2776" class="ct">Audio</text>
+  <text x="700" y="2796" class="body2">Web Audio graph</text>
+  <text x="700" y="2830" class="ct">Video</text>
+  <text x="700" y="2850" class="body2">HTML video element</text>
+  <text x="700" y="2884" class="ct">Speech</text>
+  <text x="700" y="2904" class="body2">TTS audio, analysed</text>
+  <text x="700" y="2938" class="ct">Installed window</text>
+  <text x="700" y="2958" class="body2">standalone PWA</text>
+  <line x1="700" y1="2990" x2="1004" y2="2990" class="line"/>
+  <text x="700" y="3020" class="note">The same analyser feeds the</text>
+  <text x="700" y="3042" class="note">spectrogram and the speech bubble.</text>
+
+  <!-- 6 · What stays, what leaves -->
+  <text x="56" y="3202" class="h">6 · What stays, what leaves</text>
+  <rect x="56" y="3226" width="968" height="240" rx="16" class="panel"/>
+
+  <text x="76" y="3266" class="lab accent">Stays in the page</text>
+  <text x="76" y="3296" class="body2">bundle bytes · graph · previews</text>
+  <text x="76" y="3320" class="body2">deck · assistant session state</text>
+  <text x="76" y="3344" class="body2">no upload of chosen files</text>
+
+  <line x1="376" y1="3252" x2="376" y2="3442" class="line"/>
+  <text x="396" y="3266" class="lab accent">Stays in the browser</text>
+  <text x="396" y="3296" class="body2">volume · language · features</text>
+  <text x="396" y="3320" class="body2">assistant keys only if remembered</text>
+  <text x="396" y="3344" class="body2">service-worker app-shell cache</text>
+
+  <line x1="696" y1="3252" x2="696" y2="3442" class="line"/>
+  <text x="716" y="3266" class="lab bad">Leaves only on request</text>
+  <text x="716" y="3296" class="body2">prompt + tool results to the provider</text>
+  <text x="716" y="3320" class="body2">OAuth redirect + PKCE</text>
+  <text x="716" y="3344" class="body2">realtime audio to the speech provider</text>
+
+  <text x="76" y="3404" class="note">No analytics, no telemetry, no CDN, no external fonts or images.</text>
+  <text x="76" y="3432" class="note">Assistant features are unreleased in this revision.</text>
+
+  <text x="56" y="3520" class="small">Source: okfy.html, okfy-sw.js, site.webmanifest and the project documentation.</text>
+</svg>
