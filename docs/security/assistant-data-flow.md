@@ -38,7 +38,7 @@ sources:
 
 # Why this is an explicit exception
 
-The tool's guiding [local processing](../principles/local-processing.md) principle says files chosen from disk are never uploaded. The assistant is the one **opt-in** exception: when you ask it a question, your prompt and the concepts its tools return are sent to the LLM provider you configured.[^source] Nothing is sent while the assistant is closed or idle.
+The tool's guiding [local processing](../principles/local-processing.md) principle says files chosen from disk are never uploaded. The assistant is the one **opt-in** exception: when you ask it a question, your prompt and the concepts its tools return are sent to the LLM provider you configured.[^source] Nothing is sent while the assistant is closed or idle. See the [assistant data flow explainer](attachments/assistant-data-flow.svg) for what leaves the page, the policy fence, the two authentication paths and the risk that remains.
 
 # What leaves the page
 

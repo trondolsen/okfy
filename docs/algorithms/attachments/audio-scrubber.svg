@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2380" viewBox="0 0 1080 2380" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">The audio scrubber — okfy algorithm explainer</title>
+  <desc id="d">How a drag on the seek bar is made audible. The scrubber is one range input with a thousand steps, drawn as a fill rather than a handle: the filled part of the track is the position and the circular thumb is removed. It sits over the foot of the spectrogram beside the play button and the time read-out. A pointer drag scrubs, so the playhead follows the pointer and the audio plays through the drag instead of seeking in silence, while the keyboard drives the same input event and is treated as a plain seek. A decoded clip scrubs with grains; one too large to decode streams through a media element and scrubs with its playback rate. A grain is a window of up to sixty milliseconds of the clip, played from its own buffer source at its own rate, so the buffer is never resampled and a dragged stretch keeps its pitch; its envelope is a raised cosine of forty-eight points, so each grain is silent at both edges and two overlapping grains cross-fade instead of clicking. The drag's velocity, measured on the audio clock and smoothed, sets two numbers: the hop, which is how often a grain is launched, and the advance, which is how far the read head moves in the source for each grain. Hop is the cap of 0.045 divided by the velocity, never above 0.02 seconds and never below 0.008; advance is the velocity times the hop, clamped to 0.045 seconds either way. Up to two and a quarter times the hop stays at twenty milliseconds, fifty grains a second, and only the advance grows, which is a pitch-preserving stretch; beyond that the grains get denser, up to a hundred and twenty-five a second, with the advance pinned at forty-five milliseconds, three quarters of a grain, so consecutive windows keep overlapping in the source and a fast drag stays a continuous fast-forward instead of falling into sparse, disjoint snippets; past about five and a half times the audio saturates and the pointer outruns it. Grains are launched on the audio clock rather than on the tick's ten-millisecond timer, so their spacing stays even, and a jump or a reversal of more than one grain snaps the read head to the pointer. Held still, the advance is zero so the head stops, but the grains keep firing at it, reading the same window about fifty times a second, which is heard as the clip infinitely slowed, a granular freeze, rather than a silence. A streamed clip cannot be decoded for grains, so its playback rate carries the motion, clamped between 0.3 and 4 with the pitch kept; it is re-seeked only once it has drifted 0.35 seconds from the pointer, because seeking a playing element on every pointer move stalls and silences it, and at rest its rate drops to 0.3, which is still audible. On release the slider's live value is read, so the head lands exactly where the pointer left it even if the last tick ran a moment before; the offset is set there and normal playback resumes from that spot, the grains fading out as the clip takes over. The assistant's media tool moves the same way: pvScrubTo starts a scrub at the current position and walks the bar in twenty steps, so a move sounds like a drag rather than a silent jump.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables, so the figure reads as the
+         tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .win { fill: #0e1015; stroke: #232734; stroke-width: 1.5; }
+      .track { stroke: #4a4f59; stroke-width: 4; stroke-linecap: round; }
+      .fill { stroke: #5b8def; stroke-width: 4; stroke-linecap: round; }
+      .band { fill: #5b8def; }
+      .grain { fill: #5b8def; fill-opacity: 0.12; stroke: #5b8def; stroke-width: 1.5; }
+      .curve { fill: #5b8def; fill-opacity: 0.12; stroke: #5b8def; stroke-width: 2; }
+      .axis { stroke: #2e3341; stroke-width: 1.5; fill: none; }
+      .ring { fill: none; stroke: #5b8def; stroke-width: 1.5; stroke-dasharray: 4 3; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="2380" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · ALGORITHM EXPLAINER</text>
+  <text x="56" y="110" class="title">The audio scrubber</text>
+  <text x="56" y="148" class="subtitle">A drag on the seek bar, made audible with short overlapping grains</text>
+
+  <text x="56" y="214" class="h">1 · The control</text>
+  <rect x="56" y="238" width="968" height="350" rx="16" class="panel"/>
+
+  <rect x="96" y="280" width="420" height="96" rx="8" fill="#1b1e26" stroke="#2e3341" stroke-width="1.5"/>
+  <rect class="band" x="110" y="300" width="10" height="56" fill-opacity="0.30"/>
+  <rect class="band" x="122" y="300" width="10" height="56" fill-opacity="0.45"/>
+  <rect class="band" x="134" y="300" width="10" height="56" fill-opacity="0.20"/>
+  <rect class="band" x="146" y="300" width="10" height="56" fill-opacity="0.35"/>
+  <rect class="band" x="158" y="300" width="10" height="56" fill-opacity="0.15"/>
+  <rect class="band" x="170" y="300" width="10" height="56" fill-opacity="0.25"/>
+  <rect class="band" x="182" y="300" width="10" height="56" fill-opacity="0.10"/>
+  <rect class="band" x="194" y="300" width="10" height="56" fill-opacity="0.18"/>
+  <rect class="band" x="206" y="300" width="10" height="56" fill-opacity="0.08"/>
+  <rect class="band" x="218" y="300" width="10" height="56" fill-opacity="0.12"/>
+  <rect class="band" x="230" y="300" width="10" height="56" fill-opacity="0.06"/>
+  <rect class="band" x="242" y="300" width="10" height="56" fill-opacity="0.09"/>
+
+  <rect x="96" y="382" width="420" height="40" rx="8" fill="#232734" stroke="#2e3341" stroke-width="1.5"/>
+  <circle cx="124" cy="402" r="13" fill="none" stroke="#2e3341" stroke-width="1.5"/>
+  <text x="124" y="406" class="sx" text-anchor="middle">▶</text>
+  <line x1="150" y1="402" x2="430" y2="402" class="track"/>
+  <line x1="150" y1="402" x2="318" y2="402" class="fill"/>
+  <text x="440" y="406" class="sx">0:42 / 1:30</text>
+
+  <text x="306" y="452" class="sx" text-anchor="middle">a fill, not a handle: the filled part is the position</text>
+
+  <text x="560" y="300" class="lab">One control, two paths</text>
+  <text x="560" y="330" class="sx">An input range of 1000 steps, over the foot of the spectrogram,</text>
+  <text x="560" y="352" class="sx">beside the play button and the time read-out.</text>
+  <text x="560" y="382" class="sx">A pointer drag scrubs: the playhead follows the pointer and the</text>
+  <text x="560" y="404" class="sx">audio plays through the drag instead of seeking in silence.</text>
+  <text x="560" y="434" class="sx">The keyboard drives the same input event, which is a plain seek.</text>
+  <text x="560" y="464" class="sx">A decoded clip scrubs with grains; one too large to decode streams</text>
+  <text x="560" y="486" class="sx">through a media element and scrubs with its playback rate.</text>
+
+  <text x="76" y="532" class="note">The scrubber belongs to the audio player; a video plays in a plain media element with the browser's own</text>
+  <text x="76" y="556" class="note">controls, which have no scrub.</text>
+
+  <text x="56" y="642" class="h">2 · The plan</text>
+  <rect x="56" y="666" width="968" height="400" rx="16" class="panel"/>
+
+  <text x="76" y="700" class="lab">The drag's velocity sets how far each grain reads and how densely they fall</text>
+
+  <text x="100" y="736" class="sx">a calm drag — 20 ms of source per grain</text>
+  <rect class="grain" x="110" y="746" width="96" height="32" rx="4"/>
+  <rect class="grain" x="142" y="746" width="96" height="32" rx="4"/>
+  <rect class="grain" x="174" y="746" width="96" height="32" rx="4"/>
+  <rect class="grain" x="206" y="746" width="96" height="32" rx="4"/>
+
+  <text x="100" y="810" class="sx">a fast drag — 45 ms per grain, the cap</text>
+  <rect class="grain" x="110" y="820" width="96" height="32" rx="4"/>
+  <rect class="grain" x="182" y="820" width="96" height="32" rx="4"/>
+  <rect class="grain" x="254" y="820" width="96" height="32" rx="4"/>
+  <rect class="grain" x="326" y="820" width="96" height="32" rx="4"/>
+
+  <text x="300" y="880" class="sx" text-anchor="middle">each grain is 60 ms, so consecutive windows overlap in the source</text>
+
+  <text x="560" y="736" class="lab">The plan, from the drag's velocity</text>
+  <text x="560" y="768" class="mono">hop = clamp(0.045 / max(1, |vel|), 0.008, 0.02)</text>
+  <text x="560" y="792" class="mono">advance = clamp(vel · hop, −0.045, 0.045)</text>
+  <text x="560" y="824" class="sx">Hop is how often a grain is launched; advance is how far the</text>
+  <text x="560" y="846" class="sx">read head moves in the source for each one.</text>
+  <text x="560" y="876" class="sx">Up to 2.25× the hop stays at 20 ms — fifty grains a second —</text>
+  <text x="560" y="898" class="sx">and only the advance grows: a pitch-preserving stretch.</text>
+  <text x="560" y="928" class="sx">Beyond that the grains get denser, up to 125 a second, with the</text>
+  <text x="560" y="950" class="sx">advance pinned at 45 ms, three quarters of a grain.</text>
+  <text x="560" y="980" class="sx">Past about 5.6× the audio saturates and the pointer outruns it.</text>
+
+  <text x="76" y="1016" class="note">Grains are launched on the audio clock, not the 10 ms tick, so their spacing stays even and the windows never</text>
+  <text x="76" y="1040" class="note">ripple; a jump or a reversal of more than one grain snaps the read head to the pointer.</text>
+
+  <text x="56" y="1120" class="h">3 · The grain</text>
+  <rect x="56" y="1144" width="968" height="380" rx="16" class="panel"/>
+
+  <text x="76" y="1180" class="lab">The grain's envelope, and the window it reads</text>
+
+  <line x1="96" y1="1320" x2="430" y2="1320" class="axis"/>
+  <polygon class="curve" points="96,1320 129.4,1290.5 162.8,1265.5 179.5,1250 196.2,1234.5 229.6,1209.5 263,1200 296.4,1209.5 329.8,1234.5 346.5,1250 363.2,1265.5 396.6,1290.5 430,1320"/>
+  <text x="96" y="1340" class="sx">0 ms</text>
+  <text x="430" y="1340" class="sx" text-anchor="end">60 ms</text>
+  <text x="263" y="1372" class="sx" text-anchor="middle">a raised cosine, silent at both edges</text>
+
+  <text x="560" y="1180" class="lab">One grain at a time</text>
+  <text x="560" y="1210" class="sx">Each grain is a 60 ms window of the clip, played from its own</text>
+  <text x="560" y="1232" class="sx">buffer source at its own rate — never resampled — so a dragged</text>
+  <text x="560" y="1254" class="sx">stretch keeps its pitch.</text>
+  <text x="560" y="1284" class="sx">Its envelope is a raised cosine of 48 points, set as a value curve,</text>
+  <text x="560" y="1306" class="sx">so both edges are silent and two overlapping grains cross-fade</text>
+  <text x="560" y="1328" class="sx">instead of clicking.</text>
+  <text x="560" y="1358" class="sx">The head advances by at most 45 ms per grain, less than the grain,</text>
+  <text x="560" y="1380" class="sx">so consecutive windows keep overlapping in the source: a fast drag</text>
+  <text x="560" y="1402" class="sx">stays a continuous fast-forward, never disjoint snippets.</text>
+  <text x="560" y="1432" class="sx">Each grain is its own buffer source and gain envelope, dropped</text>
+  <text x="560" y="1454" class="sx">from the player's list when it ends.</text>
+
+  <text x="76" y="1494" class="note">A grain reads min(60 ms, the clip's length) from the read head, so even a clip shorter than one grain scrubs.</text>
+
+  <text x="56" y="1578" class="h">4 · Held still</text>
+  <rect x="56" y="1602" width="968" height="300" rx="16" class="panel"/>
+
+  <text x="76" y="1638" class="lab">At rest the head stops and the grains keep firing</text>
+
+  <line x1="110" y1="1720" x2="400" y2="1720" class="track"/>
+  <line x1="110" y1="1720" x2="200" y2="1720" class="fill"/>
+  <circle cx="200" cy="1720" r="5" fill="#5b8def"/>
+  <circle cx="200" cy="1720" r="13" class="ring"/>
+  <circle cx="200" cy="1720" r="21" class="ring"/>
+  <text x="255" y="1790" class="sx" text-anchor="middle">the head is fixed; the grains repeat</text>
+
+  <text x="470" y="1638" class="lab">The freeze, and the streamed floor</text>
+  <text x="470" y="1668" class="sx">At rest the drag's velocity is zero, so the advance is zero too: the</text>
+  <text x="470" y="1690" class="sx">head stops and the grains keep reading the same 60 ms window.</text>
+  <text x="470" y="1720" class="sx">Heard, that is the clip infinitely slowed — a granular freeze —</text>
+  <text x="470" y="1742" class="sx">rather than a silence, so a held scrubber still makes a sound.</text>
+  <text x="470" y="1772" class="sx">A streamed clip cannot be decoded for grains, so its rate carries</text>
+  <text x="470" y="1794" class="sx">the drag: playbackRate = clamp(drag rate, 0.3, 4), with the pitch</text>
+  <text x="470" y="1816" class="sx">kept, and it drops to 0.3 at rest, which stays audible.</text>
+
+  <text x="76" y="1850" class="note">The streamed path is re-seeked only once it has drifted 0.35 s from the pointer: seeking a playing element on</text>
+  <text x="76" y="1874" class="note">every pointer move stalls it and silences it.</text>
+
+  <text x="56" y="1956" class="h">5 · Release</text>
+  <rect x="56" y="1980" width="968" height="300" rx="16" class="panel"/>
+
+  <text x="76" y="2016" class="lab">The head lands where the pointer left it</text>
+
+  <line x1="110" y1="2130" x2="400" y2="2130" class="track"/>
+  <line x1="110" y1="2130" x2="280" y2="2130" class="fill"/>
+  <circle cx="280" cy="2130" r="5" fill="#5b8def"/>
+  <circle cx="280" cy="2130" r="12" class="ring"/>
+  <path d="M 286 2112 L 286 2132 L 291 2127 L 296 2137 L 300 2135 L 295 2125 L 302 2125 Z" fill="#e7e9ee" stroke="#12141a" stroke-width="1"/>
+  <text x="255" y="2190" class="sx" text-anchor="middle">the head stays; playback takes over</text>
+
+  <text x="470" y="2016" class="lab">Where it lands</text>
+  <text x="470" y="2046" class="sx">On release the slider's live value is read, so the head lands exactly</text>
+  <text x="470" y="2068" class="sx">where the pointer left it even if the last tick ran a moment before.</text>
+  <text x="470" y="2098" class="sx">The offset is set there and normal playback resumes from that spot,</text>
+  <text x="470" y="2120" class="sx">the grains fading out as the clip takes over.</text>
+  <text x="470" y="2150" class="sx">The assistant's media tool moves the same way: pvScrubTo starts a</text>
+  <text x="470" y="2172" class="sx">scrub at the current position and walks the bar in twenty steps, so</text>
+  <text x="470" y="2194" class="sx">a move sounds like a drag rather than a silent jump.</text>
+  <text x="470" y="2224" class="sx">No audio is fetched or decoded for the scrub itself.</text>
+
+  <text x="56" y="2320" class="note">A drag sounds, a release resumes, and a clip too large to decode still scrubs through its rate: the scrubber</text>
+  <text x="56" y="2344" class="note">never leaves the audio where it did not ask to be.</text>
+</svg>

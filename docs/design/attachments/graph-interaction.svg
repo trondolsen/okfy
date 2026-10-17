@@ -1,0 +1,220 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2290" viewBox="0 0 1080 2290" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">Graph interaction — okfy design proposal</title>
+  <desc id="d">The canvas's gesture vocabulary. The view is a zoom and an offset, with the zoom clamped to 0.02 to 4: the wheel zooms about the pointer with a factor of e to the power of minus deltaY times 0.0015, so the point under the pointer stays put, and two fingers pinch about their midpoint, that pinch panning as it zooms. A drag on empty canvas pans, one finger panning the same way, and the cursor is a grab that becomes a grabbing hand while panning and a pointer over a node. Any gesture takes over from the auto-fit, which keeps a freshly built layout framed while it settles, running the fit each frame until the temperature falls below 0.15. Reset view re-fits the whole graph and never zooms in past one to one, Reset layout re-runs the layout, and the canvas has no keyboard pan or zoom. Hovering a node highlights it and its direct neighbours while every other node and link dims, and the tooltip names the node: its label, kind and path, description, tags and link counts, plus "N of M shown" on a node with neighbours held back. The legend uses the same cue, hovering a row highlighting that whole group and adding to a standing filter instead of replacing it; a hover changes only the highlight and the tooltip, never what is drawn. A plain click keeps the node's own action: a directory is entered and the view re-framed, on a double-click on a desktop or one tap on touch; a tag hub toggles that tag in the filter; an unloaded file is loaded and its page opened; a node with a dashed ring loads its next level first and a later click opens the page; and a concept or index opens in the preview. Nothing else is selected: there is no marquee, no multi-select and no keyboard navigation on the canvas, and a plain click never changes what is drawn, because expanding and collapsing live only on the press-and-hold dial. A drag pins the node under the pointer and raises the temperature so the graph follows the hand, and on release the node is handed back to the simulation and settles into the layout rather than staying pinned. A press and hold of 600 milliseconds is the second gesture: on a concept it starts a deck card to drag to the deck, and on a directory or tag it opens the expansion dial, which Escape cancels. Moving more than 6 pixels cancels the hold, the canvas suppresses the context menu so a long press is never interrupted, and a press only arms a drag, so a plain click cannot stir the graph. Entering a directory re-roots the graph there, re-frames the view as it settles and names the path in the toolbar's directory group, where Top, Back and Forward walk the history. The legend and the toolbar totals follow the focused subtree, a search only dims what it does not match and an attribute filter removes it, and either way the lens draws the whole focused subtree, so a match inside a directory that has not been expanded is still shown. Hovering, clicking and dragging are pointer gestures; on a touch screen a tap opens a node, a drag pans, a pinch zooms, and a press-drag moves the pointer that would otherwise hover.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables and the node colours from
+         the script, so the figure reads as the tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .ttl { font-size: 14px; font-weight: 700; fill: #e7e9ee; }
+      .ts { font-size: 12px; font-weight: 700; fill: #e7e9ee; }
+      .sxs { font-size: 11px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .win { fill: #0e1015; stroke: #232734; stroke-width: 1.5; }
+      .tipcard { fill: #1b1e27; stroke: #2e3341; stroke-width: 1.5; }
+      .link { stroke: #5a6274; stroke-width: 2; fill: none; }
+      .linkdim { stroke: #5a6274; stroke-width: 1.5; fill: none; opacity: 0.3; }
+      .grid { stroke: #2e3341; stroke-width: 1.5; fill: none; stroke-dasharray: 3 3; }
+      .grab { stroke: #5b8def; stroke-width: 2; fill: none; stroke-dasharray: 4 3; }
+      .ghost { fill: none; stroke: #47506a; stroke-width: 1.5; stroke-dasharray: 4 3; }
+      .btn { fill: #2a2f3a; stroke: #2e3341; stroke-width: 1.5; }
+      .tbar { fill: #2a2f3a; }
+      .ripple { fill: none; stroke: #5b8def; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="2290" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · DESIGN PROPOSAL</text>
+  <text x="56" y="110" class="title">Graph interaction</text>
+  <text x="56" y="148" class="subtitle">Zoom, pan, point, click and drag — one gesture vocabulary on the canvas</text>
+
+  <text x="56" y="214" class="h">1 · The view</text>
+  <rect x="56" y="238" width="968" height="380" rx="16" class="panel"/>
+
+  <rect x="96" y="300" width="170" height="150" rx="8" class="win"/>
+  <rect x="296" y="300" width="170" height="150" rx="8" class="win"/>
+  <line x1="269" y1="375" x2="285" y2="375" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 295 375 L 285 370.5 L 285 379.5 Z" fill="#9aa2b3"/>
+
+  <line x1="135" y1="387" x2="179" y2="347" class="link"/>
+  <line x1="135" y1="387" x2="225" y2="371" class="link"/>
+  <line x1="179" y1="347" x2="189" y2="413" class="link"/>
+  <circle cx="135" cy="387" r="6" fill="#8b93a7" stroke="#cfd5e2" stroke-width="1.5"/>
+  <circle cx="179" cy="347" r="5" fill="#a274d6"/>
+  <circle cx="225" cy="371" r="5" fill="#c9a24d"/>
+  <circle cx="189" cy="413" r="5" fill="#37b6c4"/>
+
+  <line x1="312" y1="393" x2="378" y2="333" class="link"/>
+  <line x1="312" y1="393" x2="447" y2="369" class="link"/>
+  <line x1="378" y1="333" x2="393" y2="432" class="link"/>
+  <circle cx="312" cy="393" r="9" fill="#8b93a7" stroke="#cfd5e2" stroke-width="2"/>
+  <circle cx="378" cy="333" r="7.5" fill="#a274d6"/>
+  <circle cx="447" cy="369" r="7.5" fill="#c9a24d"/>
+  <circle cx="393" cy="432" r="7.5" fill="#37b6c4"/>
+
+  <line x1="181" y1="352" x2="181" y2="398" class="grid"/>
+  <line x1="381" y1="352" x2="381" y2="398" class="grid"/>
+  <circle cx="181" cy="375" r="4" fill="#5b8def"/>
+  <circle cx="381" cy="375" r="4" fill="#5b8def"/>
+
+  <text x="181" y="470" class="sx" text-anchor="middle">before</text>
+  <text x="381" y="470" class="sx" text-anchor="middle">after</text>
+  <text x="281" y="496" class="sx" text-anchor="middle">the anchor point does not move</text>
+
+  <text x="520" y="306" class="lab">The view is a zoom and an offset</text>
+  <text x="520" y="336" class="sx">The wheel zooms about the pointer; two fingers pinch about</text>
+  <text x="520" y="358" class="sx">their midpoint, and the pinch pans as it zooms.</text>
+  <text x="520" y="388" class="sx">A drag on empty canvas pans, with the cursor a grab that</text>
+  <text x="520" y="410" class="sx">becomes a grabbing hand.</text>
+  <text x="520" y="440" class="sx">k is clamped to 0.02 … 4, so the graph cannot be lost.</text>
+  <text x="520" y="470" class="sx">Any gesture takes over from the auto-fit.</text>
+  <text x="520" y="500" class="sx">Reset view re-fits the whole graph, never past 1:1.</text>
+
+  <text x="76" y="542" class="note">The wheel factor is exp(−deltaY · 0.0015). A freshly built layout is kept framed while it settles — fitView runs</text>
+  <text x="76" y="566" class="note">each frame until the temperature falls below 0.15 — so the graph stays in view until it is still. Reset layout</text>
+  <text x="76" y="590" class="note">re-runs the layout itself, from a fresh arrangement.</text>
+
+  <text x="56" y="672" class="h">2 · Pointing</text>
+  <rect x="56" y="696" width="968" height="356" rx="16" class="panel"/>
+
+  <line x1="170" y1="890" x2="100" y2="815" class="link"/>
+  <line x1="170" y1="890" x2="275" y2="835" class="link"/>
+  <line x1="170" y1="890" x2="130" y2="985" class="link"/>
+  <line x1="275" y1="835" x2="390" y2="790" class="linkdim"/>
+  <line x1="100" y1="815" x2="92" y2="950" class="linkdim"/>
+  <circle cx="390" cy="790" r="7" fill="#8b93a7" opacity="0.35"/>
+  <circle cx="92" cy="950" r="7" fill="#a274d6" opacity="0.35"/>
+  <circle cx="100" cy="815" r="8" fill="#8b93a7" stroke="#cfd5e2" stroke-width="1.5"/>
+  <circle cx="275" cy="835" r="8" fill="#37b6c4"/>
+  <circle cx="130" cy="985" r="8" fill="#c9a24d"/>
+  <circle cx="170" cy="890" r="15" fill="none" stroke="#a274d6" stroke-width="2"/>
+  <circle cx="170" cy="890" r="12" fill="#a274d6"/>
+  <path d="M 176 882 L 176 902 L 181 897 L 186 907 L 190 905 L 185 895 L 192 895 Z" fill="#e7e9ee" stroke="#12141a" stroke-width="1"/>
+
+  <rect x="200" y="908" width="228" height="84" rx="10" class="tipcard"/>
+  <text x="214" y="932" class="ts">Graph model</text>
+  <text x="214" y="952" class="sxs">Concept · docs/model/graph-model.md</text>
+  <text x="214" y="970" class="sxs">#graph #layout · 6 in · 2 out</text>
+
+  <text x="265" y="1016" class="sx" text-anchor="middle">the tooltip sits beside the pointer</text>
+
+  <text x="470" y="730" class="lab">What a hover does</text>
+  <text x="470" y="762" class="sx">The node under the pointer and its direct neighbours stay</text>
+  <text x="470" y="784" class="sx">bright; every other node and link dims.</text>
+  <text x="470" y="814" class="sx">The tooltip names the node: its label, its kind and path, its</text>
+  <text x="470" y="836" class="sx">description, its tags, and its incoming and outgoing link counts,</text>
+  <text x="470" y="858" class="sx">plus “N of M shown” when neighbours are held back.</text>
+  <text x="470" y="888" class="sx">The cursor is a pointer over a node and a grab elsewhere.</text>
+  <text x="470" y="918" class="sx">The legend uses the same cue: hovering a row highlights that</text>
+  <text x="470" y="940" class="sx">whole group, and adds to a standing filter instead of replacing it.</text>
+  <text x="470" y="970" class="sx">A hover changes only the highlight and the tooltip, never what is</text>
+  <text x="470" y="992" class="sx">drawn, and it clears when the pointer leaves the canvas.</text>
+
+  <text x="56" y="1106" class="h">3 · Clicking</text>
+  <rect x="56" y="1130" width="968" height="330" rx="16" class="panel"/>
+
+  <text x="76" y="1166" class="lab">A plain click keeps the node's own action</text>
+
+  <circle cx="150" cy="1250" r="25" class="ripple" stroke-opacity="0.25"/>
+  <circle cx="150" cy="1250" r="18" class="ripple" stroke-opacity="0.5"/>
+  <circle cx="150" cy="1250" r="11" fill="#a274d6"/>
+  <path d="M 156 1242 L 156 1262 L 161 1257 L 166 1267 L 170 1265 L 165 1255 L 172 1255 Z" fill="#e7e9ee" stroke="#12141a" stroke-width="1"/>
+
+  <line x1="186" y1="1250" x2="212" y2="1250" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 222 1250 L 212 1245.5 L 212 1254.5 Z" fill="#9aa2b3"/>
+
+  <rect x="232" y="1205" width="148" height="96" rx="10" class="tipcard"/>
+  <rect x="242" y="1218" width="128" height="11" rx="3" class="tbar"/>
+  <rect x="242" y="1238" width="36" height="10" rx="5" fill="none" stroke="#2e3341" stroke-width="1.5"/>
+  <rect x="284" y="1238" width="28" height="10" rx="5" fill="none" stroke="#2e3341" stroke-width="1.5"/>
+  <rect x="242" y="1258" width="128" height="5" rx="2.5" class="tbar"/>
+  <rect x="242" y="1270" width="104" height="5" rx="2.5" class="tbar"/>
+  <rect x="242" y="1282" width="86" height="5" rx="2.5" class="tbar"/>
+
+  <text x="150" y="1325" class="sx" text-anchor="middle">a plain click</text>
+  <text x="306" y="1325" class="sx" text-anchor="middle">opens its page</text>
+
+  <text x="440" y="1200" class="br">a directory</text>
+  <text x="620" y="1200" class="sx">enter it and re-frame the view on a double-click or a tap</text>
+
+  <text x="440" y="1234" class="br">a tag hub</text>
+  <text x="620" y="1234" class="sx">toggle that tag in the filter</text>
+
+  <text x="440" y="1268" class="br">an unloaded file</text>
+  <text x="620" y="1268" class="sx">load it, then open its page</text>
+
+  <text x="440" y="1302" class="br">a node with a dashed ring</text>
+  <text x="620" y="1302" class="sx">load its next level first; a later click opens the page</text>
+
+  <text x="440" y="1336" class="br">a concept or index</text>
+  <text x="620" y="1336" class="sx">open it in the preview</text>
+
+  <text x="76" y="1390" class="note">Nothing else is selected: there is no marquee, no multi-select and no keyboard pan or zoom on the canvas.</text>
+  <text x="76" y="1414" class="note">A plain click never changes what is drawn — expanding and collapsing live only on the press-and-hold dial.</text>
+
+  <text x="56" y="1514" class="h">4 · Dragging</text>
+  <rect x="56" y="1538" width="968" height="300" rx="16" class="panel"/>
+
+  <text x="76" y="1574" class="lab">Drag a node; press and hold to change it</text>
+
+  <line x1="150" y1="1596" x2="316" y2="1616" class="link"/>
+  <line x1="176" y1="1692" x2="316" y2="1616" class="link"/>
+  <circle cx="150" cy="1596" r="8" fill="#8b93a7" stroke="#cfd5e2" stroke-width="1.5"/>
+  <circle cx="176" cy="1692" r="8" fill="#37b6c4"/>
+  <circle cx="216" cy="1644" r="9" class="ghost"/>
+  <line x1="228" y1="1640" x2="296" y2="1620" class="grab"/>
+  <path d="M 306 1620 L 296.6 1627.2 L 294.2 1618.6 Z" fill="#5b8def"/>
+  <circle cx="316" cy="1616" r="11" fill="#a274d6"/>
+  <path d="M 322 1608 L 322 1628 L 327 1623 L 332 1633 L 336 1631 L 331 1621 L 338 1621 Z" fill="#e7e9ee" stroke="#12141a" stroke-width="1"/>
+
+  <text x="216" y="1730" class="sx" text-anchor="middle">the node is pinned under the pointer</text>
+
+  <text x="470" y="1574" class="lab">What each gesture does</text>
+  <text x="470" y="1604" class="sx">A drag pins the node under the pointer and raises the</text>
+  <text x="470" y="1626" class="sx">temperature, so the graph follows the hand.</text>
+  <text x="470" y="1656" class="sx">On release the node is handed back to the simulation —</text>
+  <text x="470" y="1678" class="sx">it is not pinned — and settles into the layout.</text>
+  <text x="470" y="1708" class="sx">A 600 ms press and hold is the second gesture: on a concept</text>
+  <text x="470" y="1730" class="sx">it starts a deck card; on a directory or tag it opens the</text>
+  <text x="470" y="1752" class="sx">expansion dial. Moving more than 6 px cancels the hold.</text>
+
+  <text x="76" y="1786" class="note">The canvas suppresses the context menu, so a long press is never interrupted, and a press only arms a drag:</text>
+  <text x="76" y="1810" class="note">the temperature rises once the node actually moves, so a plain click cannot stir the graph.</text>
+
+  <text x="56" y="1892" class="h">5 · Moving through directories</text>
+  <rect x="56" y="1916" width="968" height="268" rx="16" class="panel"/>
+
+  <text x="76" y="1952" class="lab">Top, Back and Forward walk the directory stack</text>
+
+  <rect x="96" y="1972" width="320" height="34" rx="8" fill="#232734" stroke="#2e3341" stroke-width="1.5"/>
+  <rect x="104" y="1978" width="46" height="22" rx="6" class="btn"/>
+  <text x="127" y="1994" class="sx" text-anchor="middle">Top</text>
+  <rect x="156" y="1978" width="22" height="22" rx="6" class="btn"/>
+  <text x="167" y="1994" class="sx" text-anchor="middle">‹</text>
+  <rect x="184" y="1978" width="22" height="22" rx="6" class="btn"/>
+  <text x="195" y="1994" class="sx" text-anchor="middle">›</text>
+  <text x="216" y="1994" class="sx">/docs/design/</text>
+
+  <text x="256" y="2030" class="sx" text-anchor="middle">the toolbar's directory group</text>
+
+  <text x="470" y="1952" class="lab">Entering a directory re-roots the graph</text>
+  <text x="470" y="1982" class="sx">The focused directory becomes the root, the graph is re-framed</text>
+  <text x="470" y="2004" class="sx">as it settles, and the path is named in the toolbar.</text>
+  <text x="470" y="2034" class="sx">Back and Forward walk the history; Top returns to the bundle root.</text>
+  <text x="470" y="2064" class="sx">The legend and the toolbar totals follow the focused subtree.</text>
+
+  <text x="76" y="2104" class="note">A search only dims what it does not match; an attribute filter removes it. Either way the lens draws the whole</text>
+  <text x="76" y="2128" class="note">focused subtree, so a match inside a directory that has not been expanded is still shown.</text>
+
+  <text x="56" y="2224" class="note">Hovering, clicking and dragging are pointer gestures; on a touch screen a tap opens a node, a drag pans, a pinch</text>
+  <text x="56" y="2248" class="note">zooms, and a press-drag moves the pointer that would otherwise hover.</text>
+</svg>

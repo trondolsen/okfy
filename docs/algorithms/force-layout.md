@@ -14,7 +14,7 @@ sources:
 
 # Context
 
-The graph is drawn on an HTML canvas with no charting library. Node positions are found by a continuous **force simulation** in the style of `d3-force`, written from scratch.[^source]
+The graph is drawn on an HTML canvas with no charting library. Node positions are found by a continuous **force simulation** in the style of `d3-force`, written from scratch. See the [force layout explainer](attachments/force-layout.svg) for the forces, the quadtree, one Verlet step and the cooling temperature.[^source]
 
 # Forces
 

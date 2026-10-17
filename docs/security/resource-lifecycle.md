@@ -17,11 +17,11 @@ sources:
 
 # Problem
 
-A single-page tool reuses the same DOM and cache across bundles. If a resource is keyed only by file path, a new bundle can show a previous bundle's image, text or metadata, and memory can grow without bound.[^review]
+A single-page tool reuses the same DOM and cache across bundles. If a resource is keyed only by file path, a new bundle can show a previous bundle's image, text or metadata, and memory can grow without bound.[^review] See the [resource lifecycle explainer](attachments/resource-lifecycle.svg) for the generation, the rules, the teardown and the refused late result.
 
 # Rules
 
-- **Key the cache to the current blob.** Blob URLs are tied to the blob that produced them, not reused by path across bundles, and they are revoked when replaced or when the bundle changes.
+- **Key the cache to the current blob.** Blob URLs are tied to the blob that produced them, not reused by path across bundles, and they are revoked when replaced or when the bundle changes.[^source]
 - **Check the generation.** Asynchronous previews and metadata callbacks verify the render ID and bundle generation before they apply their result.
 - **Carry the generation in history.** Preview history records the bundle generation, so an old entry cannot point into a new bundle.
 - **Number full loads.** A request number makes an older HTTP result lose to a newer selected bundle.

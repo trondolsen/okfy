@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2380" viewBox="0 0 1080 2380" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">URL and network bounds — okfy security explainer</title>
+  <desc id="d">The rules that keep every request same-origin and inside the declared bundle root. A URL is accepted only when its scheme is http or https, its origin equals the page's own origin, its path starts with the root path which ends in a slash, and it carries no username, password, query, fragment or encoded separator. A URL from another origin, a path above the root, a URL with credentials, a query or a fragment, an encoded separator, or a path that traverses above the root is refused. Every request is made with credentials omitted and redirects treated as errors, so a response can neither carry a cookie nor bounce the request to another host; each request holds one of four fetch slots with a thirty-second deadline and a bounded body read, the pending queue is capped at sixty-four, a body that is never used is cancelled rather than buffered, and the response's own URL is checked again against the root so a server cannot answer from outside it. A link resolves to candidate paths anchored at the file's own directory and each ancestor; a candidate already in the loaded set resolves without a request, only a 404 tries the next candidate and any other failure is final, the crawl schedules each URL once, and the on-demand path remembers which URLs it has already tried. Inside the fence the tool can reach the entry file and every file a link resolves to, a sibling caption track, an image only as a blob URL of its own bytes, a served clip read once and then played from its blob, a local clip that streams from an object URL and never touches the network, and the page's own manifest icons. Refused at the fence are another origin, a path above the bundle root, a redirect, an external or data image from content, and any URL carrying credentials, a query or a fragment. The assistant is the single path that leaves the origin, a POST to the provider the user configures over https or over http on loopback with a bind-all address normalized to the loopback address; it does not go through the bundle fetch path, so every rule above still governs every bundle request, and the policy's connect-src is the gate. The rules constrain URLs, not the server's mapping from URLs to files, so symlinks, internal rewrites and a misconfigured deploy remain the server's business.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables and the warn tint from the
+         script, so the figure reads as the tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .ct { font-size: 12px; font-weight: 700; fill: #e7e9ee; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #9aa2b3; }
+      .ok { font-size: 14px; font-weight: 700; fill: #5b8def; }
+      .bad { font-size: 14px; font-weight: 700; fill: #e0575b; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .region { fill: #1b1e26; stroke: #2e3341; stroke-width: 1.5; }
+      .no { fill: #232734; stroke: #e0575b; stroke-opacity: 0.45; stroke-width: 1.5; }
+      .fence { stroke: #5b8def; stroke-width: 2; fill: none; stroke-dasharray: 5 4; opacity: 0.6; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="2380" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · SECURITY EXPLAINER</text>
+  <text x="56" y="110" class="title">URL and network bounds</text>
+  <text x="56" y="148" class="subtitle">Every request same-origin and under the bundle root, with no credentials and no redirects</text>
+
+  <text x="56" y="214" class="h">1 · What a URL must be</text>
+  <rect x="56" y="238" width="968" height="400" rx="16" class="panel"/>
+
+  <text x="76" y="300" class="lab">A URL is checked before any request is made — and again on the response</text>
+
+  <text x="100" y="336" class="sx">verdict</text>
+  <text x="170" y="336" class="sx">the URL</text>
+  <text x="540" y="336" class="sx">why</text>
+
+  <text x="100" y="372" class="ok">✓</text>
+  <text x="170" y="372" class="mono">https://example.org/okfy/guide.md</text>
+  <text x="540" y="372" class="sx">the page's origin, under the root, nothing else</text>
+
+  <text x="100" y="406" class="bad">×</text>
+  <text x="170" y="406" class="mono">https://other.example/x.md</text>
+  <text x="540" y="406" class="sx">another origin</text>
+
+  <text x="100" y="440" class="bad">×</text>
+  <text x="170" y="440" class="mono">https://example.org/secret.md</text>
+  <text x="540" y="440" class="sx">above the root path</text>
+
+  <text x="100" y="474" class="bad">×</text>
+  <text x="170" y="474" class="mono">https://user:pw@example.org/okfy/a.md</text>
+  <text x="540" y="474" class="sx">credentials</text>
+
+  <text x="100" y="508" class="bad">×</text>
+  <text x="170" y="508" class="mono">https://example.org/okfy/a.md?q=1</text>
+  <text x="540" y="508" class="sx">a query, or a fragment</text>
+
+  <text x="100" y="542" class="bad">×</text>
+  <text x="170" y="542" class="mono">https://example.org/okfy/a%2fb.md</text>
+  <text x="540" y="542" class="sx">an encoded separator</text>
+
+  <text x="100" y="576" class="bad">×</text>
+  <text x="170" y="576" class="mono">https://example.org/okfy/../secret.md</text>
+  <text x="540" y="576" class="sx">traversal above the root</text>
+
+  <text x="76" y="606" class="note">The check runs on the URL the tool resolved and once more on the URL the response reports.</text>
+
+  <text x="56" y="692" class="h">2 · How the request is made</text>
+  <rect x="56" y="716" width="968" height="320" rx="16" class="panel"/>
+
+  <text x="76" y="750" class="lab">Four properties, on every fetch</text>
+
+  <rect x="96" y="776" width="210" height="84" rx="10" class="card"/>
+  <text x="201" y="802" class="ct" text-anchor="middle">no credentials</text>
+  <text x="201" y="824" class="sx" text-anchor="middle">credentials: omit, so</text>
+  <text x="201" y="842" class="sx" text-anchor="middle">no cookie or auth header</text>
+
+  <rect x="334" y="776" width="210" height="84" rx="10" class="card"/>
+  <text x="439" y="802" class="ct" text-anchor="middle">no redirects</text>
+  <text x="439" y="824" class="sx" text-anchor="middle">redirect: error, so a</text>
+  <text x="439" y="842" class="sx" text-anchor="middle">bounce is a failure</text>
+
+  <rect x="572" y="776" width="210" height="84" rx="10" class="card"/>
+  <text x="677" y="802" class="ct" text-anchor="middle">one slot, a deadline</text>
+  <text x="677" y="824" class="sx" text-anchor="middle">four at a time, 30 s,</text>
+  <text x="677" y="842" class="sx" text-anchor="middle">a body read with a bound</text>
+
+  <rect x="810" y="776" width="210" height="84" rx="10" class="card"/>
+  <text x="915" y="802" class="ct" text-anchor="middle">the response URL</text>
+  <text x="915" y="824" class="sx" text-anchor="middle">checked against the root,</text>
+  <text x="915" y="842" class="sx" text-anchor="middle">so it cannot answer outside</text>
+
+  <text x="76" y="900" class="sx">Sixty-four requests may wait at once, and a body the tool does not use is cancelled rather than buffered.</text>
+  <text x="76" y="924" class="sx">A 404 is the only failure that moves on: a blocked, refused or redirecting URL is left alone.</text>
+  <text x="76" y="948" class="sx">Credentials are omitted, so a bundle request carries nothing the origin could act on.</text>
+
+  <text x="76" y="1000" class="note">Refusing redirects is what makes the root check final: a bounce cannot carry the request somewhere else.</text>
+
+  <text x="56" y="1090" class="h">3 · What a link may reach</text>
+  <rect x="56" y="1114" width="968" height="300" rx="16" class="panel"/>
+
+  <text x="76" y="1148" class="lab">A link becomes candidates, and a candidate becomes a request</text>
+
+  <text x="100" y="1188" class="mono">pathCandidates</text>
+  <text x="380" y="1188" class="sx">anchored at the file's own directory and at each ancestor, up to the root</text>
+
+  <text x="100" y="1222" class="mono">the loaded set first</text>
+  <text x="380" y="1222" class="sx">a candidate already loaded resolves with no request at all</text>
+
+  <text x="100" y="1256" class="mono">404 → the next</text>
+  <text x="380" y="1256" class="sx">only a 404 tries the next candidate; another failure is final</text>
+
+  <text x="100" y="1290" class="mono">once per URL</text>
+  <text x="380" y="1290" class="sx">the crawl schedules each URL once, and the on-demand path remembers what it tried</text>
+
+  <text x="76" y="1340" class="note">Alternative paths are the one concession: a link written for a nested collection still resolves, and a miss</text>
+  <text x="76" y="1364" class="note">is answered by another candidate rather than by a retry.</text>
+
+  <text x="56" y="1468" class="h">4 · Inside the fence, and outside it</text>
+  <rect x="56" y="1492" width="968" height="400" rx="16" class="panel"/>
+
+  <text x="76" y="1530" class="lab">What the same origin and the root let through, and what they stop</text>
+
+  <rect x="96" y="1556" width="400" height="250" rx="12" class="region"/>
+  <text x="112" y="1582" class="br">reachable</text>
+  <text x="112" y="1610" class="sx">the entry file, and each file a link resolves to</text>
+  <text x="112" y="1638" class="sx">a sibling caption track for a clip</text>
+  <text x="112" y="1666" class="sx">an image, only as a blob URL of its bytes</text>
+  <text x="112" y="1694" class="sx">a served clip, read once, played from its blob</text>
+  <text x="112" y="1722" class="sx">a local clip: an object URL, no network at all</text>
+  <text x="112" y="1750" class="sx">the page's own manifest icons</text>
+
+  <line x1="512" y1="1540" x2="512" y2="1820" class="fence"/>
+
+  <rect x="540" y="1570" width="470" height="32" rx="8" class="no"/>
+  <text x="556" y="1592" class="bad">×</text>
+  <text x="576" y="1592" class="sx">another origin — a different host or scheme</text>
+
+  <rect x="540" y="1618" width="470" height="32" rx="8" class="no"/>
+  <text x="556" y="1640" class="bad">×</text>
+  <text x="576" y="1640" class="sx">a path above the bundle root</text>
+
+  <rect x="540" y="1666" width="470" height="32" rx="8" class="no"/>
+  <text x="556" y="1688" class="bad">×</text>
+  <text x="576" y="1688" class="sx">a redirect: the bounce is a failure, not a hop</text>
+
+  <rect x="540" y="1714" width="470" height="32" rx="8" class="no"/>
+  <text x="556" y="1736" class="bad">×</text>
+  <text x="576" y="1736" class="sx">an external or data: image from content</text>
+
+  <rect x="540" y="1762" width="470" height="32" rx="8" class="no"/>
+  <text x="556" y="1784" class="bad">×</text>
+  <text x="576" y="1784" class="sx">credentials, a query or a fragment</text>
+
+  <text x="76" y="1858" class="note">So a malicious bundle cannot probe another host, read another origin, or smuggle a resource in through a redirect.</text>
+
+  <text x="56" y="1946" class="h">5 · The one way out</text>
+  <rect x="56" y="1970" width="968" height="300" rx="16" class="panel"/>
+
+  <text x="76" y="2006" class="lab">The assistant, and the limits of the rules</text>
+
+  <text x="100" y="2046" class="br">the assistant</text>
+  <text x="320" y="2046" class="sx">a POST to the provider you configure, over https — or http on loopback</text>
+
+  <text x="100" y="2080" class="br">not the bundle path</text>
+  <text x="320" y="2080" class="sx">so every rule on this page still governs every bundle request</text>
+
+  <text x="100" y="2114" class="br">the policy gate</text>
+  <text x="320" y="2114" class="sx">connect-src allows the page's own origin and the provider's endpoints</text>
+
+  <text x="100" y="2148" class="br">the server's mapping</text>
+  <text x="320" y="2148" class="sx">the rules bind URLs, not how a server turns them into files: symlinks and rewrites are its job</text>
+
+  <text x="100" y="2182" class="br">so the advice</text>
+  <text x="320" y="2182" class="sx">publish on a dedicated static origin, without sensitive routes</text>
+
+  <text x="56" y="2310" class="note">The rules constrain URLs, not the server's mapping from URLs to files. Symlinks, internal rewrites and a</text>
+  <text x="56" y="2334" class="note">misconfigured deploy are handled on the server; the tool's part is to refuse every URL outside its own root.</text>
+</svg>

@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2370" viewBox="0 0 1080 2370" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">Assistant data flow — okfy security explainer</title>
+  <desc id="d">What the optional assistant sends off the page, how those requests are bounded, how it authenticates and what risk remains. The assistant is the one opt-in exception to the tool's local-processing principle: nothing is sent while a bundle is explored, and only a question you ask sends anything. What leaves the page is your prompt and the running conversation; the system prompt, the viewer's own instructions exposed as the generated .runtime/AGENTS.md; the output of the tools the agent calls, that is the titles, descriptions, tags, paths, frontmatter, body text and link lists the tools return, and never images, PDFs or other attachments; one model-listing request per configured provider that is set up, when you open a model picker; your key or OAuth token, in the request header to the provider the request is for; and, when you use the microphone, the audio you speak, streamed to the provider's realtime transcription socket. No host other than the configured providers is contacted, and bundle requests keep their same-origin, no-credentials, no-redirect bounds. The Content-Security-Policy is the fence: connect-src allows https and wss, plus http and ws on loopback only, and a local provider entered with a bind-all address such as 0.0.0.0 or :: is rewritten to 127.0.0.1, which the policy names, so a local server is reachable and covered. Every request uses credentials omit, redirect error and a no-referrer policy, so a response cannot carry a cookie or bounce the call to another host. Two authentication paths are supported. An API key is a static secret sent as Authorization Bearer, or as the api-key header for Azure. OAuth 2.0 Authorization Code with PKCE makes the page a public client: it uses S256 with no client secret, validates the state parameter, takes the redirect back to the page as the callback, and reads the access token's exp claim as an unverified JWT for the expiry display only, since a browser cannot verify the signature. The microphone needs a second socket: because a browser cannot set an Authorization header on a WebSocket, the configured key is first exchanged at the provider's session endpoint for a short-lived realtime token, which the socket then carries as a subprotocol, so the key itself never reaches the socket; the socket URL is the provider's base URL with its scheme swapped to ws or wss. The work is bounded like any other read: a request has a 120-second deadline and a 4 MiB streamed reply, the prompt is capped at 8 000 input characters and at most 8 tool steps, each tool result at 12 000 characters with the replayed history keeping the most recent 8 whole, and the microphone's send queue at 64 000 bytes paced at the audio's own rate. What remains is stated plainly: prompt injection can mislead the model even though the system prompt tells it to treat bundle content as untrusted data, though the blast radius is bounded because the tools are read-only and the only egress is the configured provider; data leaves the machine, which is inherent to a remote provider and why a local server is offered; the key is unencrypted in local storage when you choose to remember it and is readable by any script on the origin; and the provider's response is trusted as data, never executed.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables and the warn tint from the
+         script, so the figure reads as the tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .ct { font-size: 12px; font-weight: 700; fill: #e7e9ee; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .region { fill: #1b1e26; stroke: #2e3341; stroke-width: 1.5; }
+      .fence { stroke: #5b8def; stroke-width: 2; fill: none; stroke-dasharray: 5 4; opacity: 0.6; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="2370" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · SECURITY EXPLAINER</text>
+  <text x="56" y="110" class="title">Assistant data flow</text>
+  <text x="56" y="148" class="subtitle">The one opt-in exception: what leaves the page, and how it is bounded</text>
+
+  <text x="56" y="214" class="h">1 · What leaves the page</text>
+  <rect x="56" y="238" width="968" height="390" rx="16" class="panel"/>
+
+  <text x="76" y="300" class="lab">The opt-in exception: nothing is sent while the panel is closed or idle</text>
+
+  <text x="100" y="336" class="sx">sent</text>
+  <text x="380" y="336" class="sx">when</text>
+
+  <text x="100" y="372" class="mono">your prompt</text>
+  <text x="380" y="372" class="sx">and the running conversation, when you ask a question</text>
+
+  <text x="100" y="406" class="mono">the system prompt</text>
+  <text x="380" y="406" class="sx">the viewer's own instructions, exposed as the generated .runtime/AGENTS.md</text>
+
+  <text x="100" y="440" class="mono">tool output</text>
+  <text x="380" y="440" class="sx">the titles, descriptions, tags, paths, frontmatter and body text the tools return</text>
+
+  <text x="100" y="474" class="mono">the model list</text>
+  <text x="380" y="474" class="sx">one model-list request per configured provider, when you open a picker</text>
+
+  <text x="100" y="508" class="mono">your key or token</text>
+  <text x="380" y="508" class="sx">in the request header, to the provider the request is for</text>
+
+  <text x="100" y="542" class="mono">your voice</text>
+  <text x="380" y="542" class="sx">streamed to the realtime socket, when you use the microphone</text>
+
+  <text x="76" y="588" class="note">No host other than the configured providers is contacted; images, PDFs and attachments are never sent.</text>
+
+  <text x="56" y="682" class="h">2 · The fence: the policy and the request</text>
+  <rect x="56" y="706" width="968" height="270" rx="16" class="panel"/>
+
+  <text x="76" y="768" class="lab">The policy names the provider, and every request carries three properties</text>
+
+  <rect x="96" y="798" width="286" height="96" rx="10" class="card"/>
+  <text x="112" y="824" class="ct">the CSP gate</text>
+  <text x="112" y="846" class="sx">connect-src allows https:</text>
+  <text x="112" y="864" class="sx">and wss:, plus http and</text>
+  <text x="112" y="882" class="sx">ws on loopback only</text>
+
+  <rect x="406" y="798" width="286" height="96" rx="10" class="card"/>
+  <text x="422" y="824" class="ct">the address</text>
+  <text x="422" y="846" class="sx">a bind-all 0.0.0.0 or</text>
+  <text x="422" y="864" class="sx">:: is rewritten to</text>
+  <text x="422" y="882" class="sx">127.0.0.1, which the CSP names</text>
+
+  <rect x="716" y="798" width="286" height="96" rx="10" class="card"/>
+  <text x="732" y="824" class="ct">the properties</text>
+  <text x="732" y="846" class="sx">credentials: omit, so no</text>
+  <text x="732" y="864" class="sx">cookie; redirect: error, so</text>
+  <text x="732" y="882" class="sx">a bounce fails; no-referrer</text>
+
+  <text x="76" y="936" class="note">The client sends only to https:, or to http on a local host — a bind-all address is rewritten to loopback.</text>
+
+  <text x="56" y="1030" class="h">3 · Authentication: two paths</text>
+  <rect x="56" y="1054" width="968" height="290" rx="16" class="panel"/>
+
+  <text x="76" y="1116" class="lab">Neither path keeps a client secret in the page</text>
+
+  <rect x="96" y="1146" width="440" height="110" rx="10" class="card"/>
+  <text x="112" y="1176" class="ct">API key</text>
+  <text x="112" y="1202" class="sx">a static key, sent as Authorization: Bearer (RFC 6750),</text>
+  <text x="112" y="1224" class="sx">or as the api-key header for Azure</text>
+
+  <rect x="560" y="1146" width="440" height="110" rx="10" class="card"/>
+  <text x="576" y="1176" class="ct">OAuth 2.0 code + PKCE</text>
+  <text x="576" y="1202" class="sx">a public client: S256, no client secret, the state validated;</text>
+  <text x="576" y="1224" class="sx">the token's exp is read unverified</text>
+
+  <text x="76" y="1280" class="note">The key is in memory by default; if you remember it, it is stored unencrypted in localStorage.</text>
+  <text x="76" y="1304" class="note">Any script on the origin can then read it.</text>
+
+  <text x="56" y="1398" class="h">4 · The microphone's second socket</text>
+  <rect x="56" y="1422" width="968" height="290" rx="16" class="panel"/>
+
+  <text x="76" y="1484" class="lab">A token is minted for the socket, so the key never rides on it</text>
+
+  <rect x="96" y="1514" width="276" height="96" rx="10" class="card"/>
+  <text x="112" y="1540" class="ct">the provider key</text>
+  <text x="112" y="1562" class="sx">the configured credential,</text>
+  <text x="112" y="1580" class="sx">never sent on the socket</text>
+
+  <line x1="378" y1="1562" x2="400" y2="1562" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 408 1562 L 400 1558 L 400 1566 Z" fill="#9aa2b3"/>
+
+  <rect x="412" y="1514" width="276" height="96" rx="10" class="card"/>
+  <text x="428" y="1540" class="ct">POST /client/sessions</text>
+  <text x="428" y="1562" class="sx">exchanges the key for a</text>
+  <text x="428" y="1580" class="sx">short-lived realtime token</text>
+
+  <line x1="694" y1="1562" x2="716" y2="1562" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 724 1562 L 716 1558 L 716 1566 Z" fill="#9aa2b3"/>
+
+  <rect x="728" y="1514" width="276" height="96" rx="10" class="card"/>
+  <text x="744" y="1540" class="ct">the realtime socket</text>
+  <text x="744" y="1562" class="sx">carries the token as a</text>
+  <text x="744" y="1580" class="sx">subprotocol, not the key</text>
+
+  <text x="76" y="1648" class="note">A browser cannot set an Authorization header on a WebSocket, so the key is exchanged for a token first.</text>
+  <text x="76" y="1672" class="note">The socket URL is the provider's base URL with its scheme swapped to ws or wss.</text>
+
+  <text x="56" y="1766" class="h">5 · Bounded, and what remains</text>
+  <rect x="56" y="1790" width="968" height="470" rx="16" class="panel"/>
+
+  <text x="76" y="1852" class="lab">Bounded, like every other read</text>
+
+  <text x="100" y="1888" class="mono">the request</text>
+  <text x="380" y="1888" class="sx">120 s, and 4 MiB of streamed reply</text>
+
+  <text x="100" y="1922" class="mono">the prompt</text>
+  <text x="380" y="1922" class="sx">8 000 input characters, and at most 8 tool steps</text>
+
+  <text x="100" y="1956" class="mono">each tool result</text>
+  <text x="380" y="1956" class="sx">12 000 characters; the replayed history keeps the most recent 8 whole</text>
+
+  <text x="100" y="1990" class="mono">the microphone</text>
+  <text x="380" y="1990" class="sx">a 64 000-byte send queue, paced at the audio's own rate</text>
+
+  <text x="76" y="2038" class="lab">What remains</text>
+
+  <text x="100" y="2074" class="mono">prompt injection</text>
+  <text x="380" y="2074" class="sx">bundle text can mislead the model; tools are read-only and egress is only the provider</text>
+
+  <text x="100" y="2108" class="mono">data leaves the machine</text>
+  <text x="380" y="2108" class="sx">inherent to a remote provider; use a local server for sensitive bundles</text>
+
+  <text x="100" y="2142" class="mono">the key</text>
+  <text x="380" y="2142" class="sx">unencrypted when remembered; any script on the origin can read it</text>
+
+  <text x="100" y="2176" class="mono">the provider</text>
+  <text x="380" y="2176" class="sx">its content is trusted as data, never executed</text>
+
+  <text x="76" y="2220" class="note">The blast radius is bounded: the tools only read, and the only egress is the provider you configured.</text>
+
+  <text x="56" y="2300" class="note">The assistant is the one path that leaves the origin. Every bundle request keeps its same-origin,</text>
+  <text x="56" y="2324" class="note">no-credentials, no-redirect bounds; the assistant has its own client and does not change them.</text>
+</svg>

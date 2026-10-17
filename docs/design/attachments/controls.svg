@@ -1,0 +1,228 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1970" viewBox="0 0 1080 1970" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">The control vocabulary — okfy design proposal</title>
+  <desc id="d">The shared interaction elements of the viewer. Buttons: one surface and one border, with hover promoting the border to the accent, a disabled button at 45 percent opacity, a toggle whose off state dims only its label, an icon button with no box that is muted when off and accent when pressed, a pill, a full-width Select button with a chevron, and a chip that is a label button beside its own cross. Inputs: a text field whose focus turns the border accent, a search box that pairs its field with a scope row under a divider, a number field with the platform spinners hidden, a text area with a footer row, a checkbox, and a scrubber that is a fill with no handle. Handles: the panel tab, rotated so its label reads down the inner edge with its inner border transparent, and the resize grip that is invisible until the pointer is near it. Toggles: the state lives in aria-pressed, so the off state dims the label and nothing moves. Listings: a facet list of wrapping pills with a count and Clear, a row with hover, selected and dimmed cues, and a menu row that marks the chosen entry in the accent.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables, so the figure reads as the
+         tool does and matches the sibling design figures. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sm { font-size: 14px; font-weight: 700; fill: #e7e9ee; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .dim { font-size: 13px; fill: #676b75; }
+      .acc { font-size: 13px; fill: #5b8def; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .box { fill: #232734; stroke: #2e3341; stroke-width: 2; }
+      .hot { fill: #232734; stroke: #5b8def; stroke-width: 2; }
+      .line { stroke: #2e3341; stroke-width: 2; }
+      .cinc { fill: #5b8def; fill-opacity: .26; stroke: #5b8def; stroke-opacity: .55; stroke-width: 1.5; }
+      .cexc { fill: #e0575b; fill-opacity: .24; stroke: #e0575b; stroke-opacity: .55; stroke-width: 1.5; }
+      .cplain { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .strike { text-decoration: line-through; fill: #e0575b; }
+      .rowhover { fill: #232734; }
+      .rowsel { fill: #5b8def; fill-opacity: .22; }
+      .sw { fill: #8b93a7; }
+      .mark { fill: none; stroke: #9aa2b3; stroke-width: 2; }
+      .markon { fill: none; stroke: #5b8def; stroke-width: 2; }
+      .dot { fill: #9aa2b3; }
+      .doton { fill: #5b8def; }
+      .gripidle { fill: none; stroke: #47506a; stroke-width: 2; stroke-dasharray: 4 4; }
+      .griphot { fill: #5b8def; fill-opacity: .45; }
+      .track { fill: #3d4354; }
+      .trackfill { fill: #5b8def; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="1970" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · DESIGN PROPOSAL</text>
+  <text x="56" y="110" class="title">The control vocabulary</text>
+  <text x="56" y="148" class="subtitle">One surface, one border, and the state carried by the attribute</text>
+
+  <text x="56" y="214" class="h">1 · Buttons</text>
+  <rect x="56" y="238" width="968" height="362" rx="16" class="panel"/>
+
+  <rect x="76" y="284" width="120" height="32" rx="8" class="box"/>
+  <text x="136" y="305" class="br" text-anchor="middle">Open folder…</text>
+  <rect x="216" y="284" width="120" height="32" rx="8" class="hot"/>
+  <text x="276" y="305" class="br" text-anchor="middle">Reload</text>
+  <g opacity="0.45">
+    <rect x="356" y="284" width="120" height="32" rx="8" class="box"/>
+    <text x="416" y="305" class="br" text-anchor="middle">Send</text>
+  </g>
+  <rect x="496" y="284" width="120" height="32" rx="8" class="box"/>
+  <text x="556" y="305" class="dim" text-anchor="middle">Labels</text>
+  <rect x="636" y="284" width="120" height="32" rx="8" class="box"/>
+  <text x="696" y="305" class="br" text-anchor="middle">Tags</text>
+
+  <text x="136" y="340" class="sx" text-anchor="middle">default</text>
+  <text x="276" y="340" class="sx" text-anchor="middle">hover</text>
+  <text x="416" y="340" class="sx" text-anchor="middle">disabled</text>
+  <text x="556" y="340" class="sx" text-anchor="middle">toggle off</text>
+  <text x="696" y="340" class="sx" text-anchor="middle">toggle on</text>
+  <text x="76" y="376" class="note">Hover promotes the border to the accent; a disabled button keeps the line border at 45 % opacity.</text>
+  <text x="76" y="400" class="note">A toggle's state lives in aria-pressed: the off state dims the label only, never the fill.</text>
+
+  <path class="mark" d="M 84 436 V 452 M 92 436 V 452 M 100 436 V 452"/>
+  <circle cx="84" cy="442" r="3.5" class="dot"/>
+  <circle cx="92" cy="449" r="3.5" class="dot"/>
+  <circle cx="100" cy="439" r="3.5" class="dot"/>
+  <path class="markon" d="M 140 436 V 452 M 148 436 V 452 M 156 436 V 452"/>
+  <circle cx="140" cy="439" r="3.5" class="doton"/>
+  <circle cx="148" cy="449" r="3.5" class="doton"/>
+  <circle cx="156" cy="442" r="3.5" class="doton"/>
+  <rect x="196" y="428" width="132" height="32" rx="16" class="box"/>
+  <text x="262" y="450" class="br" text-anchor="middle">Show source</text>
+  <rect x="348" y="428" width="180" height="32" rx="8" class="box"/>
+  <text x="360" y="450" class="br">Select kinds…</text>
+  <text x="516" y="450" class="sx" text-anchor="end">⌄</text>
+  <rect x="548" y="432" width="120" height="26" rx="13" class="cinc"/>
+  <text x="560" y="450" class="br">Concept</text>
+  <line x1="636" y1="432" x2="636" y2="458" class="line"/>
+  <text x="652" y="450" class="sx">×</text>
+
+  <text x="92" y="484" class="sx" text-anchor="middle">icon, off</text>
+  <text x="148" y="484" class="sx" text-anchor="middle">icon, on</text>
+  <text x="262" y="484" class="sx" text-anchor="middle">pill</text>
+  <text x="438" y="484" class="sx" text-anchor="middle">select</text>
+  <text x="608" y="484" class="sx" text-anchor="middle">chip: label + ×</text>
+  <text x="76" y="520" class="note">An icon button carries no box: it is muted when off and takes the accent when it is pressed. A chip is a label</text>
+  <text x="76" y="544" class="note">button beside its own × button, and Select… is a full-width button with a chevron.</text>
+
+  <text x="56" y="654" class="h">2 · Inputs</text>
+  <rect x="56" y="678" width="968" height="412" rx="16" class="panel"/>
+
+  <rect x="76" y="700" width="240" height="34" rx="8" class="box"/>
+  <text x="88" y="722" class="sx">json, guide, nsm…</text>
+  <rect x="336" y="700" width="240" height="34" rx="8" class="hot"/>
+  <text x="348" y="722" class="sx">json, guide, nsm…</text>
+  <rect x="596" y="700" width="120" height="34" rx="8" class="box"/>
+  <text x="608" y="722" class="br">1024</text>
+  <rect x="740" y="708" width="16" height="16" rx="4" class="box"/>
+  <path d="M 743 716 L 746 720 L 753 711" fill="none" stroke="#5b8def" stroke-width="2"/>
+  <text x="766" y="722" class="sx">Remember the key in this browser</text>
+
+  <text x="196" y="752" class="sx" text-anchor="middle">text field</text>
+  <text x="456" y="752" class="sx" text-anchor="middle">focused: accent border</text>
+  <text x="656" y="752" class="sx" text-anchor="middle">number field</text>
+  <text x="890" y="752" class="sx" text-anchor="middle">checkbox</text>
+
+  <rect x="76" y="786" width="280" height="64" rx="8" class="box"/>
+  <text x="88" y="808" class="sx">json, guide, nsm…</text>
+  <line x1="76" y1="822" x2="356" y2="822" class="line"/>
+  <text x="88" y="842" class="sx">in</text>
+  <text x="118" y="842" class="br">All fields</text>
+  <text x="340" y="842" class="sx" text-anchor="end">⌄</text>
+
+  <rect x="376" y="786" width="380" height="44" rx="8" class="box"/>
+  <text x="388" y="812" class="sx">Ask about this bundle…</text>
+  <rect x="376" y="838" width="124" height="22" rx="11" class="cplain"/>
+  <text x="386" y="853" class="sx">deepseek-flash</text>
+  <text x="512" y="853" class="sx">↑ 0 ↓ 0</text>
+  <rect x="700" y="838" width="56" height="22" rx="6" class="box"/>
+  <text x="728" y="853" class="br" text-anchor="middle">Send</text>
+
+  <rect x="596" y="880" width="280" height="12" rx="6" class="track"/>
+  <rect x="596" y="880" width="112" height="12" rx="6" class="trackfill"/>
+
+  <text x="216" y="912" class="sx" text-anchor="middle">a field with a scope</text>
+  <text x="560" y="912" class="sx" text-anchor="middle">text area with its footer</text>
+  <text x="740" y="912" class="sx" text-anchor="middle">scrubber: a fill, no knob</text>
+  <text x="76" y="956" class="note">Every field shares one surface and one border; focus turns the border accent, with no outline. The number field</text>
+  <text x="76" y="980" class="note">hides the platform spinners, and the scrubber is a filled track with no circular handle to grab.</text>
+
+  <text x="56" y="1134" class="h">3 · Handles</text>
+  <rect x="56" y="1158" width="968" height="152" rx="16" class="panel"/>
+
+  <rect x="96" y="1170" width="28" height="84" rx="6" class="box"/>
+  <text x="110" y="1212" class="sx" text-anchor="middle" transform="rotate(90 110 1212)">Assistant</text>
+  <rect x="300" y="1170" width="10" height="84" class="gripidle"/>
+  <rect x="400" y="1170" width="10" height="84" class="griphot"/>
+  <text x="110" y="1294" class="sx" text-anchor="middle">panel tab</text>
+  <text x="305" y="1294" class="sx" text-anchor="middle">grip, idle</text>
+  <text x="405" y="1294" class="sx" text-anchor="middle">grip, hover</text>
+  <text x="520" y="1200" class="note">Both live on a panel's inner edge. The tab is</text>
+  <text x="520" y="1224" class="note">the panel's own handle, rotated so its label</text>
+  <text x="520" y="1248" class="note">reads down the edge, its inner border clear.</text>
+  <text x="520" y="1272" class="note">The grip tints with the accent on hover.</text>
+
+  <text x="56" y="1354" class="h">4 · Toggles</text>
+  <rect x="56" y="1378" width="968" height="152" rx="16" class="panel"/>
+
+  <rect x="96" y="1396" width="120" height="32" rx="8" class="box"/>
+  <text x="156" y="1417" class="dim" text-anchor="middle">Labels</text>
+  <rect x="236" y="1396" width="120" height="32" rx="8" class="box"/>
+  <text x="296" y="1417" class="br" text-anchor="middle">Labels</text>
+  <rect x="376" y="1396" width="120" height="32" rx="8" class="box"/>
+  <text x="436" y="1417" class="dim" text-anchor="middle">Tags</text>
+  <rect x="516" y="1396" width="120" height="32" rx="8" class="box"/>
+  <text x="576" y="1417" class="br" text-anchor="middle">Tags</text>
+  <path class="mark" d="M 668 1404 V 1420 M 676 1404 V 1420 M 684 1404 V 1420"/>
+  <circle cx="668" cy="1410" r="3.5" class="dot"/>
+  <circle cx="676" cy="1417" r="3.5" class="dot"/>
+  <circle cx="684" cy="1407" r="3.5" class="dot"/>
+  <path class="markon" d="M 728 1404 V 1420 M 736 1404 V 1420 M 744 1404 V 1420"/>
+  <circle cx="728" cy="1407" r="3.5" class="doton"/>
+  <circle cx="736" cy="1417" r="3.5" class="doton"/>
+  <circle cx="744" cy="1410" r="3.5" class="doton"/>
+
+  <text x="156" y="1452" class="sx" text-anchor="middle">off</text>
+  <text x="296" y="1452" class="sx" text-anchor="middle">on</text>
+  <text x="436" y="1452" class="sx" text-anchor="middle">off</text>
+  <text x="576" y="1452" class="sx" text-anchor="middle">on</text>
+  <text x="676" y="1452" class="sx" text-anchor="middle">off</text>
+  <text x="736" y="1452" class="sx" text-anchor="middle">on</text>
+  <text x="96" y="1486" class="note">Off dims the label only, so nothing moves when a toggle flips; an icon toggle tints its glyph.</text>
+
+  <text x="56" y="1574" class="h">5 · Listings</text>
+  <rect x="56" y="1598" width="968" height="292" rx="16" class="panel"/>
+
+  <rect x="96" y="1620" width="300" height="32" rx="8" class="box"/>
+  <text x="110" y="1641" class="sx">Search kinds…</text>
+  <rect x="96" y="1664" width="104" height="26" rx="13" class="cinc"/>
+  <text x="108" y="1682" class="br">✓ Concept</text>
+  <rect x="208" y="1664" width="70" height="26" rx="13" class="cexc"/>
+  <text x="220" y="1682" class="strike">− File</text>
+  <rect x="286" y="1664" width="50" height="26" rx="13" class="cplain"/>
+  <text x="298" y="1682" class="sx">Tag</text>
+  <rect x="96" y="1698" width="92" height="26" rx="13" class="cplain"/>
+  <text x="108" y="1716" class="sx">Directory</text>
+  <rect x="196" y="1698" width="88" height="26" rx="13" class="cplain"/>
+  <text x="208" y="1716" class="sx">Index file</text>
+  <line x1="96" y1="1744" x2="396" y2="1744" class="line"/>
+  <text x="110" y="1766" class="sx">34 kinds</text>
+  <text x="382" y="1766" class="sx" text-anchor="end">Clear</text>
+  <text x="96" y="1796" class="note">a list: a search, wrapping entries, a count and Clear</text>
+
+  <rect x="460" y="1656" width="240" height="28" rx="6" class="rowhover"/>
+  <rect x="460" y="1692" width="240" height="28" rx="6" class="rowsel"/>
+  <circle cx="474" cy="1624" r="6" class="sw"/>
+  <text x="490" y="1628" class="sx">Directories</text>
+  <text x="688" y="1628" class="sx" text-anchor="end">2</text>
+  <circle cx="474" cy="1670" r="6" class="sw"/>
+  <text x="490" y="1674" class="sx">Directories</text>
+  <text x="688" y="1674" class="sx" text-anchor="end">2</text>
+  <circle cx="474" cy="1706" r="6" class="sw"/>
+  <text x="490" y="1710" class="sx">Directories</text>
+  <text x="688" y="1710" class="sx" text-anchor="end">2</text>
+  <g opacity="0.4">
+    <circle cx="474" cy="1742" r="6" class="sw"/>
+    <text x="490" y="1746" class="sx">Directories</text>
+    <text x="688" y="1746" class="sx" text-anchor="end">2</text>
+  </g>
+  <text x="490" y="1796" class="note">a row: hover, selected, dimmed</text>
+
+  <text x="754" y="1628" class="acc">Built-in microphone</text>
+  <text x="988" y="1628" class="acc" text-anchor="end">✓</text>
+  <rect x="740" y="1656" width="264" height="28" rx="6" class="rowhover"/>
+  <text x="754" y="1674" class="sx">System microphone</text>
+  <text x="740" y="1712" class="note">a menu row: the chosen entry</text>
+  <text x="740" y="1736" class="note">is accent, with a check</text>
+
+  <text x="56" y="1932" class="note">One surface and one border; hover promotes the border to the accent, and state lives in ARIA.</text>
+</svg>

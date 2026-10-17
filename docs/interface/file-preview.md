@@ -62,6 +62,8 @@ If an image cannot be loaded, the preview shows a short notice instead. An audio
 - [Graph model](../model/graph-model.md)
 - [Local folders](local-folders.md)
 - [Markdown preview](../algorithms/markdown-preview.md)
+- [Spectrogram](../algorithms/spectrogram.md)
+- [Audio scrubber](../algorithms/audio-scrubber.md)
 - [URL and network bounds](../security/url-and-network-bounds.md)
 - [Limits and budgets](../security/limits-and-budgets.md)
 

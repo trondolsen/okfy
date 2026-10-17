@@ -14,6 +14,8 @@ sources:
 
 # Steps
 
+See the [graph construction explainer](attachments/graph-construction.svg) for the kinds, the reference edges, the tag hubs and the page each node shows.[^source]
+
 1. Create a `dir` node for every directory implied by a file or a placeholder node — including a directory that holds only files and has no Markdown of its own — and connect each directory to its parent with a **tree** link, creating missing ancestors on demand.[^source]
 2. For each file, decide its kind from its name and contents, one of `index`, `concept` or `file`. Parse frontmatter for Markdown files, then connect the file to its directory with a tree link.
 3. For each concept, parse its body links and its frontmatter `sources`. A source may name any file, not only Markdown. Resolve each target to a loaded file, else to an unloaded placeholder (a non-Markdown file, fetched on click), else to a `missing` candidate for on-demand loading. Create one **ref** link per referencing concept and target pair.

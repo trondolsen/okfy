@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1660" viewBox="0 0 1080 1660" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">The filter panel — okfy design proposal</title>
+  <desc id="d">The filter sidebar docks right behind its Filters tab and reads as one column: a head naming the panel with the count of facets that are on, a Search box with a scope menu under it, four attribute facets — Kinds, Types, Tags and Status — each with a label, its chips and a Select button, and Clear filters at the foot. A chip is a facet that is on: its label flips include and exclude and its cross removes it, include tinted with the accent and exclude tinted red with a struck label. A facet's Select button opens a searchable list whose values are wrapping pills that cycle through none, include (a check, filled), and exclude (a minus, red and struck). A search or an attribute filter is a lens: the whole focused subtree is drawn, so a match inside a folder that has not been expanded is still shown.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables, so the figure reads as the
+         tool does and matches the sibling design figures. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .ct { font-size: 20px; font-weight: 700; fill: #e7e9ee; }
+      .body { font-size: 17px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sm { font-size: 14px; font-weight: 700; fill: #e7e9ee; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .wire { fill: #1b1e27; stroke: #2e3341; stroke-width: 2; }
+      .box { fill: #232734; stroke: #2e3341; stroke-width: 2; }
+      .divider { stroke: #2e3341; stroke-width: 2; }
+      .cinc { fill: #5b8def; fill-opacity: .26; stroke: #5b8def; stroke-opacity: .55; stroke-width: 1.5; }
+      .cexc { fill: #e0575b; fill-opacity: .24; stroke: #e0575b; stroke-opacity: .55; stroke-width: 1.5; }
+      .cplain { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .strike { text-decoration: line-through; fill: #e0575b; }
+      .link { fill: none; stroke: #6a7488; stroke-width: 2.5; }
+      .dirfill { fill: #8b93a7; stroke: #cfd5e2; stroke-width: 1.6; }
+      .confill { fill: #5b8def; stroke: #4a6fa5; stroke-width: 1.6; }
+      .faded { fill: #232734; stroke: #3b4358; stroke-width: 1.6; }
+      .dashout { fill: none; stroke: #5b8def; stroke-width: 2.5; stroke-dasharray: 6 5; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="1660" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · DESIGN PROPOSAL</text>
+  <text x="56" y="110" class="title">The filter panel</text>
+  <text x="56" y="148" class="subtitle">Search plus four attribute facets, and a list whose values cycle through three states</text>
+
+  <text x="56" y="214" class="h">1 · The panel, top to bottom</text>
+  <rect x="56" y="238" width="968" height="712" rx="16" class="panel"/>
+
+  <rect x="120" y="278" width="300" height="652" rx="10" class="wire"/>
+  <rect x="108" y="292" width="12" height="58" rx="3" class="box"/>
+  <text x="146" y="322" class="body">Search &amp; filter</text>
+  <text x="408" y="322" class="sx" text-anchor="end">2 active</text>
+  <line x1="132" y1="338" x2="408" y2="338" class="divider"/>
+  <text x="146" y="368" class="sx">Search</text>
+  <rect x="140" y="380" width="268" height="64" rx="8" class="box"/>
+  <text x="152" y="404" class="sx">json, guide, nsm…</text>
+  <line x1="140" y1="418" x2="408" y2="418" class="divider"/>
+  <text x="152" y="440" class="sx">in</text>
+  <text x="184" y="440" class="br">All fields</text>
+  <text x="392" y="440" class="sx" text-anchor="end">⌄</text>
+
+  <text x="146" y="478" class="sx">Kinds</text>
+  <rect x="140" y="490" width="104" height="24" rx="12" class="cinc"/>
+  <text x="152" y="507" class="br">Concept</text>
+  <text x="228" y="507" class="sx">×</text>
+  <rect x="252" y="490" width="86" height="24" rx="12" class="cexc"/>
+  <text x="264" y="507" class="strike">File</text>
+  <text x="322" y="507" class="sx">×</text>
+  <rect x="140" y="524" width="268" height="30" rx="8" class="box"/>
+  <text x="152" y="544" class="sx">Select kinds…</text>
+
+  <text x="146" y="582" class="sx">Types</text>
+  <rect x="140" y="594" width="106" height="24" rx="12" class="cinc"/>
+  <text x="152" y="611" class="br">Reference</text>
+  <text x="232" y="611" class="sx">×</text>
+  <rect x="140" y="628" width="268" height="30" rx="8" class="box"/>
+  <text x="152" y="648" class="sx">Select types…</text>
+
+  <text x="146" y="686" class="sx">Tags</text>
+  <rect x="140" y="698" width="66" height="24" rx="12" class="cinc"/>
+  <text x="152" y="715" class="br">ml</text>
+  <text x="190" y="715" class="sx">×</text>
+  <rect x="140" y="732" width="268" height="30" rx="8" class="box"/>
+  <text x="152" y="752" class="sx">Select tags…</text>
+
+  <text x="146" y="790" class="sx">Status</text>
+  <rect x="140" y="802" width="268" height="30" rx="8" class="box"/>
+  <text x="152" y="822" class="sx">Select status…</text>
+
+  <rect x="140" y="852" width="268" height="32" rx="8" class="box"/>
+  <text x="274" y="873" class="br" text-anchor="middle">Clear filters</text>
+
+  <text x="470" y="322" class="note">The panel name, and the count of facets that are on.</text>
+  <text x="470" y="404" class="note">Search: a case-insensitive substring match.</text>
+  <text x="470" y="440" class="note">Scope it: All fields, Title, Description, Type, Tags or Path.</text>
+  <text x="470" y="507" class="note">A chip is a facet that is on: its label flips</text>
+  <text x="470" y="531" class="note">include and exclude, its × removes it. Include</text>
+  <text x="470" y="555" class="note">is blue; exclude is red and struck through.</text>
+  <text x="470" y="611" class="note">Four attribute facets share one anatomy: a</text>
+  <text x="470" y="635" class="note">label, its chips, and a Select… button.</text>
+  <text x="470" y="715" class="note">Tags nest, so choosing ml keeps ml/vision.</text>
+  <text x="470" y="873" class="note">Clear filters drops every facet at once, and</text>
+  <text x="470" y="897" class="note">leaves the Tags toggle in the toolbar as it was.</text>
+
+  <text x="56" y="1014" class="h">2 · A facet's list</text>
+  <rect x="56" y="1038" width="968" height="272" rx="16" class="panel"/>
+
+  <rect x="120" y="1068" width="300" height="212" rx="10" class="wire"/>
+  <rect x="132" y="1080" width="276" height="32" rx="8" class="box"/>
+  <text x="146" y="1101" class="sx">Search kinds…</text>
+  <rect x="132" y="1124" width="104" height="26" rx="13" class="cinc"/>
+  <text x="144" y="1142" class="br">✓ Concept</text>
+  <rect x="244" y="1124" width="70" height="26" rx="13" class="cexc"/>
+  <text x="256" y="1142" class="strike">− File</text>
+  <rect x="322" y="1124" width="50" height="26" rx="13" class="cplain"/>
+  <text x="334" y="1142" class="sx">Tag</text>
+  <rect x="132" y="1158" width="92" height="26" rx="13" class="cplain"/>
+  <text x="144" y="1176" class="sx">Directory</text>
+  <rect x="232" y="1158" width="88" height="26" rx="13" class="cplain"/>
+  <text x="244" y="1176" class="sx">Index file</text>
+  <line x1="132" y1="1204" x2="408" y2="1204" class="divider"/>
+  <text x="146" y="1226" class="sx">34 kinds</text>
+  <text x="392" y="1226" class="sx" text-anchor="end">Clear</text>
+
+  <text x="470" y="1101" class="note">Select… opens a searchable list of the facet's values.</text>
+  <text x="470" y="1142" class="note">A value's own pill cycles through three states: none,</text>
+  <text x="470" y="1166" class="note">include (✓, filled with the accent, white text),</text>
+  <text x="470" y="1190" class="note">exclude (−, red and struck through), then none again.</text>
+  <text x="470" y="1226" class="note">Clear in the foot resets that one facet.</text>
+
+  <text x="56" y="1374" class="h">3 · What a filter does to the graph</text>
+  <rect x="56" y="1398" width="968" height="232" rx="16" class="panel"/>
+
+  <text x="120" y="1430" class="sm">No filter</text>
+  <path class="link" d="M 166 1478 L 272 1450 M 290 1450 L 400 1478"/>
+  <circle cx="280" cy="1450" r="10" class="dirfill"/>
+  <circle cx="410" cy="1478" r="9" class="faded"/>
+  <circle cx="150" cy="1478" r="16" class="dirfill"/>
+  <circle cx="150" cy="1478" r="21" class="dashout"/>
+  <text x="410" y="1504" class="sx" text-anchor="middle">held back</text>
+  <text x="120" y="1536" class="note">the page draws the folders only</text>
+
+  <text x="580" y="1430" class="sm">A filter is active</text>
+  <path class="link" d="M 626 1478 L 732 1450 M 750 1450 L 860 1478"/>
+  <circle cx="740" cy="1450" r="10" class="dirfill"/>
+  <circle cx="870" cy="1478" r="9" class="confill"/>
+  <circle cx="610" cy="1478" r="16" class="dirfill"/>
+  <circle cx="610" cy="1478" r="21" class="dashout"/>
+  <text x="870" y="1504" class="sx" text-anchor="middle">the match</text>
+  <text x="580" y="1536" class="note">the filter draws the match too</text>
+
+  <text x="120" y="1584" class="note">A search or an attribute filter is a lens: the whole focused subtree is drawn, so a match inside a</text>
+  <text x="120" y="1608" class="note">folder that has not been expanded is still shown, and the toolbar's totals count that subtree.</text>
+</svg>

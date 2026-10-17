@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1600" viewBox="0 0 1080 1600" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">The node preview — okfy design proposal</title>
+  <desc id="d">The page panel a node opens. Clicking a node opens the preview: one reused panel, centred over the graph behind a 55 percent black scrim, with a card up to 840 by 940 pixels, rounded, deep-shadowed and carrying one header row. The header has back and forward (disabled until there is history), the title and the path on one line, both ellipsised, an add-to-deck handle and Close. The body opens with the page's frontmatter as chips, then the rendered Markdown; a text-based image page adds a Show source toggle to the chips row. By kind, a concept or index renders its Markdown, a file shows its source text, a binary shows its file details as a definition list, and an audio or video clip plays with the shared mel spectrogram, one volume control and WebVTT captions over it. A tag or directory has no page, so only a file opens here, and the deck's reading stream reuses the same card with its header controls hidden.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables and the node colours from
+         the script, so the figure reads as the tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .sec { font-size: 11px; letter-spacing: 1.2px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .canvas { fill: #0e1015; stroke: #232734; stroke-width: 1.5; }
+      .card { fill: #1b1e27; stroke: #2e3341; stroke-width: 1.5; }
+      .btn { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .chip { fill: none; stroke: #2e3341; stroke-width: 1.5; }
+      .tbar { fill: #2a2f3a; }
+      .codebar { fill: #3a404e; }
+      .link { fill: #5b8def; }
+      .hl { fill: #5b8def; fill-opacity: .4; }
+      .hlhead { fill: #5b8def; fill-opacity: .22; }
+      .sp1 { fill: #5b8def; fill-opacity: .55; }
+      .sp2 { fill: #5b8def; fill-opacity: .3; }
+      .track { fill: #3d4354; }
+      .trackfill { fill: #5b8def; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="1600" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · DESIGN PROPOSAL</text>
+  <text x="56" y="110" class="title">The node preview</text>
+  <text x="56" y="148" class="subtitle">One reused panel that opens a node's page over the graph</text>
+
+  <text x="56" y="214" class="h">1 · The panel</text>
+  <rect x="56" y="238" width="968" height="402" rx="16" class="panel"/>
+
+  <rect x="96" y="274" width="400" height="200" rx="12" class="canvas"/>
+  <path d="M150 330 L400 348 M150 330 L188 428 M400 348 L420 432" fill="none" stroke="#232734" stroke-width="2"/>
+  <circle cx="150" cy="330" r="7" fill="#2b303c"/>
+  <circle cx="400" cy="348" r="7" fill="#2b303c"/>
+  <circle cx="188" cy="428" r="7" fill="#2b303c"/>
+  <circle cx="420" cy="432" r="7" fill="#2b303c"/>
+  <rect x="96" y="274" width="400" height="200" rx="12" fill="#000000" fill-opacity="0.55"/>
+  <rect x="152" y="300" width="288" height="152" rx="12" fill="#000000" fill-opacity="0.5"/>
+  <rect x="148" y="296" width="288" height="152" rx="12" class="card"/>
+  <rect x="158" y="306" width="16" height="14" rx="4" class="btn"/>
+  <rect x="178" y="306" width="16" height="14" rx="4" class="btn"/>
+  <rect x="202" y="308" width="58" height="8" rx="4" fill="#c9d0da"/>
+  <rect x="268" y="310" width="46" height="6" rx="3" fill="#6a7488"/>
+  <text x="390" y="319" class="sx">⋮</text>
+  <rect x="402" y="306" width="26" height="14" rx="4" class="btn"/>
+  <line x1="148" y1="330" x2="436" y2="330" stroke="#2e3341" stroke-width="1.5"/>
+  <rect x="160" y="344" width="258" height="6" rx="3" class="tbar"/>
+  <rect x="160" y="358" width="246" height="6" rx="3" class="tbar"/>
+  <rect x="160" y="372" width="258" height="6" rx="3" class="tbar"/>
+  <rect x="160" y="386" width="150" height="6" rx="3" class="tbar"/>
+  <rect x="160" y="402" width="264" height="30" rx="6" class="btn"/>
+  <rect x="172" y="412" width="160" height="5" rx="2" class="codebar"/>
+  <rect x="172" y="422" width="118" height="5" rx="2" class="codebar"/>
+  <text x="296" y="502" class="sx" text-anchor="middle">centred over the graph, behind a 55 % black scrim</text>
+
+  <text x="520" y="300" class="note">One reused panel for every node: opening an entry replaces</text>
+  <text x="520" y="324" class="note">the content and scrolls it back to the top. It is one card</text>
+  <text x="520" y="348" class="note">up to 840 × 940 px, rounded, deep-shadowed, one header row.</text>
+  <text x="520" y="380" class="note">The preview opens only for a file, a concept or an index; a</text>
+  <text x="520" y="404" class="note">tag hub and a directory have no page of their own.</text>
+
+  <rect x="96" y="532" width="888" height="50" rx="10" class="card"/>
+  <rect x="108" y="544" width="30" height="26" rx="6" class="btn" opacity="0.45"/>
+  <text x="123" y="563" class="br" text-anchor="middle" opacity="0.45">‹</text>
+  <rect x="146" y="544" width="30" height="26" rx="6" class="btn" opacity="0.45"/>
+  <text x="161" y="563" class="br" text-anchor="middle" opacity="0.45">›</text>
+  <text x="194" y="563" font-size="15" font-weight="600">Graph model</text>
+  <text x="312" y="562" font-size="12" fill="#9aa2b3">docs/model/graph-model.md</text>
+  <text x="846" y="563" font-size="15" fill="#9aa2b3">⋮</text>
+  <rect x="870" y="544" width="100" height="26" rx="6" class="btn"/>
+  <text x="920" y="562" class="br" text-anchor="middle">Close</text>
+
+  <text x="120" y="608" class="sx" text-anchor="middle">back</text>
+  <text x="164" y="608" class="sx" text-anchor="middle">forward</text>
+  <text x="300" y="608" class="sx" text-anchor="middle">title and path</text>
+  <text x="846" y="608" class="sx" text-anchor="middle">add to deck</text>
+  <text x="920" y="608" class="sx" text-anchor="middle">Close</text>
+
+  <text x="56" y="694" class="h">2 · The page</text>
+  <rect x="56" y="718" width="968" height="402" rx="16" class="panel"/>
+
+  <rect x="96" y="746" width="66" height="20" rx="10" class="chip"/>
+  <text x="129" y="760" class="sx" text-anchor="middle">Concept</text>
+  <rect x="170" y="746" width="50" height="20" rx="10" class="chip"/>
+  <text x="195" y="760" class="sx" text-anchor="middle">graph</text>
+  <rect x="228" y="746" width="52" height="20" rx="10" class="chip"/>
+  <text x="254" y="760" class="sx" text-anchor="middle">model</text>
+  <rect x="878" y="746" width="106" height="20" rx="10" class="chip"/>
+  <text x="931" y="760" class="br" text-anchor="middle" font-size="11">Show source</text>
+
+  <text x="96" y="802" font-size="20" font-weight="700">Graph model</text>
+  <line x1="96" y1="814" x2="984" y2="814" stroke="#2e3341" stroke-width="1.5"/>
+  <rect x="96" y="834" width="888" height="6" rx="3" class="tbar"/>
+  <rect x="96" y="850" width="856" height="6" rx="3" class="tbar"/>
+  <rect x="96" y="866" width="470" height="6" rx="3" class="tbar"/>
+  <rect x="578" y="866" width="110" height="6" rx="3" class="link"/>
+  <rect x="96" y="892" width="600" height="62" rx="8" class="btn"/>
+  <rect x="110" y="906" width="300" height="5" rx="2" class="codebar"/>
+  <rect x="110" y="920" width="360" height="5" rx="2" class="codebar"/>
+  <rect x="110" y="934" width="220" height="5" rx="2" class="codebar"/>
+  <line x1="98" y1="968" x2="98" y2="1000" stroke="#2e3341" stroke-width="3"/>
+  <rect x="114" y="972" width="420" height="5" rx="2" fill="#6a7488" fill-opacity="0.6"/>
+  <rect x="114" y="986" width="320" height="5" rx="2" fill="#6a7488" fill-opacity="0.6"/>
+
+  <text x="76" y="1040" class="note">The body opens with the page's frontmatter as chips, then the rendered Markdown — headings, links,</text>
+  <text x="76" y="1064" class="note">code, lists, quotes and tables — all from one bounded renderer, so pathological input shows a notice.</text>
+  <text x="76" y="1088" class="note">The Show source toggle sits at the end of the chips row on a text-based image page.</text>
+
+  <text x="56" y="1174" class="h">3 · By kind</text>
+  <rect x="56" y="1198" width="968" height="332" rx="16" class="panel"/>
+
+  <rect x="96" y="1220" width="40" height="18" rx="9" class="chip"/>
+  <text x="116" y="1233" class="sx" text-anchor="middle" font-size="10">SVG</text>
+  <rect x="284" y="1220" width="96" height="18" rx="9" class="chip"/>
+  <text x="332" y="1233" class="br" text-anchor="middle" font-size="10">Show source</text>
+  <rect x="96" y="1250" width="284" height="132" rx="8" class="canvas"/>
+  <circle cx="312" cy="1278" r="11" fill="#c9a24d" fill-opacity="0.6"/>
+  <path d="M108 1376 L196 1288 L246 1342 L280 1308 L368 1376 Z" fill="#8b93a7" fill-opacity="0.45"/>
+  <text x="238" y="1432" class="sx" text-anchor="middle">an image: whole, no scroll</text>
+
+  <rect x="400" y="1220" width="284" height="120" rx="8" class="btn"/>
+  <rect class="sp1" x="412" y="1256" width="13" height="44" rx="2"/>
+  <rect class="sp2" x="434" y="1270" width="13" height="30" rx="2"/>
+  <rect class="sp1" x="456" y="1242" width="13" height="58" rx="2"/>
+  <rect class="sp2" x="478" y="1262" width="13" height="38" rx="2"/>
+  <rect class="sp1" x="500" y="1232" width="13" height="68" rx="2"/>
+  <rect class="sp2" x="522" y="1266" width="13" height="34" rx="2"/>
+  <rect class="sp1" x="544" y="1248" width="13" height="52" rx="2"/>
+  <rect class="sp2" x="566" y="1274" width="13" height="26" rx="2"/>
+  <rect class="sp1" x="588" y="1253" width="13" height="47" rx="2"/>
+  <rect class="sp2" x="610" y="1239" width="13" height="61" rx="2"/>
+  <rect class="sp1" x="632" y="1269" width="13" height="31" rx="2"/>
+  <rect class="sp2" x="654" y="1259" width="13" height="41" rx="2"/>
+  <text x="542" y="1284" font-size="10" fill="#e7e9ee" text-anchor="middle">the words being spoken</text>
+  <circle cx="416" cy="1320" r="11" fill="none" stroke="#2e3341" stroke-width="1.5"/>
+  <circle cx="446" cy="1320" r="11" fill="none" stroke="#2e3341" stroke-width="1.5"/>
+  <text x="446" y="1324" font-size="9" fill="#e7e9ee" text-anchor="middle">▶</text>
+  <rect x="466" y="1318" width="140" height="4" rx="2" class="track"/>
+  <rect x="466" y="1318" width="64" height="4" rx="2" class="trackfill"/>
+  <text x="676" y="1324" font-size="10" fill="#e7e9ee" text-anchor="end">0:42 / 1:30</text>
+  <rect x="405" y="1204" width="24" height="100" rx="8" class="card"/>
+  <rect x="415" y="1214" width="4" height="80" rx="2" class="track"/>
+  <rect x="415" y="1254" width="4" height="40" rx="2" class="trackfill"/>
+  <text x="542" y="1432" class="sx" text-anchor="middle">an audio clip: spectrogram and transport</text>
+
+  <text x="720" y="1218" class="sec">FILE</text>
+  <line x1="718" y1="1230" x2="718" y2="1330" stroke="#2e3341" stroke-width="2"/>
+  <text x="732" y="1248" font-size="12" fill="#9aa2b3">Path</text>
+  <text x="820" y="1248" font-size="12" fill="#e7e9ee">media/talk.mp3</text>
+  <text x="732" y="1270" font-size="12" fill="#9aa2b3">Size</text>
+  <text x="820" y="1270" font-size="12" fill="#e7e9ee">1.2 MB</text>
+  <text x="732" y="1292" font-size="12" fill="#9aa2b3">Type</text>
+  <text x="820" y="1292" font-size="12" fill="#e7e9ee">audio/mpeg</text>
+  <text x="732" y="1314" font-size="12" fill="#9aa2b3">Captions</text>
+  <text x="820" y="1314" font-size="12" fill="#e7e9ee">talk.vtt · 42 cues</text>
+  <text x="844" y="1432" class="sx" text-anchor="middle">file details: a definition list</text>
+
+  <text x="76" y="1480" class="note">By kind: a concept or index renders its Markdown, a file shows its source text, and a binary has no</text>
+  <text x="76" y="1504" class="note">preview of its own, so it lists the file's details instead. One volume control serves both players.</text>
+
+  <text x="56" y="1566" class="note">The preview shows one page at a time; reading a deck reuses the same card, with its controls hidden.</text>
+</svg>

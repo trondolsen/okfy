@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1620" viewBox="0 0 1080 1620" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">The full-page view — okfy design proposal</title>
+  <desc id="d">The deck's full-page reading view. Opening a card reads the whole deck as one continuous stream, fullscreen within the browser window, with no OS fullscreen requested; the reading view is its own top layer and the rest of the interface is left untouched beneath it. The reading top bar keeps only the current page — its title and path, inside the reading column — while the history controls, the add-to-deck handle and the close button are hidden, and a small grabber pill sits at the top edge above the bar. The pages follow each other in deck order, each as a section under the shared bar, reading as a centred column about 720 pixels wide with no visible scrollbar and a hairline between one page and the next. Reading is left by pulling the top handle, or the top bar, down: the view slides down, the graph shows through behind it, and it closes once the pull passes a short distance, while a shorter pull springs back. Escape also closes, there is no click-outside close, and the handle is clear of the text so a pull is never taken for a text selection.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables, so the figure reads as the
+         tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #1b1e27; stroke: #2e3341; stroke-width: 1.5; }
+      .canvas { fill: #0e1015; stroke: #232734; stroke-width: 1.5; }
+      .tbar { fill: #2a2f3a; }
+      .ghost { fill: #2b303c; }
+      .col { fill: none; stroke: #2e3341; stroke-width: 1.5; stroke-dasharray: 5 4; }
+      .rule { stroke: #2e3341; stroke-width: 1.5; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="1620" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · DESIGN PROPOSAL</text>
+  <text x="56" y="110" class="title">The full-page view</text>
+  <text x="56" y="148" class="subtitle">Reading a whole deck as one stream, fullscreen in the window</text>
+
+  <text x="56" y="214" class="h">1 · The layer, and leaving it</text>
+  <rect x="56" y="238" width="968" height="432" rx="16" class="panel"/>
+
+  <rect x="96" y="274" width="420" height="260" rx="10" class="card"/>
+  <rect x="287" y="286" width="38" height="4" rx="2" fill="#9aa2b3" fill-opacity="0.65"/>
+  <line x1="198" y1="300" x2="198" y2="520" class="col"/>
+  <line x1="414" y1="300" x2="414" y2="520" class="col"/>
+  <rect x="212" y="306" width="86" height="9" rx="4" fill="#c9d0da"/>
+  <rect x="306" y="307" width="50" height="6" rx="3" fill="#6a7488"/>
+  <line x1="198" y1="326" x2="414" y2="326" class="rule"/>
+  <rect x="212" y="340" width="76" height="8" rx="4" fill="#9aa2b3"/>
+  <rect x="212" y="358" width="180" height="5" rx="2" class="tbar"/>
+  <rect x="212" y="370" width="168" height="5" rx="2" class="tbar"/>
+  <rect x="212" y="382" width="180" height="5" rx="2" class="tbar"/>
+  <line x1="198" y1="398" x2="414" y2="398" class="rule"/>
+  <rect x="212" y="412" width="64" height="8" rx="4" fill="#9aa2b3"/>
+  <rect x="212" y="430" width="180" height="5" rx="2" class="tbar"/>
+  <rect x="212" y="442" width="158" height="5" rx="2" class="tbar"/>
+  <rect x="212" y="454" width="140" height="5" rx="2" class="tbar"/>
+  <text x="306" y="558" class="sx" text-anchor="middle">the reading view fills the window</text>
+
+  <rect x="564" y="274" width="420" height="260" rx="10" class="canvas"/>
+  <path d="M640 300 L760 320 M760 320 L860 296" fill="none" stroke="#232734" stroke-width="2"/>
+  <circle cx="640" cy="300" r="6" class="ghost"/>
+  <circle cx="760" cy="320" r="6" class="ghost"/>
+  <circle cx="860" cy="296" r="6" class="ghost"/>
+  <rect x="564" y="274" width="420" height="60" fill="#000000" fill-opacity="0.25"/>
+  <rect x="564" y="330" width="420" height="204" class="card"/>
+  <rect x="755" y="342" width="38" height="4" rx="2" fill="#9aa2b3" fill-opacity="0.65"/>
+  <line x1="666" y1="354" x2="666" y2="520" class="col"/>
+  <line x1="882" y1="354" x2="882" y2="520" class="col"/>
+  <rect x="680" y="362" width="86" height="9" rx="4" fill="#c9d0da"/>
+  <rect x="774" y="363" width="50" height="6" rx="3" fill="#6a7488"/>
+  <line x1="666" y1="382" x2="882" y2="382" class="rule"/>
+  <rect x="680" y="392" width="76" height="8" rx="4" fill="#9aa2b3"/>
+  <rect x="680" y="410" width="180" height="5" rx="2" class="tbar"/>
+  <rect x="680" y="422" width="168" height="5" rx="2" class="tbar"/>
+  <rect x="680" y="434" width="180" height="5" rx="2" class="tbar"/>
+  <line x1="666" y1="450" x2="882" y2="450" class="rule"/>
+  <rect x="680" y="464" width="180" height="5" rx="2" class="tbar"/>
+  <rect x="680" y="476" width="158" height="5" rx="2" class="tbar"/>
+  <text x="774" y="558" class="sx" text-anchor="middle">pulling down reveals the graph</text>
+
+  <text x="76" y="590" class="note">Opening a card reads the whole deck as one stream, fullscreen within the browser window — no OS</text>
+  <text x="76" y="614" class="note">fullscreen is requested. The interface is left untouched beneath it, and the docked deck keeps its dock.</text>
+  <text x="76" y="638" class="note">Pulling the reading view down slides it clear and lets the graph show through behind the fading scrim.</text>
+
+  <text x="56" y="724" class="h">2 · The reading chrome</text>
+  <rect x="56" y="748" width="968" height="282" rx="16" class="panel"/>
+
+  <rect x="96" y="776" width="888" height="64" rx="8" class="card"/>
+  <line x1="312" y1="776" x2="312" y2="840" class="col"/>
+  <line x1="768" y1="776" x2="768" y2="840" class="col"/>
+  <text x="340" y="812" font-size="15" font-weight="600">Graph model</text>
+  <text x="442" y="811" font-size="12" fill="#9aa2b3">docs/model/graph-model.md</text>
+  <line x1="312" y1="830" x2="768" y2="830" class="rule"/>
+  <text x="96" y="864" class="sx">the top bar: the current page's title and path, inside the column</text>
+
+  <line x1="96" y1="896" x2="984" y2="896" class="rule"/>
+  <rect x="381" y="892" width="38" height="4" rx="2" fill="#9aa2b3" fill-opacity="0.65"/>
+  <rect x="681" y="892" width="38" height="4" rx="2" fill="#5b8def"/>
+  <text x="96" y="932" class="sx">the grabber pill, at the top edge</text>
+  <text x="400" y="932" class="sx" text-anchor="middle">idle</text>
+  <text x="700" y="932" class="sx" text-anchor="middle">hovered</text>
+
+  <text x="76" y="972" class="note">The bar keeps only the page being read; the history controls, the add-to-deck handle and Close are</text>
+  <text x="76" y="996" class="note">hidden, so the reading chrome is one title and path. The grabber pill is the handle for leaving.</text>
+
+  <text x="56" y="1084" class="h">3 · The stream</text>
+  <rect x="56" y="1108" width="968" height="452" rx="16" class="panel"/>
+
+  <line x1="312" y1="1136" x2="312" y2="1440" class="col"/>
+  <line x1="768" y1="1136" x2="768" y2="1440" class="col"/>
+  <text x="340" y="1170" font-size="17" font-weight="700">Graph model</text>
+  <rect x="340" y="1190" width="400" height="6" rx="3" class="tbar"/>
+  <rect x="340" y="1206" width="380" height="6" rx="3" class="tbar"/>
+  <rect x="340" y="1222" width="400" height="6" rx="3" class="tbar"/>
+  <rect x="340" y="1238" width="340" height="6" rx="3" class="tbar"/>
+  <rect x="340" y="1258" width="320" height="32" rx="6" class="card"/>
+  <line x1="312" y1="1304" x2="768" y2="1304" class="rule"/>
+  <text x="340" y="1354" font-size="17" font-weight="700">Deck of cards</text>
+  <rect x="340" y="1374" width="400" height="6" rx="3" class="tbar"/>
+  <rect x="340" y="1390" width="370" height="6" rx="3" class="tbar"/>
+  <rect x="340" y="1406" width="320" height="6" rx="3" class="tbar"/>
+
+  <text x="540" y="1472" class="sx" text-anchor="middle">the stream: one section per decked page, in deck order, in a centred column</text>
+
+  <text x="76" y="1504" class="note">Each decked page is one section under the shared top bar, with a hairline between it and the next,</text>
+  <text x="76" y="1528" class="note">and the column is about 720 px wide with no visible scrollbar. A page's title is about one and a half times the body.</text>
+
+  <text x="56" y="1604" class="note">Reading is the user's to leave: a pull down — or Escape — closes it, and the assistant's tools decline to.</text>
+</svg>

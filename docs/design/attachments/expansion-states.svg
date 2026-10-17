@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1650" viewBox="0 0 1080 1650" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">Expansion states of a directory or tag node — okfy design proposal</title>
+  <desc id="d">A directory or tag node shows its neighbours one page at a time. Its fill says whether any neighbour is drawn — hollow when none is, filled once at least one is — and a dashed accent ring hugging the node says more neighbours are still held back. On load a directory draws every child directory and index file and up to 50 concepts, holding its files back; a tag hub opens fully unless it has more than 16 neighbours, when it starts as a first page; the bundle root always opens fully. A press and hold opens the expansion dial that changes the page, and a plain click keeps the node's own action.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables and the node colours from the
+         script (directories, index files, concepts, the accent), so the figure matches the
+         tool and reads as the companion to the expansion dial figure. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .ct { font-size: 20px; font-weight: 700; fill: #e7e9ee; }
+      .body { font-size: 17px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sm { font-size: 14px; font-weight: 700; fill: #e7e9ee; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .mono { font-size: 16px; font-weight: 700; fill: #5b8def; }
+      .card { fill: #1b1e27; stroke: #2e3341; stroke-width: 2; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .chip { fill: #1b1e27; stroke: #2e3341; stroke-width: 2; }
+      .edge { fill: none; stroke: #6a7488; stroke-width: 2.5; }
+      .dirfill { fill: #8b93a7; stroke: #cfd5e2; stroke-width: 1.6; }
+      .idxfill { fill: #37b6c4; stroke: #0c2f33; stroke-width: 1.6; }
+      .confill { fill: #5b8def; stroke: #4a6fa5; stroke-width: 1.6; }
+      .hollow { fill: none; stroke: #8b93a7; stroke-width: 2.5; }
+      .dashout { fill: none; stroke: #5b8def; stroke-width: 2.5; stroke-dasharray: 6 5; }
+      .faded { fill: #232734; stroke: #3b4358; stroke-width: 1.6; }
+      .sect { fill: #1b1e27; stroke: #2e3341; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="1650" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="60" class="eyebrow">OKFY · DESIGN PROPOSAL</text>
+  <text x="56" y="118" class="title">Expansion states of a node</text>
+  <text x="56" y="156" class="subtitle">Fill says whether a neighbour is drawn; a dashed ring says more are held back</text>
+
+  <text x="56" y="226" class="h">1 · The three states</text>
+  <rect x="56" y="250" width="968" height="306" rx="16" class="panel"/>
+
+  <rect x="76" y="274" width="288" height="258" rx="14" class="card"/>
+  <text x="100" y="312" class="ct">Collapsed</text>
+  <circle cx="146" cy="412" r="15" class="hollow"/>
+  <circle cx="146" cy="412" r="20" class="dashout"/>
+  <text x="100" y="486" class="sm">0 of 5 shown</text>
+  <text x="100" y="512" class="note">hollow, nothing drawn</text>
+
+  <rect x="396" y="274" width="288" height="258" rx="14" class="card"/>
+  <text x="420" y="312" class="ct">Partly shown</text>
+  <path class="edge" d="M 466 412 L 612 352 M 466 412 L 612 382 M 466 412 L 612 412"/>
+  <circle cx="612" cy="352" r="9" class="dirfill"/>
+  <circle cx="612" cy="382" r="9" class="dirfill"/>
+  <circle cx="612" cy="412" r="9" class="dirfill"/>
+  <circle cx="612" cy="442" r="9" class="faded"/>
+  <circle cx="612" cy="472" r="9" class="faded"/>
+  <circle cx="466" cy="412" r="15" class="dirfill"/>
+  <circle cx="466" cy="412" r="20" class="dashout"/>
+  <text x="420" y="486" class="sm">3 of 5 shown</text>
+  <text x="420" y="512" class="note">filled, ring: more remain</text>
+
+  <rect x="716" y="274" width="288" height="258" rx="14" class="card"/>
+  <text x="740" y="312" class="ct">All shown</text>
+  <path class="edge" d="M 786 412 L 932 352 M 786 412 L 932 382 M 786 412 L 932 412 M 786 412 L 932 442 M 786 412 L 932 472"/>
+  <circle cx="932" cy="352" r="9" class="dirfill"/>
+  <circle cx="932" cy="382" r="9" class="dirfill"/>
+  <circle cx="932" cy="412" r="9" class="dirfill"/>
+  <circle cx="932" cy="442" r="9" class="dirfill"/>
+  <circle cx="932" cy="472" r="9" class="dirfill"/>
+  <circle cx="786" cy="412" r="15" class="dirfill"/>
+  <text x="740" y="486" class="sm">5 of 5 shown</text>
+  <text x="740" y="512" class="note">filled, no ring</text>
+
+  <text x="56" y="600" class="h">2 · What a directory draws on load</text>
+  <rect x="56" y="624" width="968" height="272" rx="16" class="panel"/>
+  <path class="edge" d="M 140 748 L 470 678 M 140 748 L 470 748 M 140 748 L 470 818 M 140 748 L 700 678 M 140 748 L 700 748 M 140 748 L 700 818"/>
+  <circle cx="470" cy="678" r="12" class="dirfill"/>
+  <text x="494" y="684" class="body">guides/</text>
+  <circle cx="470" cy="748" r="12" class="dirfill"/>
+  <text x="494" y="754" class="body">model/</text>
+  <circle cx="470" cy="818" r="12" class="dirfill"/>
+  <text x="494" y="824" class="body">security/</text>
+  <circle cx="700" cy="678" r="10" class="idxfill"/>
+  <text x="722" y="684" class="body">index.md</text>
+  <circle cx="700" cy="748" r="10" class="confill"/>
+  <text x="722" y="754" class="body">Model</text>
+  <circle cx="700" cy="818" r="10" class="confill"/>
+  <text x="722" y="824" class="body">Security</text>
+  <rect x="890" y="662" width="118" height="32" rx="8" class="faded"/>
+  <text x="949" y="683" class="sx" text-anchor="middle">logo.svg</text>
+  <rect x="890" y="732" width="118" height="32" rx="8" class="faded"/>
+  <text x="949" y="753" class="sx" text-anchor="middle">notes.txt</text>
+  <rect x="890" y="802" width="118" height="32" rx="8" class="faded"/>
+  <text x="949" y="823" class="sx" text-anchor="middle">okfy.png</text>
+  <circle cx="140" cy="748" r="18" class="dirfill"/>
+  <circle cx="140" cy="748" r="23" class="dashout"/>
+  <text x="140" y="800" class="note" text-anchor="middle">docs/</text>
+  <text x="196" y="856" class="note">Every child directory and index file, and up to 50 concepts.</text>
+  <text x="196" y="882" class="note">Its files stay held back until the dial reveals them.</text>
+
+  <text x="56" y="940" class="h">3 · A tag hub, and the bundle root</text>
+  <rect x="56" y="964" width="968" height="190" rx="16" class="panel"/>
+  <circle cx="140" cy="1030" r="18" class="dirfill"/>
+  <circle cx="140" cy="1030" r="23" class="dashout"/>
+  <text x="140" y="1072" class="note" text-anchor="middle">#guide</text>
+  <path class="edge" d="M 176 1030 H 344"/>
+  <circle cx="360" cy="1030" r="7" class="confill"/>
+  <circle cx="394" cy="1030" r="7" class="confill"/>
+  <circle cx="428" cy="1030" r="7" class="confill"/>
+  <circle cx="462" cy="1030" r="7" class="confill"/>
+  <circle cx="496" cy="1030" r="7" class="confill"/>
+  <circle cx="530" cy="1030" r="7" class="confill"/>
+  <circle cx="564" cy="1030" r="7" class="confill"/>
+  <circle cx="598" cy="1030" r="7" class="confill"/>
+  <circle cx="632" cy="1030" r="7" class="faded"/>
+  <circle cx="666" cy="1030" r="7" class="faded"/>
+  <circle cx="700" cy="1030" r="7" class="faded"/>
+  <circle cx="734" cy="1030" r="7" class="faded"/>
+  <text x="770" y="1036" class="note">8 shown of 200</text>
+  <text x="196" y="1110" class="note">A tag hub opens fully unless it has more than 16 neighbours, when it starts as a first page.</text>
+  <text x="196" y="1136" class="note">The bundle root always opens fully.</text>
+
+  <text x="56" y="1198" class="h">4 · The gesture</text>
+  <rect x="56" y="1222" width="968" height="190" rx="16" class="panel"/>
+  <circle cx="200" cy="1300" r="16" class="dirfill"/>
+  <circle cx="200" cy="1300" r="21" class="dashout"/>
+  <path d="M 200 1274 A 26 26 0 1 1 184.7 1321" fill="none" stroke="#5b8def" stroke-width="3" stroke-linecap="round"/>
+  <text x="200" y="1370" class="note" text-anchor="middle">press and hold ≈ 0.6 s</text>
+  <g transform="translate(580,1298) scale(0.42)">
+    <path class="sect" d="M -70.5 -87 A 112 112 0 0 1 70.5 -87 L 30.2 -37.3 A 48 48 0 0 0 -30.2 -37.3 Z"/>
+    <path class="sect" d="M 87 -70.5 A 112 112 0 0 1 87 70.5 L 37.3 30.2 A 48 48 0 0 0 37.3 -30.2 Z"/>
+    <path class="sect" d="M 70.5 87 A 112 112 0 0 1 -70.5 87 L -30.2 37.3 A 48 48 0 0 0 30.2 37.3 Z"/>
+    <path class="sect" d="M -87 70.5 A 112 112 0 0 1 -87 -70.5 L -37.3 -30.2 A 48 48 0 0 0 -37.3 30.2 Z"/>
+    <circle cx="-16" cy="0" r="26" fill="none" stroke="#5b8def" stroke-width="7"/>
+    <circle cx="0" cy="-80" r="10" fill="#5b8def"/>
+    <circle cx="80" cy="0" r="10" fill="#3b4358"/>
+    <circle cx="0" cy="80" r="10" fill="#3b4358"/>
+    <circle cx="-80" cy="0" r="10" fill="#3b4358"/>
+  </g>
+  <text x="580" y="1370" class="note" text-anchor="middle">the dial opens</text>
+  <text x="790" y="1284" class="body">The dial changes the page.</text>
+  <text x="790" y="1316" class="note">A plain click keeps the node's own</text>
+  <text x="790" y="1342" class="note">action: open a page, enter a</text>
+  <text x="790" y="1368" class="note">directory, toggle a tag.</text>
+
+  <text x="56" y="1452" class="h">Knobs</text>
+  <rect x="56" y="1476" width="300" height="54" rx="12" class="chip"/>
+  <text x="206" y="1510" class="mono" text-anchor="middle">EXPAND_PAGE = 8</text>
+  <rect x="372" y="1476" width="300" height="54" rx="12" class="chip"/>
+  <text x="522" y="1510" class="mono" text-anchor="middle">DEFAULT_CONCEPTS = 50</text>
+  <rect x="688" y="1476" width="336" height="54" rx="12" class="chip"/>
+  <text x="856" y="1510" class="mono" text-anchor="middle">AUTO_EXPAND_MAX = 16</text>
+
+  <circle cx="76" cy="1560" r="10" class="dirfill"/>
+  <text x="96" y="1567" class="note">drawn</text>
+  <circle cx="280" cy="1560" r="10" class="faded"/>
+  <text x="300" y="1567" class="note">held back</text>
+  <circle cx="500" cy="1560" r="10" class="hollow"/>
+  <circle cx="500" cy="1560" r="14" class="dashout"/>
+  <text x="524" y="1567" class="note">none drawn yet</text>
+  <circle cx="760" cy="1560" r="10" class="dirfill"/>
+  <circle cx="760" cy="1560" r="14" class="dashout"/>
+  <text x="784" y="1567" class="note">more remain</text>
+
+  <text x="56" y="1604" class="note">The dashed ring hugs the node, and both cues use the node's kind colour.</text>
+  <text x="56" y="1630" class="note">A held-back neighbour is not drawn in the tool; it is shown faded here only so the count is visible.</text>
+</svg>

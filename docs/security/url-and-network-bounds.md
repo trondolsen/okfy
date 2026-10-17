@@ -17,7 +17,7 @@ sources:
 
 # Rules
 
-Every URL the tool loads passes through the same checks before any request is made:[^source][^review]
+Every URL the tool loads passes through the same checks before any request is made:[^source][^review] See the [URL and network bounds explainer](attachments/url-and-network-bounds.svg) for the verdicts on a URL, the four properties of a request, and what the fence lets through.
 
 - **Same origin only.** The URL's origin must equal the page's origin, and the scheme must be `http:` or `https:`.
 - **Inside the bundle root.** The URL path must start with the root path, which must end in `/`; neither the root nor the URL may carry a username, password, query or fragment.

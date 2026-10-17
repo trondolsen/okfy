@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2360" viewBox="0 0 1080 2360" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">Input handling — okfy security explainer</title>
+  <desc id="d">What enters the tool and the rules every input passes through. Five things enter: the URL's query string, which carries the start file and the depth; the served bundle, which carries Markdown bodies, frontmatter, link destinations and caption tracks; local files from a picked or dropped folder; the preview's own reads of images, audio, video and PDF metadata; and the state kept in this browser, such as the volume, the language and the assistant's settings. Nothing is trusted. The URL's query is checked against the page's own origin and the bundle root before it is used, and a bad value falls back to the default. Bundle paths are normalized, resolved and then validated twice: a destination is decoded exactly once and its encoded separators are refused before the decode, so an encoded separator can never become one; it may not carry a scheme, a backslash, a control character, a query or a fragment; joining it against the file's own directory and each ancestor never climbs above the root; a path is capped at 2048 characters and 24 segments and a dot-directory is skipped; and the resolved URL is re-checked for the same origin, no credentials and a path under the root, then checked a third time on the response's own URL, so a redirect out of the root is refused rather than followed. Alternative candidate paths are tried on a 404 only. Every read is bounded as it streams, before it is buffered: a file is capped at 512 kibibytes, a bundle at 8000 files and 128 mebibytes, the graph at 32 000 nodes and 80 000 links, references at 256 per file, tags at 64, images at eight mebibytes each and sixteen in total, and the renderer has its own input, output, depth and search-work budget; a response's content-length is checked before the body is read and an unused body is cancelled. Untrusted text is escaped where it is written and never re-parsed: text goes through esc for the ampersand, the angle brackets and the double quote; an attribute value goes through markdownAttr, which escapes the single quote too; a link target must be http, https or mailto with no credentials and no control characters, or only its label is written; an image is written with no source and the source is set later through the DOM from a validated blob URL; and raw HTML is never rendered, so an image tag in a bundle is shown as the words a reader sees. Because nothing generated is ever substituted into an attribute, a forged fragment cannot close a quote and become an attribute of its own. The policy is a second line of defence: script-src-attr none means no inline event handler can be created however the markup is built; default-src none means every kind of load must be named, so a new one fails closed; object, base and form actions are off; images come only from the page's own origin, a blob URL or the inline favicon; and connections are limited to the page itself and the assistant's endpoints, which is the documented exception.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables, so the figure reads as the
+         tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .t12 { font-size: 12px; font-weight: 700; fill: #e7e9ee; }
+      .s11 { font-size: 11px; fill: #9aa2b3; }
+      .ct { font-size: 12px; font-weight: 700; fill: #e7e9ee; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .bx { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .edge { stroke: #5b8def; stroke-width: 2; fill: none; }
+      .edge-d { stroke: #5b8def; stroke-width: 2; fill: none; stroke-dasharray: 5 4; opacity: 0.6; }
+      .arrow { stroke: #9aa2b3; stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="2360" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · SECURITY EXPLAINER</text>
+  <text x="56" y="110" class="title">Input handling</text>
+  <text x="56" y="148" class="subtitle">Nothing the tool reads is trusted: every input is checked before it is used</text>
+
+  <text x="56" y="214" class="h">1 · What enters</text>
+  <rect x="56" y="238" width="968" height="350" rx="16" class="panel"/>
+
+  <text x="76" y="282" class="lab">Five inputs, and the boundary each one is checked at</text>
+
+  <line x1="418" y1="300" x2="418" y2="490" class="edge-d"/>
+
+  <rect x="96" y="310" width="294" height="38" rx="8" class="bx"/>
+  <text x="110" y="328" class="t12">the URL's query</text>
+  <text x="110" y="343" class="s11">?start, ?depth</text>
+  <line x1="392" y1="329" x2="404" y2="329" class="edge"/>
+  <path d="M 412 329 L 402 324.5 L 402 333.5 Z" fill="#5b8def"/>
+
+  <rect x="96" y="360" width="294" height="38" rx="8" class="bx"/>
+  <text x="110" y="378" class="t12">the served bundle</text>
+  <text x="110" y="393" class="s11">Markdown, frontmatter, .vtt</text>
+  <line x1="392" y1="379" x2="404" y2="379" class="edge"/>
+  <path d="M 412 379 L 402 374.5 L 402 383.5 Z" fill="#5b8def"/>
+
+  <rect x="96" y="410" width="294" height="38" rx="8" class="bx"/>
+  <text x="110" y="428" class="t12">local files</text>
+  <text x="110" y="443" class="s11">a picked or dropped folder</text>
+  <line x1="392" y1="429" x2="404" y2="429" class="edge"/>
+  <path d="M 412 429 L 402 424.5 L 402 433.5 Z" fill="#5b8def"/>
+
+  <rect x="96" y="460" width="294" height="38" rx="8" class="bx"/>
+  <text x="110" y="478" class="t12">the preview's reads</text>
+  <text x="110" y="493" class="s11">images, audio, video, PDF metadata</text>
+  <line x1="392" y1="479" x2="404" y2="479" class="edge"/>
+  <path d="M 412 479 L 402 474.5 L 402 483.5 Z" fill="#5b8def"/>
+
+  <text x="450" y="332" class="sx">checked against the page's own origin and the bundle root</text>
+  <text x="450" y="348" class="sx">before use; a bad value falls back to the default</text>
+  <text x="450" y="382" class="sx">paths normalized and re-checked after every resolution;</text>
+  <text x="450" y="398" class="sx">the text rendered with escaping at the sink</text>
+  <text x="450" y="432" class="sx">read bounded from the File objects; media plays only</text>
+  <text x="450" y="448" class="sx">from a blob URL of its own bytes</text>
+  <text x="450" y="482" class="sx">read bounded and validated before use: an image only</text>
+  <text x="450" y="498" class="sx">from a blob URL, a caption only as plain words</text>
+
+  <text x="76" y="534" class="note">Nothing the tool reads is trusted, and nothing is fetched from a URL it was handed: every request is re-checked</text>
+  <text x="76" y="558" class="note">against the bundle root, and only the page's own origin and the bundle folder are ever reached.</text>
+
+  <text x="56" y="642" class="h">2 · Paths and URLs</text>
+  <rect x="56" y="666" width="968" height="400" rx="16" class="panel"/>
+
+  <text x="76" y="700" class="lab">A destination is normalized, resolved, and then validated twice</text>
+
+  <rect x="96" y="716" width="210" height="84" rx="10" class="card"/>
+  <text x="201" y="742" class="ct" text-anchor="middle">normalize</text>
+  <text x="201" y="764" class="sx" text-anchor="middle">decode once, drop # and ?</text>
+  <text x="201" y="782" class="sx" text-anchor="middle">refuse %2f, %5c and %25</text>
+  <line x1="306" y1="758" x2="320" y2="758" class="arrow"/>
+  <path d="M 330 758 L 320 753.5 L 320 762.5 Z" fill="#9aa2b3"/>
+
+  <rect x="334" y="716" width="210" height="84" rx="10" class="card"/>
+  <text x="439" y="742" class="ct" text-anchor="middle">resolve</text>
+  <text x="439" y="764" class="sx" text-anchor="middle">join at the file's directory</text>
+  <text x="439" y="782" class="sx" text-anchor="middle">never above the root</text>
+  <line x1="544" y1="758" x2="558" y2="758" class="arrow"/>
+  <path d="M 568 758 L 558 753.5 L 558 762.5 Z" fill="#9aa2b3"/>
+
+  <rect x="572" y="716" width="210" height="84" rx="10" class="card"/>
+  <text x="677" y="742" class="ct" text-anchor="middle">validate the path</text>
+  <text x="677" y="764" class="sx" text-anchor="middle">1–2048 chars, ≤ 24 segments</text>
+  <text x="677" y="782" class="sx" text-anchor="middle">no scheme, no dot-directory</text>
+  <line x1="782" y1="758" x2="796" y2="758" class="arrow"/>
+  <path d="M 806 758 L 796 753.5 L 796 762.5 Z" fill="#9aa2b3"/>
+
+  <rect x="810" y="716" width="210" height="84" rx="10" class="card"/>
+  <text x="915" y="742" class="ct" text-anchor="middle">validate the URL</text>
+  <text x="915" y="764" class="sx" text-anchor="middle">same origin, no credentials</text>
+  <text x="915" y="782" class="sx" text-anchor="middle">no query, under the root</text>
+
+  <text x="76" y="830" class="sx">Decoded exactly once: %2f, %5c and %25 are refused before the decode, so an encoded separator can never become</text>
+  <text x="76" y="854" class="sx">one, and a destination may not carry a scheme, a backslash, a control character, a query or a fragment.</text>
+  <text x="76" y="886" class="sx">A path is capped at 2048 characters and 24 segments, and a dot-directory is skipped, so nothing hidden is crawled.</text>
+  <text x="76" y="918" class="sx">The resolved URL is checked again — same origin, no credentials, the path under the root — and checked a third time</text>
+  <text x="76" y="942" class="sx">on the response's own URL, so a redirect out of the root is refused rather than followed.</text>
+
+  <text x="76" y="1004" class="note">Alternative candidate paths are tried on a 404 only, never on another failure, so a miss cannot be turned into a</text>
+  <text x="76" y="1028" class="note">request somewhere else.</text>
+
+  <text x="56" y="1120" class="h">3 · Bounded before buffered</text>
+  <rect x="56" y="1144" width="968" height="320" rx="16" class="panel"/>
+
+  <text x="76" y="1180" class="lab">Every read is bounded as it streams, before it is buffered</text>
+
+  <text x="100" y="1220" class="br">one file</text>
+  <text x="300" y="1220" class="sx">512 KiB of text; at the bound the read stops and the rest is cancelled</text>
+
+  <text x="100" y="1250" class="br">one bundle</text>
+  <text x="300" y="1250" class="sx">8000 files and 128 MiB of text</text>
+
+  <text x="100" y="1280" class="br">the graph</text>
+  <text x="300" y="1280" class="sx">32 000 nodes and 80 000 links</text>
+
+  <text x="100" y="1310" class="br">references and tags</text>
+  <text x="300" y="1310" class="sx">256 references per file; 64 tags of 256 characters and 16 segments</text>
+
+  <text x="100" y="1340" class="br">images</text>
+  <text x="300" y="1340" class="sx">8 MiB each, 16 MiB in total, 64 per preview</text>
+
+  <text x="100" y="1370" class="br">the renderer</text>
+  <text x="300" y="1370" class="sx">512 KiB in, 2 MiB out, 24 levels deep, 32× the input in search work</text>
+
+  <text x="76" y="1420" class="note">A response's content-length is checked before the body is read, and a body that is never used is cancelled.</text>
+
+  <text x="56" y="1518" class="h">4 · Escaped at the sink</text>
+  <rect x="56" y="1542" width="968" height="340" rx="16" class="panel"/>
+
+  <text x="76" y="1578" class="lab">Untrusted text is escaped where it is written, never re-parsed</text>
+
+  <text x="100" y="1620" class="br">text</text>
+  <text x="320" y="1620" class="sx">escaped for text: &amp; &lt; &gt; and the double quote</text>
+
+  <text x="100" y="1654" class="br">an attribute value</text>
+  <text x="320" y="1654" class="sx">escaped for an attribute: the single quote too</text>
+
+  <text x="100" y="1688" class="br">a link target</text>
+  <text x="320" y="1688" class="sx">http, https or mailto only, with no credentials and no control characters</text>
+
+  <text x="100" y="1722" class="br">an image</text>
+  <text x="320" y="1722" class="sx">written with no source; the source is set later from a validated blob URL</text>
+
+  <text x="100" y="1756" class="br">raw HTML in a bundle</text>
+  <text x="320" y="1756" class="sx">never rendered: it is shown as the words a reader sees</text>
+
+  <text x="76" y="1800" class="note">Nothing generated is ever substituted into an attribute, so a forged fragment cannot close a quote and become an</text>
+  <text x="76" y="1824" class="note">attribute of its own — the failure the review's finding A1 describes.</text>
+
+  <text x="56" y="1936" class="h">5 · The policy backstop</text>
+  <rect x="56" y="1960" width="968" height="280" rx="16" class="panel"/>
+
+  <text x="76" y="1996" class="lab">The Content-Security-Policy the page runs under</text>
+
+  <text x="100" y="2036" class="mono">script-src-attr 'none'</text>
+  <text x="400" y="2036" class="sx">no inline event handler can be created, however the markup is built</text>
+
+  <text x="100" y="2066" class="mono">default-src 'none'</text>
+  <text x="400" y="2066" class="sx">every kind of load must be named, so a new one fails closed</text>
+
+  <text x="100" y="2096" class="mono">object-src 'none'</text>
+  <text x="400" y="2096" class="sx">no plugin and no embedded document</text>
+
+  <text x="100" y="2126" class="mono">base-uri 'none' · form-action 'none'</text>
+  <text x="400" y="2126" class="sx">a bundle cannot re-point relative URLs or post a form anywhere</text>
+
+  <text x="100" y="2156" class="mono">img-src 'self' blob: data:</text>
+  <text x="400" y="2156" class="sx">images only from the page's own origin, a blob URL or the inline favicon</text>
+
+  <text x="100" y="2186" class="mono">connect-src 'self' https: wss: …</text>
+  <text x="400" y="2186" class="sx">the page itself and the assistant's endpoints — the documented exception</text>
+
+  <text x="56" y="2280" class="note">The rules hold together as one idea: never trust the shape of an input, validate the value that will actually be</text>
+  <text x="56" y="2304" class="note">used rather than the text that produced it, and escape at the sink where that value is written.</text>
+</svg>

@@ -21,7 +21,7 @@ The tool must show a concept's Markdown without a library and without letting a 
 
 # Approach
 
-The renderer parses raw syntax and writes escaped text to the correct context, rather than building an HTML string and re-parsing it. Each inline writer escapes text and attribute values at the sink, so generated HTML is never substituted into attributes and cannot create event handlers.[^review]
+The renderer parses raw syntax and writes escaped text to the correct context, rather than building an HTML string and re-parsing it. Each inline writer escapes text and attribute values at the sink, so generated HTML is never substituted into attributes and cannot create event handlers.[^review] See the [Markdown preview explainer](attachments/markdown-preview.svg) for the pass, the inline tokens, the escaping and the one budget.[^source]
 
 # What it supports
 

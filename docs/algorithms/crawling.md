@@ -21,6 +21,8 @@ Given one entry file, find the set of concept files reachable through Markdown l
 
 # Steps
 
+See the [crawling explainer](attachments/crawling.svg) for the entry, the queue with its alternatives, the per-item steps and the bounds.[^source]
+
 1. Put the **start file**, `index.md` by default, in a queue at depth 0.[^source]
 2. Take the next URL, decode it to a bundle-relative path, and reject it unless it is a valid bundle path and a Markdown file (the crawl loads only Markdown).
 3. Fetch the file within the byte budget. A `404` triggers a **fallback**: try the next candidate path for the same link.

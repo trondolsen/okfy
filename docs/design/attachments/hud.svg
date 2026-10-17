@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1560" viewBox="0 0 1080 1560" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">The heads-up bar — okfy design proposal</title>
+  <desc id="d">The viewer's floating toolbar. It is one fixed, transparent layer across the top of the window that never takes the pointer, so a press landing between its groups still reaches the graph underneath; only the groups handle a press. Each group is a translucent pill — the panel colour behind a blur — and holds related controls: the title with the file stats, the file actions, the view and toggle actions, and the directory navigation. The load spinner is its own pill at the far right and takes no pointer either. On desktop the bar's right edge and the spinner pull in past an open panel so the bar never sits under it; under 760px the bar becomes a column, with the hamburger and the title on the top line, the directory navigation next, and the other groups hidden until the hamburger is pressed.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables and the node colours from
+         the script, so the figure reads as the tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .dim { font-size: 13px; fill: #676b75; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .canvas { fill: #0e1015; stroke: #232734; stroke-width: 1.5; }
+      .group { fill: #1b1e27; fill-opacity: .92; stroke: #2e3341; stroke-width: 1.5; }
+      .groupdot { fill: #1b1e27; fill-opacity: .92; stroke: #2e3341; stroke-width: 1.5; stroke-dasharray: 5 4; }
+      .grouphot { fill: #1b1e27; fill-opacity: .92; stroke: #5b8def; stroke-width: 2; }
+      .btn { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .layer { fill: none; stroke: #2e3341; stroke-width: 1.5; stroke-dasharray: 6 5; }
+      .link { fill: none; stroke: #2e3341; stroke-width: 2; }
+      .ghost { fill: #2b303c; }
+      .brandletter text { fill: #ffffff; }
+    </style>
+    <g id="brand">
+      <path d="M60.5 37 L99.5 43 M99.5 43 L140.5 37 M140.5 37 L179.5 43" fill="none" stroke="#6a7488" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="60.5" cy="37" r="16" fill="#8b93a7"/>
+      <circle cx="99.5" cy="43" r="16" fill="#5b8def"/>
+      <circle cx="140.5" cy="37" r="16" fill="#c9a24d"/>
+      <circle cx="179.5" cy="43" r="16" fill="#a274d6"/>
+      <g class="brandletter" font-weight="800" font-size="20" text-anchor="middle">
+        <text x="60.5" y="44">o</text>
+        <text x="99.5" y="50">k</text>
+        <text x="140.5" y="44">f</text>
+        <text x="179.5" y="50">y</text>
+      </g>
+    </g>
+    <g id="cur">
+      <path d="M0 0 L0 15 L4.2 11.2 L7 17 L9.6 15.9 L6.8 10.2 L11.6 10.2 Z" fill="#e7e9ee" stroke="#0e1015" stroke-width="1.2" stroke-linejoin="round"/>
+    </g>
+  </defs>
+
+  <rect width="1080" height="1560" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · DESIGN PROPOSAL</text>
+  <text x="56" y="110" class="title">The heads-up bar</text>
+  <text x="56" y="148" class="subtitle">A transparent layer over the graph; only its groups take a press</text>
+
+  <text x="56" y="214" class="h">1 · The layer</text>
+  <rect x="56" y="238" width="968" height="342" rx="16" class="panel"/>
+
+  <rect x="96" y="274" width="888" height="170" rx="10" class="canvas"/>
+  <rect x="112" y="290" width="860" height="68" rx="10" class="layer"/>
+
+  <rect x="124" y="302" width="226" height="44" rx="10" class="grouphot"/>
+  <use href="#brand" transform="translate(118.6,304.9) scale(0.48)"/>
+  <text x="220" y="328" class="sx">▾</text>
+  <text x="236" y="328" class="sx">3 files · 2 links</text>
+
+  <rect x="370" y="302" width="160" height="44" rx="10" class="group"/>
+  <rect x="380" y="312" width="76" height="24" rx="6" class="btn"/>
+  <text x="418" y="328" class="br" text-anchor="middle">Open…</text>
+  <rect x="464" y="312" width="56" height="24" rx="6" class="btn"/>
+  <text x="492" y="328" class="br" text-anchor="middle">Reload</text>
+
+  <rect x="550" y="302" width="140" height="44" rx="10" class="group"/>
+  <rect x="560" y="312" width="54" height="24" rx="6" class="btn"/>
+  <text x="587" y="328" class="br" text-anchor="middle">View</text>
+  <rect x="622" y="312" width="56" height="24" rx="6" class="btn"/>
+  <text x="650" y="328" class="br" text-anchor="middle">Labels</text>
+
+  <rect x="882" y="302" width="90" height="44" rx="10" class="groupdot"/>
+  <circle cx="902" cy="324" r="6" fill="none" stroke="#2e3341" stroke-width="2"/>
+  <path d="M902 318 A6 6 0 0 1 908 324" fill="none" stroke="#5b8def" stroke-width="2" stroke-linecap="round"/>
+  <text x="920" y="329" class="sx">7</text>
+  <text x="927" y="374" class="sx" text-anchor="middle">the load spinner</text>
+
+  <use href="#cur" transform="translate(534,312)"/>
+  <path d="M540 348 L540 388" fill="none" stroke="#5b8def" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M534 386 L540 396 L546 386 Z" fill="#5b8def"/>
+
+  <path class="link" d="M418 408 H529"/>
+  <path class="link" d="M551 408 H662"/>
+  <circle cx="410" cy="408" r="8" class="ghost"/>
+  <circle cx="670" cy="408" r="8" class="ghost"/>
+  <circle cx="540" cy="408" r="11" fill="#8b93a7"/>
+  <text x="540" y="436" class="sx" text-anchor="middle">docs/</text>
+
+  <text x="237" y="468" class="sx" text-anchor="middle">a press on a group is handled there</text>
+  <text x="720" y="468" class="sx" text-anchor="middle">a press in a gap falls through to the graph</text>
+
+  <text x="76" y="504" class="note">The bar is one transparent layer: it never takes the pointer, so a press between the groups still falls through.</text>
+  <text x="76" y="528" class="note">A group is a pill — the panel colour at 92 % behind a blur — and is the only part that handles a press.</text>
+
+  <text x="56" y="634" class="h">2 · The groups</text>
+  <rect x="56" y="658" width="968" height="400" rx="16" class="panel"/>
+
+  <text x="96" y="705" class="lab">title and stats</text>
+  <rect x="300" y="678" width="240" height="44" rx="10" class="group"/>
+  <use href="#brand" transform="translate(294.6,680.9) scale(0.48)"/>
+  <text x="396" y="705" class="sx">▾</text>
+  <text x="412" y="705" class="sx">3 files · 2 links</text>
+
+  <text x="96" y="763" class="lab">file actions</text>
+  <rect x="300" y="736" width="210" height="44" rx="10" class="group"/>
+  <rect x="314" y="744" width="96" height="28" rx="8" class="btn"/>
+  <text x="362" y="763" class="br" text-anchor="middle">Open folder…</text>
+  <rect x="420" y="744" width="76" height="28" rx="8" class="btn"/>
+  <text x="458" y="763" class="br" text-anchor="middle">Reload</text>
+
+  <text x="96" y="821" class="lab">view and toggles</text>
+  <rect x="300" y="794" width="340" height="44" rx="10" class="group"/>
+  <rect x="314" y="802" width="86" height="28" rx="8" class="btn"/>
+  <text x="357" y="821" class="br" text-anchor="middle">Reset view</text>
+  <rect x="410" y="802" width="92" height="28" rx="8" class="btn"/>
+  <text x="456" y="821" class="br" text-anchor="middle">Reset layout</text>
+  <rect x="512" y="802" width="56" height="28" rx="8" class="btn"/>
+  <text x="540" y="821" class="br" text-anchor="middle">Labels</text>
+  <rect x="578" y="802" width="50" height="28" rx="8" class="btn"/>
+  <text x="603" y="821" class="dim" text-anchor="middle">Tags</text>
+
+  <text x="96" y="879" class="lab">directory navigation</text>
+  <rect x="300" y="852" width="260" height="44" rx="10" class="group"/>
+  <rect x="314" y="860" width="54" height="28" rx="8" class="btn"/>
+  <text x="341" y="879" class="br" text-anchor="middle">Top</text>
+  <rect x="378" y="860" width="32" height="28" rx="8" class="btn"/>
+  <text x="394" y="879" class="br" text-anchor="middle">‹</text>
+  <rect x="420" y="860" width="32" height="28" rx="8" class="btn"/>
+  <text x="436" y="879" class="br" text-anchor="middle">›</text>
+  <text x="464" y="879" class="sx">/</text>
+
+  <text x="96" y="937" class="lab">the load spinner</text>
+  <rect x="300" y="910" width="120" height="44" rx="10" class="groupdot"/>
+  <circle cx="326" cy="932" r="6" fill="none" stroke="#2e3341" stroke-width="2"/>
+  <path d="M326 926 A6 6 0 0 1 332 932" fill="none" stroke="#5b8def" stroke-width="2" stroke-linecap="round"/>
+  <text x="344" y="937" class="sx">7</text>
+
+  <text x="76" y="990" class="note">Groups hold related controls; hovering a control promotes only its border to the accent, and a toggle dims only its label.</text>
+  <text x="76" y="1014" class="note">The spinner is its own pill at the far right and takes no pointer, so it never blocks a press on the graph behind it.</text>
+
+  <text x="56" y="1112" class="h">3 · Placement</text>
+  <rect x="56" y="1136" width="968" height="344" rx="16" class="panel"/>
+
+  <text x="96" y="1172" class="lab">Desktop: clear of the panels</text>
+  <rect x="96" y="1196" width="440" height="164" rx="10" class="canvas"/>
+  <rect x="452" y="1206" width="76" height="144" rx="8" class="group"/>
+  <text x="490" y="1284" class="sx" text-anchor="middle">panel</text>
+  <rect x="108" y="1210" width="332" height="44" rx="10" class="layer"/>
+  <rect x="118" y="1210" width="120" height="44" rx="10" class="group"/>
+  <rect x="126" y="1220" width="48" height="24" rx="6" class="btn"/>
+  <rect x="180" y="1220" width="48" height="24" rx="6" class="btn"/>
+  <rect x="248" y="1210" width="90" height="44" rx="10" class="group"/>
+  <rect x="256" y="1220" width="36" height="24" rx="6" class="btn"/>
+  <rect x="298" y="1220" width="32" height="24" rx="6" class="btn"/>
+  <rect x="360" y="1210" width="80" height="44" rx="10" class="groupdot"/>
+  <circle cx="380" cy="1232" r="5" fill="none" stroke="#2e3341" stroke-width="2"/>
+  <path d="M380 1227 A5 5 0 0 1 385 1232" fill="none" stroke="#5b8def" stroke-width="2" stroke-linecap="round"/>
+  <text x="396" y="1236" class="sx">7</text>
+  <text x="316" y="1386" class="sx" text-anchor="middle">the bar and the spinner stop short of an open panel</text>
+
+  <text x="600" y="1172" class="lab">Small screens: a column behind ☰</text>
+  <rect x="600" y="1196" width="360" height="164" rx="10" class="canvas"/>
+  <rect x="612" y="1204" width="30" height="30" rx="8" class="btn"/>
+  <text x="627" y="1226" class="br" text-anchor="middle">☰</text>
+  <rect x="650" y="1202" width="170" height="34" rx="9" class="group"/>
+  <use href="#brand" transform="translate(646.3,1206.2) scale(0.397)"/>
+  <text x="734" y="1224" class="sx">▾</text>
+  <rect x="612" y="1248" width="220" height="38" rx="9" class="group"/>
+  <rect x="622" y="1254" width="58" height="26" rx="6" class="btn"/>
+  <text x="651" y="1272" class="br" text-anchor="middle">Top</text>
+  <rect x="688" y="1254" width="34" height="26" rx="6" class="btn"/>
+  <text x="705" y="1272" class="br" text-anchor="middle">‹</text>
+  <rect x="730" y="1254" width="34" height="26" rx="6" class="btn"/>
+  <text x="747" y="1272" class="br" text-anchor="middle">›</text>
+  <text x="776" y="1272" class="sx">/</text>
+  <rect x="612" y="1294" width="220" height="42" rx="9" class="groupdot"/>
+  <text x="722" y="1321" class="dim" text-anchor="middle">the other groups</text>
+  <text x="780" y="1386" class="sx" text-anchor="middle">☰ with the title, the directory nav, then the rest hidden</text>
+
+  <text x="76" y="1418" class="note">On desktop the bar's right edge and the spinner pull in past an open panel, so the bar never sits under it.</text>
+  <text x="76" y="1442" class="note">Under 760px the bar becomes a column, with the directory nav leading and the other groups hidden behind ☰.</text>
+
+  <text x="56" y="1524" class="note">The heads-up bar floats over the graph and never blocks it; only its groups take the pointer.</text>
+</svg>

@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1400" viewBox="0 0 1080 1400" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">Media file kinds — okfy design proposal</title>
+  <desc id="d">Media means the audio and video file kinds. The kind is decided by the extension: audio (mp3, m4a, aac, wav, ogg, oga, opus, flac, weba, aif, aiff), video (mp4, m4v, webm, ogv, mov, mkv), and the WebVTT captions track that sits beside a clip. Each is a file node, drawn in the graph and never read into it; its bytes are read only when the preview opens, within a byte bound. Audio plays through the Web Audio graph, so it draws the same rolling mel spectrogram the assistant's speech bubbles use, with the transport laid over its foot. Video plays in a plain media element with the browser's own controls. Both carry one volume control — a speaker button with a vertical slider above it — shared between the two players and remembered across reloads, and a drag on the seek bar scrubs. A sibling WebVTT track gives captions over the clip and is a page of its own, opening as a transcript of time and words through the same document renderer. A clip too large to read shows a notice naming its size, the limit it is read under and the way out.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables and the node colours from
+         the script, so the figure reads as the tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .ct { font-size: 9px; fill: #9aa2b3; }
+      .sec { font-size: 10px; letter-spacing: 1.2px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #1b1e27; stroke: #2e3341; stroke-width: 1.5; }
+      .chip { fill: none; stroke: #2e3341; stroke-width: 1.5; }
+      .btn { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .tbar { fill: #2a2f3a; }
+      .sp1 { fill: #5b8def; fill-opacity: .55; }
+      .sp2 { fill: #5b8def; fill-opacity: .3; }
+      .track { fill: #3d4354; }
+      .trackfill { fill: #5b8def; }
+    </style>
+    <g id="spk">
+      <path d="M4 9v6h4l5 4V5L8 9H4Z" stroke-width="1.4" stroke-linejoin="round"/>
+      <path d="M16.4 9.2a4.2 4.2 0 0 1 0 5.6" fill="none" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+  </defs>
+
+  <rect width="1080" height="1400" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · DESIGN PROPOSAL</text>
+  <text x="56" y="110" class="title">Media file kinds</text>
+  <text x="56" y="148" class="subtitle">How an audio or video file becomes a file node, and how its page is shown</text>
+
+  <text x="56" y="214" class="h">1 · The kinds</text>
+  <rect x="56" y="238" width="968" height="240" rx="16" class="panel"/>
+
+  <text x="96" y="283" class="lab">audio</text>
+  <rect x="300" y="268" width="32" height="20" rx="10" class="chip"/><text x="316" y="281" class="ct" text-anchor="middle">MP3</text>
+  <rect x="337" y="268" width="32" height="20" rx="10" class="chip"/><text x="353" y="281" class="ct" text-anchor="middle">M4A</text>
+  <rect x="374" y="268" width="32" height="20" rx="10" class="chip"/><text x="390" y="281" class="ct" text-anchor="middle">AAC</text>
+  <rect x="411" y="268" width="32" height="20" rx="10" class="chip"/><text x="427" y="281" class="ct" text-anchor="middle">WAV</text>
+  <rect x="448" y="268" width="32" height="20" rx="10" class="chip"/><text x="464" y="281" class="ct" text-anchor="middle">OGG</text>
+  <rect x="485" y="268" width="32" height="20" rx="10" class="chip"/><text x="501" y="281" class="ct" text-anchor="middle">OGA</text>
+  <rect x="522" y="268" width="38" height="20" rx="10" class="chip"/><text x="541" y="281" class="ct" text-anchor="middle">OPUS</text>
+  <rect x="565" y="268" width="38" height="20" rx="10" class="chip"/><text x="584" y="281" class="ct" text-anchor="middle">FLAC</text>
+  <rect x="608" y="268" width="38" height="20" rx="10" class="chip"/><text x="627" y="281" class="ct" text-anchor="middle">WEBA</text>
+  <rect x="651" y="268" width="32" height="20" rx="10" class="chip"/><text x="667" y="281" class="ct" text-anchor="middle">AIF</text>
+  <rect x="688" y="268" width="38" height="20" rx="10" class="chip"/><text x="707" y="281" class="ct" text-anchor="middle">AIFF</text>
+
+  <text x="96" y="329" class="lab">video</text>
+  <rect x="300" y="314" width="32" height="20" rx="10" class="chip"/><text x="316" y="327" class="ct" text-anchor="middle">MP4</text>
+  <rect x="337" y="314" width="32" height="20" rx="10" class="chip"/><text x="353" y="327" class="ct" text-anchor="middle">M4V</text>
+  <rect x="374" y="314" width="38" height="20" rx="10" class="chip"/><text x="393" y="327" class="ct" text-anchor="middle">WEBM</text>
+  <rect x="417" y="314" width="32" height="20" rx="10" class="chip"/><text x="433" y="327" class="ct" text-anchor="middle">OGV</text>
+  <rect x="454" y="314" width="32" height="20" rx="10" class="chip"/><text x="470" y="327" class="ct" text-anchor="middle">MOV</text>
+  <rect x="491" y="314" width="32" height="20" rx="10" class="chip"/><text x="507" y="327" class="ct" text-anchor="middle">MKV</text>
+
+  <text x="96" y="375" class="lab">captions</text>
+  <rect x="300" y="360" width="32" height="20" rx="10" class="chip"/><text x="316" y="373" class="ct" text-anchor="middle">VTT</text>
+
+  <text x="76" y="420" class="note">Every media file is a file node: drawn in the graph, never read into it, and read only when its preview</text>
+  <text x="76" y="444" class="note">opens, within a byte bound — an audio or video clip, or the captions track beside it.</text>
+
+  <text x="56" y="532" class="h">2 · Audio and video</text>
+  <rect x="56" y="556" width="968" height="416" rx="16" class="panel"/>
+
+  <rect x="96" y="584" width="38" height="18" rx="9" class="chip"/><text x="115" y="597" class="ct" text-anchor="middle">MP3</text>
+  <rect x="96" y="612" width="424" height="140" rx="8" class="btn"/>
+  <rect class="sp1" x="106" y="662" width="14" height="46" rx="2"/>
+  <rect class="sp2" x="131" y="676" width="14" height="32" rx="2"/>
+  <rect class="sp1" x="156" y="646" width="14" height="62" rx="2"/>
+  <rect class="sp2" x="181" y="668" width="14" height="40" rx="2"/>
+  <rect class="sp1" x="206" y="634" width="14" height="74" rx="2"/>
+  <rect class="sp2" x="231" y="672" width="14" height="36" rx="2"/>
+  <rect class="sp1" x="256" y="652" width="14" height="56" rx="2"/>
+  <rect class="sp2" x="281" y="680" width="14" height="28" rx="2"/>
+  <rect class="sp1" x="306" y="658" width="14" height="50" rx="2"/>
+  <rect class="sp2" x="331" y="642" width="14" height="66" rx="2"/>
+  <rect class="sp1" x="356" y="674" width="14" height="34" rx="2"/>
+  <rect class="sp2" x="381" y="664" width="14" height="44" rx="2"/>
+  <rect class="sp1" x="406" y="650" width="14" height="58" rx="2"/>
+  <rect class="sp2" x="431" y="678" width="14" height="30" rx="2"/>
+  <rect class="sp1" x="456" y="660" width="14" height="48" rx="2"/>
+  <rect class="sp2" x="481" y="670" width="14" height="38" rx="2"/>
+  <text x="308" y="704" font-size="10" fill="#e7e9ee" text-anchor="middle">the words being spoken</text>
+  <circle cx="118" cy="733" r="12" fill="none" stroke="#2e3341" stroke-width="1.5"/>
+  <use href="#spk" transform="translate(111.5,726.5) scale(0.54)" fill="#e7e9ee" stroke="#e7e9ee"/>
+  <circle cx="150" cy="733" r="12" fill="none" stroke="#2e3341" stroke-width="1.5"/>
+  <text x="150" y="737" font-size="9" fill="#e7e9ee" text-anchor="middle">▶</text>
+  <rect x="172" y="731" width="270" height="4" rx="2" class="track"/>
+  <rect x="172" y="731" width="108" height="4" rx="2" class="trackfill"/>
+  <text x="510" y="737" font-size="10" fill="#e7e9ee" text-anchor="end">1:02 / 4:30</text>
+  <rect x="106" y="616" width="24" height="100" rx="8" class="card"/>
+  <rect x="116" y="626" width="4" height="80" rx="2" class="track"/>
+  <rect x="116" y="646" width="4" height="60" rx="2" class="trackfill"/>
+  <text x="96" y="774" class="sec">FILE</text>
+  <text x="96" y="796" font-size="11" fill="#9aa2b3">Path</text>
+  <text x="160" y="796" font-size="11" fill="#e7e9ee">media/talk.mp3</text>
+  <text x="96" y="814" font-size="11" fill="#9aa2b3">Captions</text>
+  <text x="160" y="814" font-size="11" fill="#e7e9ee">talk.vtt · 42 cues</text>
+  <text x="308" y="852" class="sx" text-anchor="middle">the mel spectrogram, with the transport over its foot</text>
+
+  <rect x="560" y="584" width="38" height="18" rx="9" class="chip"/><text x="579" y="597" class="ct" text-anchor="middle">MP4</text>
+  <rect x="560" y="612" width="424" height="216" rx="8" fill="#000000" stroke="#2e3341" stroke-width="1.5"/>
+  <circle cx="772" cy="702" r="24" fill="#ffffff" fill-opacity="0.12"/>
+  <path d="M764 690 L786 702 L764 714 Z" fill="#ffffff" fill-opacity="0.7"/>
+  <text x="772" y="744" font-size="10" fill="#e7e9ee" text-anchor="middle">the words being spoken</text>
+  <rect x="560" y="790" width="424" height="38" fill="#000000" fill-opacity="0.55"/>
+  <path d="M576 801 L588 809 L576 817 Z" fill="#e7e9ee"/>
+  <rect x="600" y="807" width="300" height="4" rx="2" fill="#6a7488"/>
+  <circle cx="700" cy="809" r="5" fill="#e7e9ee"/>
+  <text x="966" y="814" font-size="11" fill="#e7e9ee" text-anchor="end">⛶</text>
+  <circle cx="582" cy="776" r="12" fill="#000000" fill-opacity="0.6" stroke="#2e3341" stroke-width="1.5"/>
+  <use href="#spk" transform="translate(575.5,769.5) scale(0.54)" fill="#e7e9ee" stroke="#e7e9ee"/>
+  <text x="772" y="852" class="sx" text-anchor="middle">a video element with the browser's own controls</text>
+
+  <text x="76" y="884" class="note">Audio plays through the Web Audio graph, so its preview draws the same rolling mel spectrogram the</text>
+  <text x="76" y="908" class="note">assistant's speech bubbles use; video plays in a plain media element with the browser's own controls.</text>
+  <text x="76" y="932" class="note">Both carry one volume control — a speaker with a vertical slider above it — shared and remembered.</text>
+
+  <text x="56" y="1026" class="h">3 · Captions and notices</text>
+  <rect x="56" y="1050" width="968" height="290" rx="16" class="panel"/>
+
+  <rect x="96" y="1078" width="32" height="18" rx="9" class="chip"/><text x="112" y="1091" class="ct" text-anchor="middle">VTT</text>
+  <text x="96" y="1122" font-size="10" fill="#9aa2b3">0:04</text>
+  <rect x="140" y="1116" width="300" height="6" rx="3" class="tbar"/>
+  <text x="96" y="1146" font-size="10" fill="#9aa2b3">0:11</text>
+  <rect x="140" y="1140" width="270" height="6" rx="3" class="tbar"/>
+  <text x="96" y="1170" font-size="10" fill="#9aa2b3">0:19</text>
+  <rect x="140" y="1164" width="316" height="6" rx="3" class="tbar"/>
+  <text x="96" y="1194" font-size="10" fill="#9aa2b3">0:27</text>
+  <rect x="140" y="1188" width="240" height="6" rx="3" class="tbar"/>
+  <text x="96" y="1218" font-size="10" fill="#9aa2b3">0:35</text>
+  <rect x="140" y="1212" width="285" height="6" rx="3" class="tbar"/>
+  <text x="308" y="1274" class="sx" text-anchor="middle">a .vtt track, read as a transcript</text>
+
+  <rect x="560" y="1106" width="424" height="72" rx="8" class="card"/>
+  <text x="576" y="1136" font-size="11" fill="#e7e9ee">Talk.mp4 is 84 MB — over the read limit for a served clip. Open the</text>
+  <text x="576" y="1160" font-size="11" fill="#e7e9ee">folder locally, where the clip streams and its size does not matter.</text>
+  <text x="560" y="1212" class="sx">Any other binary kind is shown as a node only;</text>
+  <text x="560" y="1236" class="sx">it is never read and has no preview of its own.</text>
+  <text x="772" y="1274" class="sx" text-anchor="middle">a clip refused, and the plain notice</text>
+
+  <text x="76" y="1306" class="note">A track is both captions for its clip and a page of its own, read as a transcript by the same renderer.</text>
+
+  <text x="56" y="1384" class="note">A media kind is decided by the extension, and one preview panel shows each; a clip's bytes never enter the graph.</text>
+</svg>

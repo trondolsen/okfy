@@ -1,0 +1,223 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2160" viewBox="0 0 1080 2160" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">The assistant panel — okfy design proposal</title>
+  <desc id="d">The docked assistant panel. It is fixed to the right edge, full height, with the Assistant tab and a resize strip on its inner edge above the Filters tab. Its header names the panel and carries three pointer-less-looking icon toggles — audio output (a speaker), microphone and settings (sliders) — each muted when off and accent when pressed. Below it a notice bar names the host that receives the prompt, the concepts the tools read and the key, dismissable with its cross. The transcript is a column of bubbles: user on a panel surface with a border, assistant in an accent tint, commentary in a stronger tint with a live mel spectrogram and a stop or replay button, tool and notice with dashed borders, and error in the warn tint; the bubble that is speaking, or the user bubble while listening, sticks to the top or bottom edge. The chat form carries the prompt textarea with an inline speaker while the assistant speaks, and one row with the model chip, the token-usage badge (a context ring, an up-arrow for output tokens and a down-arrow for input tokens against their limits, then the session total), the budget control and Stop and Send. Settings replaces the chat, and until the acknowledgement gate is accepted nothing else in it shows; past it the pane lists Provider, Chat model, Audio output model, Audio input model and Generation as labelled fields, with inputs, a model combobox carrying an inline list button, checkboxes and an inline Default button.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables, so the figure reads as the
+         tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .sec { font-size: 10px; letter-spacing: 1.2px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #1b1e27; stroke: #2e3341; stroke-width: 1.5; }
+      .chip { fill: none; stroke: #2e3341; stroke-width: 1.5; }
+      .chipon { fill: none; stroke: #5b8def; stroke-width: 2; }
+      .btn { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .dash { fill: #232734; stroke: #2e3341; stroke-width: 1.5; stroke-dasharray: 5 4; }
+      .tbar { fill: #2a2f3a; }
+      .bub { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .bubas { fill: #5b8def; fill-opacity: .1; }
+      .bubcom { fill: #5b8def; fill-opacity: .14; stroke: #5b8def; stroke-opacity: .55; stroke-width: 1.5; }
+      .buberr { fill: #c06a5b; fill-opacity: .2; }
+      .bubstick { fill: #5b8def; fill-opacity: .18; stroke: #5b8def; stroke-opacity: .55; stroke-width: 1.5; }
+      .wave { fill: #5b8def; fill-opacity: .55; }
+      .field { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+    </style>
+    <g id="spk">
+      <path d="M4 9v6h4l5 4V5L8 9H4Z" stroke-width="1.4" stroke-linejoin="round"/>
+      <path d="M16.4 9.2a4.2 4.2 0 0 1 0 5.6" fill="none" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+    <g id="mic">
+      <rect x="9" y="3" width="6" height="11" rx="3"/>
+      <path d="M6 11a6 6 0 0 0 12 0" fill="none" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M12 17v4" fill="none" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+    <g id="sld">
+      <path d="M4 3v18M12 3v18M20 3v18" fill="none" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="4" cy="9" r="3"/><circle cx="12" cy="15" r="3"/><circle cx="20" cy="7" r="3"/>
+    </g>
+  </defs>
+
+  <rect width="1080" height="2160" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · DESIGN PROPOSAL</text>
+  <text x="56" y="110" class="title">The assistant panel</text>
+  <text x="56" y="148" class="subtitle">A docked chat panel: its header, its transcript, its form and its gated settings</text>
+
+  <text x="56" y="214" class="h">1 · The panel and its header</text>
+  <rect x="56" y="238" width="968" height="362" rx="16" class="panel"/>
+
+  <rect x="96" y="290" width="22" height="82" rx="6" class="card"/>
+  <text x="107" y="331" class="br" text-anchor="middle" transform="rotate(90 107 331)">Assistant</text>
+  <rect x="118" y="290" width="96" height="82" rx="8" class="card"/>
+
+  <rect x="260" y="290" width="96" height="82" rx="8" class="card"/>
+  <rect x="255" y="290" width="10" height="82" fill="#5b8def" fill-opacity="0.45"/>
+
+  <rect x="400" y="290" width="600" height="82" rx="8" class="card"/>
+  <text x="416" y="322" font-size="14" font-weight="600">Assistant</text>
+  <use href="#spk" transform="translate(492,306) scale(0.66)" fill="#9aa2b3" stroke="#9aa2b3"/>
+  <use href="#mic" transform="translate(522,306) scale(0.66)" fill="#5b8def" stroke="#5b8def"/>
+  <use href="#sld" transform="translate(552,306) scale(0.66)" fill="#9aa2b3" stroke="#9aa2b3"/>
+  <line x1="400" y1="332" x2="1000" y2="332" stroke="#2e3341" stroke-width="1.5"/>
+  <rect x="416" y="346" width="560" height="8" rx="3" class="tbar"/>
+
+  <text x="155" y="396" class="sx" text-anchor="middle">the tab</text>
+  <text x="320" y="396" class="sx" text-anchor="middle">the resize handle</text>
+  <text x="550" y="396" class="sx" text-anchor="middle">the header: title and toggles</text>
+
+  <rect x="96" y="430" width="904" height="52" rx="8" class="btn"/>
+  <text x="110" y="452" font-size="11" fill="#9aa2b3">The host that receives your prompt, the concepts the tools read and your key.</text>
+  <text x="110" y="470" font-size="11" fill="#9aa2b3">Dismiss it with its ×; the dismissal is remembered for that host.</text>
+  <text x="978" y="454" font-size="13" fill="#9aa2b3" text-anchor="end">×</text>
+  <text x="96" y="510" class="sx">the notice</text>
+
+  <text x="76" y="540" class="note">The panel is docked to the right edge, full height, with the Assistant tab on its inner edge above the</text>
+  <text x="76" y="564" class="note">Filters tab. The three header toggles carry no box: muted when off, the accent when pressed.</text>
+
+  <text x="56" y="654" class="h">2 · The transcript</text>
+  <rect x="56" y="678" width="968" height="452" rx="16" class="panel"/>
+
+  <rect x="96" y="706" width="544" height="46" rx="10" class="bub"/>
+  <text x="110" y="726" class="sec">YOU</text>
+  <text x="110" y="745" font-size="13">What does this bundle describe?</text>
+  <rect x="96" y="758" width="544" height="46" rx="10" class="bubas"/>
+  <text x="110" y="778" class="sec">ASSISTANT</text>
+  <text x="110" y="797" font-size="13">It describes the okfy viewer and its model.</text>
+  <rect x="96" y="810" width="544" height="80" rx="10" class="bubcom"/>
+  <text x="110" y="830" class="sec">COMMENTARY</text>
+  <text x="110" y="849" font-size="13">Here is the short version.</text>
+  <rect x="110" y="858" width="516" height="24" rx="6" class="bub"/>
+  <rect class="wave" x="118" y="870" width="14" height="8" rx="2"/>
+  <rect class="wave" x="146" y="862" width="14" height="16" rx="2"/>
+  <rect class="wave" x="174" y="867" width="14" height="11" rx="2"/>
+  <rect class="wave" x="202" y="860" width="14" height="18" rx="2"/>
+  <rect class="wave" x="230" y="865" width="14" height="13" rx="2"/>
+  <rect class="wave" x="258" y="869" width="14" height="9" rx="2"/>
+  <rect class="wave" x="286" y="861" width="14" height="17" rx="2"/>
+  <rect class="wave" x="314" y="866" width="14" height="12" rx="2"/>
+  <rect class="wave" x="342" y="859" width="14" height="19" rx="2"/>
+  <rect class="wave" x="370" y="868" width="14" height="10" rx="2"/>
+  <rect class="wave" x="398" y="863" width="14" height="15" rx="2"/>
+  <rect class="wave" x="426" y="870" width="14" height="8" rx="2"/>
+  <rect class="wave" x="454" y="864" width="14" height="14" rx="2"/>
+  <rect class="wave" x="482" y="867" width="14" height="11" rx="2"/>
+  <text x="620" y="830" font-size="13" fill="#5b8def" text-anchor="middle">❚❚</text>
+
+  <rect x="680" y="706" width="304" height="46" rx="10" class="dash"/>
+  <text x="694" y="726" class="sec">TOOL</text>
+  <text x="694" y="745" font-size="11" fill="#9aa2b3">search_concepts(index)</text>
+  <rect x="680" y="758" width="304" height="46" rx="10" class="dash"/>
+  <text x="694" y="778" class="sec">NOTICE</text>
+  <text x="694" y="797" font-size="11" fill="#9aa2b3">3 concepts were read.</text>
+  <rect x="680" y="810" width="304" height="46" rx="10" class="buberr"/>
+  <text x="694" y="830" class="sec">ERROR</text>
+  <text x="694" y="849" font-size="11">The provider returned 503.</text>
+
+  <rect x="96" y="920" width="888" height="60" rx="10" class="bubstick"/>
+  <text x="110" y="944" class="sec">ASSISTANT</text>
+  <text x="110" y="966" font-size="13">Speaking… it stays pinned to the edge of the transcript.</text>
+  <text x="956" y="948" font-size="13" fill="#5b8def" text-anchor="middle">❚❚</text>
+
+  <text x="368" y="1008" class="sx" text-anchor="middle">the transcript: user, assistant and commentary</text>
+  <text x="832" y="1008" class="sx" text-anchor="middle">tool, notice and error</text>
+
+  <text x="76" y="1040" class="note">A bubble is one surface and one tint: user on panel-2 with a border, assistant in a light accent,</text>
+  <text x="76" y="1064" class="note">commentary in a stronger accent carrying the live mel spectrogram and a stop or replay button,</text>
+  <text x="76" y="1088" class="note">tool and notice with dashed borders, and error in the warn tint. The speaking bubble sticks.</text>
+
+  <text x="56" y="1184" class="h">3 · The chat form</text>
+  <rect x="56" y="1208" width="968" height="452" rx="16" class="panel"/>
+
+  <rect x="96" y="1236" width="600" height="220" rx="10" class="card"/>
+  <rect x="110" y="1250" width="572" height="58" rx="8" class="field"/>
+  <text x="124" y="1285" font-size="12" fill="#9aa2b3">Ask about this bundle…</text>
+  <use href="#spk" transform="translate(650,1284) scale(0.75)" fill="#5b8def" stroke="#5b8def"/>
+  <rect x="110" y="1328" width="140" height="26" rx="13" class="chip"/>
+  <text x="120" y="1345" font-size="11" fill="#9aa2b3">deepseek-flash</text>
+  <text x="238" y="1346" font-size="10" fill="#9aa2b3">▾</text>
+  <circle cx="268" cy="1341" r="9" fill="none" stroke="#9aa2b3" stroke-opacity="0.55" stroke-width="3"/>
+  <circle cx="268" cy="1341" r="9" fill="none" stroke="#5b8def" stroke-width="3" stroke-dasharray="28 999" transform="rotate(-90 268 1341)"/>
+  <text x="288" y="1346" font-size="12" fill="#9aa2b3">↑</text>
+  <text x="302" y="1346" font-size="12" fill="#9aa2b3">↓</text>
+  <text x="318" y="1346" font-size="11" fill="#9aa2b3">13k</text>
+  <text x="370" y="1346" font-size="12" fill="#9aa2b3">◎</text>
+  <text x="386" y="1346" font-size="11" fill="#9aa2b3">20k</text>
+  <rect x="556" y="1328" width="56" height="26" rx="8" class="btn"/>
+  <text x="584" y="1345" class="br" text-anchor="middle">Stop</text>
+  <rect x="620" y="1328" width="64" height="26" rx="8" class="btn"/>
+  <text x="652" y="1345" class="br" text-anchor="middle">Send</text>
+
+  <rect x="720" y="1236" width="280" height="120" rx="8" class="card"/>
+  <text x="734" y="1262" font-size="11" fill="#9aa2b3">Input 12,000 · 16,384</text>
+  <text x="734" y="1282" font-size="11" fill="#9aa2b3">Output 800 · 1,024</text>
+  <text x="734" y="1302" font-size="11" fill="#9aa2b3">Total 12,800 · 1 request</text>
+  <text x="734" y="1322" font-size="11" fill="#9aa2b3">Sent 41 kB · got 2 kB</text>
+
+  <rect x="720" y="1378" width="280" height="150" rx="8" class="card"/>
+  <rect x="732" y="1390" width="256" height="20" rx="6" class="field"/>
+  <text x="742" y="1404" font-size="10" fill="#9aa2b3">Search models…</text>
+  <rect x="732" y="1420" width="256" height="22" rx="6" class="chipon"/>
+  <text x="742" y="1435" font-size="10" fill="#e7e9ee">deepseek-flash</text>
+  <rect x="732" y="1448" width="256" height="22" rx="6" class="chip"/>
+  <text x="742" y="1463" font-size="10" fill="#9aa2b3">llama-3.2-1b</text>
+  <rect x="732" y="1476" width="256" height="22" rx="6" class="chip"/>
+  <text x="742" y="1491" font-size="10" fill="#9aa2b3">mistral-large-latest</text>
+  <text x="732" y="1516" font-size="10" fill="#9aa2b3">$0.15 in · $0.6 out per 1M tokens</text>
+
+  <text x="396" y="1556" class="sx" text-anchor="middle">the prompt, the inline speaker and the row</text>
+  <text x="860" y="1556" class="sx" text-anchor="middle">the usage breakdown, and the model list</text>
+
+  <text x="76" y="1588" class="note">The prompt carries an inline speaker while the assistant speaks; clicking it interrupts. The row holds</text>
+  <text x="76" y="1612" class="note">the model chip, the ring-and-arrow usage badge, the budget, and Stop and Send. Both list buttons open</text>
+  <text x="76" y="1636" class="note">a searchable list, so the model is chosen from the provider's own listing.</text>
+
+  <g transform="translate(0,90)">
+  <text x="56" y="1624" class="h">4 · Settings</text>
+  <rect x="56" y="1648" width="968" height="362" rx="16" class="panel"/>
+
+  <rect x="96" y="1676" width="424" height="250" rx="10" class="card"/>
+  <text x="110" y="1702" class="sec">ENABLE THE ASSISTANT</text>
+  <rect x="110" y="1716" width="396" height="6" rx="3" class="tbar"/>
+  <rect x="110" y="1730" width="372" height="6" rx="3" class="tbar"/>
+  <rect x="110" y="1744" width="340" height="6" rx="3" class="tbar"/>
+  <rect x="110" y="1760" width="396" height="6" rx="3" class="tbar"/>
+  <rect x="110" y="1774" width="360" height="6" rx="3" class="tbar"/>
+  <rect x="110" y="1790" width="396" height="6" rx="3" class="tbar"/>
+  <rect x="110" y="1804" width="300" height="6" rx="3" class="tbar"/>
+  <rect x="110" y="1822" width="14" height="14" rx="3" class="chip"/>
+  <text x="132" y="1834" font-size="11" fill="#9aa2b3">I understand what the assistant is and want to enable it.</text>
+  <rect x="110" y="1850" width="110" height="26" rx="8" class="btn"/>
+  <text x="165" y="1867" class="br" text-anchor="middle">Continue</text>
+  <rect x="230" y="1850" width="84" height="26" rx="8" class="btn"/>
+  <text x="272" y="1867" class="br" text-anchor="middle">Cancel</text>
+
+  <rect x="560" y="1676" width="424" height="250" rx="10" class="card"/>
+  <text x="574" y="1702" class="sec">PROVIDER</text>
+  <text x="574" y="1718" font-size="10" fill="#9aa2b3">Base URL</text>
+  <rect x="574" y="1724" width="396" height="22" rx="6" class="field"/>
+  <text x="574" y="1764" class="sec">CHAT MODEL</text>
+  <rect x="574" y="1770" width="396" height="22" rx="6" class="field"/>
+  <text x="952" y="1786" font-size="11" fill="#9aa2b3" text-anchor="middle">▾</text>
+  <rect x="574" y="1800" width="300" height="5" rx="2" class="tbar"/>
+  <rect x="574" y="1814" width="14" height="14" rx="3" class="chip"/>
+  <text x="596" y="1826" font-size="11" fill="#9aa2b3">Remember the key in this browser</text>
+  <text x="574" y="1856" class="sec">GENERATION</text>
+  <rect x="574" y="1862" width="180" height="22" rx="6" class="field"/>
+  <rect x="770" y="1862" width="200" height="22" rx="6" class="field"/>
+  <text x="900" y="1878" font-size="10" fill="#5b8def">Default</text>
+
+  <text x="308" y="1952" class="sx" text-anchor="middle">the gate: nothing else shows until it is accepted</text>
+  <text x="772" y="1952" class="sx" text-anchor="middle">the fields: inputs, a combobox, checkboxes</text>
+
+  <text x="76" y="1984" class="note">Opening Settings replaces the chat; past the gate, the pane lists its sections as labelled fields.</text>
+  </g>
+
+  <text x="56" y="2144" class="note">The assistant is a docked panel, not the canvas: its transcript, form and settings never cover the graph.</text>
+</svg>

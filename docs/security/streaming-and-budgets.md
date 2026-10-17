@@ -17,7 +17,7 @@ sources:
 
 # Problem
 
-A stream can deliver more data than expected, so buffering a whole response before checking its size lets an attacker allocate memory first and measure later. The same applies to decompressed PDF object streams.[^review]
+A stream can deliver more data than expected, so buffering a whole response before checking its size lets an attacker allocate memory first and measure later. The same applies to decompressed PDF object streams.[^review] See the [bounded streaming and reserved capacity explainer](attachments/streaming-and-budgets.svg) for the bounded reader, the reserved capacity, the fetch slot and the rollback.
 
 # Steps
 

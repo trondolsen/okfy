@@ -1,0 +1,189 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">The force layout — okfy algorithm explainer</title>
+  <desc id="d">How the graph's layout is computed. The simulation adds up acceleration on every node from five forces, then clamps the whole vector. Many-body repulsion follows Fruchterman-Reingold: charge times alpha over d squared plus a softening term, with a negative charge of k squared times 0.6. The softening stops two almost coincident nodes from pushing with an infinitely strong force. Link springs pull along each link, with a rest length and strength per kind: tree 150 and 0.8, reference 220 and 0.05, tag 260 and 0.03. Tree links are therefore stiff, while references and tags are soft. A radial force pulls a node onto the ring for its depth, a very weak force pulls everything towards the origin, and a collision force pushes overlapping nodes apart from a uniform grid, with a normalised direction. Repulsion is all-pairs, so the simulation approximates it with a Barnes-Hut quadtree, rebuilt every step. A cell whose width is small against its distance, w squared over theta squared below d squared with theta 0.9, is pooled into one mass at its centre of mass. The force then visits only the near neighbours one by one, and the cost falls from n squared to about n log n. The step is velocity Verlet: add up a at t, advance the position by v plus half a, add up a at t plus dt, then update the velocity from the mean of the two accelerations, damp it and clamp the speed. The damping hardens as the layout cools, from 0.7 to 0.5. The acceleration cap equals the speed cap, so the half-step cannot carry a node further than about one and a half caps in a frame. The temperature alpha decays by 0.975 each tick from 1, with a floor of 0.02. Interaction that changes the layout raises it again: 0.6 for a directory, a resize or a reset, and 0.5 for a node drag.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables, so the figure reads as the
+         tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .node { fill: #8b93a7; }
+      .ring { fill: none; stroke: #2e3341; stroke-width: 1.5; stroke-dasharray: 5 4; }
+      .grid { stroke: #2e3341; stroke-width: 1.5; }
+      .apt { fill: #232734; stroke: #2e3341; stroke-width: 1.5; stroke-dasharray: 4 3; }
+      .axis { stroke: #2e3341; stroke-width: 1.5; }
+      .curve { fill: none; stroke: #5b8def; stroke-width: 2.5; }
+      .jump { stroke: #5b8def; stroke-width: 2; stroke-dasharray: 4 4; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="1920" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · ALGORITHM EXPLAINER</text>
+  <text x="56" y="110" class="title">The force layout</text>
+  <text x="56" y="148" class="subtitle">A d3-force-style simulation: five forces, one Verlet step, and a cooling temperature</text>
+
+  <text x="56" y="214" class="h">1 · The forces on a node</text>
+  <rect x="56" y="238" width="968" height="292" rx="16" class="panel"/>
+
+  <text x="190" y="320" font-size="10" fill="#9aa2b3" text-anchor="middle">d</text>
+  <line x1="163" y1="340" x2="237" y2="340" class="axis"/>
+  <circle cx="150" cy="350" r="13" class="node"/>
+  <circle cx="250" cy="350" r="13" class="node"/>
+  <line x1="137" y1="350" x2="116" y2="350" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 116 346 L 106 350 L 116 354 Z" fill="#9aa2b3"/>
+  <line x1="263" y1="350" x2="284" y2="350" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 284 346 L 294 350 L 284 354 Z" fill="#9aa2b3"/>
+  <text x="96" y="424" class="lab">many-body repulsion</text>
+  <text x="96" y="448" class="mono">CHARGE · α / (d² + ε)</text>
+  <text x="96" y="470" class="sx">softened when nodes are close</text>
+
+  <line x1="399" y1="350" x2="473" y2="350" stroke="#6a7488" stroke-width="2"/>
+  <circle cx="386" cy="350" r="13" class="node"/>
+  <circle cx="486" cy="350" r="13" class="node"/>
+  <line x1="399" y1="344" x2="429" y2="344" stroke="#5b8def" stroke-width="2"/>
+  <path d="M 429 340 L 437 344 L 429 348 Z" fill="#5b8def"/>
+  <line x1="473" y1="356" x2="443" y2="356" stroke="#5b8def" stroke-width="2"/>
+  <path d="M 443 352 L 435 356 L 443 360 Z" fill="#5b8def"/>
+  <text x="332" y="424" class="lab">link springs</text>
+  <text x="332" y="448" class="mono">(d − rest) · k · α / d</text>
+  <text x="332" y="470" class="sx">a rest length and strength by kind</text>
+
+  <circle cx="620" cy="350" r="70" class="ring"/>
+  <line x1="612" y1="350" x2="628" y2="350" stroke="#9aa2b3" stroke-width="2"/>
+  <line x1="620" y1="342" x2="620" y2="358" stroke="#9aa2b3" stroke-width="2"/>
+  <circle cx="655" cy="350" r="12" class="node"/>
+  <line x1="667" y1="350" x2="684" y2="350" stroke="#8b93a7" stroke-width="2"/>
+  <path d="M 684 346 L 692 350 L 684 354 Z" fill="#8b93a7"/>
+  <line x1="643" y1="350" x2="635" y2="350" stroke="#6a7488" stroke-width="2"/>
+  <path d="M 635 346 L 627 350 L 635 354 Z" fill="#6a7488"/>
+  <text x="690" y="332" font-size="10" fill="#9aa2b3">ring</text>
+  <text x="612" y="378" font-size="10" fill="#9aa2b3" text-anchor="middle">O</text>
+  <text x="568" y="424" class="lab">radial and centring</text>
+  <text x="568" y="448" class="mono">(r_target − r) · 0.35 · α</text>
+  <text x="568" y="470" class="sx">rings by depth, plus a weak 0.003</text>
+
+  <circle cx="874" cy="350" r="14" class="node"/>
+  <circle cx="900" cy="350" r="14" class="node"/>
+  <line x1="860" y1="350" x2="834" y2="350" stroke="#c9a24d" stroke-width="2"/>
+  <path d="M 834 346 L 826 350 L 834 354 Z" fill="#c9a24d"/>
+  <line x1="914" y1="350" x2="940" y2="350" stroke="#c9a24d" stroke-width="2"/>
+  <path d="M 940 346 L 948 350 L 940 354 Z" fill="#c9a24d"/>
+  <text x="804" y="424" class="lab">collision</text>
+  <text x="804" y="448" class="mono">(minD − d) · ½ · α</text>
+  <text x="804" y="470" class="sx">pushes overlapping nodes apart</text>
+
+  <text x="76" y="504" class="note">All five forces add to the acceleration. One step sums them, then clamps the whole vector.</text>
+
+  <text x="56" y="584" class="h">2 · Repulsion, pooled in a quadtree</text>
+  <rect x="56" y="608" width="968" height="342" rx="16" class="panel"/>
+
+  <rect x="96" y="640" width="320" height="290" class="apt"/>
+  <line x1="176" y1="640" x2="176" y2="930" class="grid"/>
+  <line x1="256" y1="640" x2="256" y2="930" class="grid"/>
+  <line x1="336" y1="640" x2="336" y2="930" class="grid"/>
+  <line x1="96" y1="712" x2="416" y2="712" class="grid"/>
+  <line x1="96" y1="785" x2="416" y2="785" class="grid"/>
+  <line x1="96" y1="858" x2="416" y2="858" class="grid"/>
+  <line x1="136" y1="640" x2="136" y2="712" class="grid"/>
+  <line x1="96" y1="676" x2="176" y2="676" class="grid"/>
+  <rect x="256" y="640" width="80" height="72" fill="#5b8def" fill-opacity="0.1"/>
+  <circle cx="150" cy="690" r="5" class="node"/>
+  <circle cx="112" cy="700" r="5" class="node"/>
+  <circle cx="205" cy="676" r="5" class="node"/>
+  <circle cx="300" cy="676" r="5" class="node"/>
+  <circle cx="375" cy="700" r="5" class="node"/>
+  <circle cx="230" cy="740" r="5" class="node"/>
+  <circle cx="140" cy="800" r="5" class="node"/>
+  <circle cx="290" cy="820" r="5" class="node"/>
+  <circle cx="210" cy="890" r="5" class="node"/>
+  <circle cx="370" cy="880" r="5" class="node"/>
+  <circle cx="335" cy="755" r="5" class="node"/>
+  <circle cx="120" cy="745" r="5" class="node"/>
+  <circle cx="150" cy="690" r="9" fill="none" stroke="#5b8def" stroke-width="2"/>
+  <circle cx="296" cy="676" r="6" fill="#5b8def"/>
+  <line x1="160" y1="690" x2="288" y2="676" stroke="#5b8def" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M 288 672 L 296 676 L 288 680 Z" fill="#5b8def"/>
+
+  <text x="450" y="656" class="lab">Barnes-Hut quadtree</text>
+  <text x="450" y="688" class="mono">pool when  w² / θ² &lt; d²</text>
+  <text x="450" y="722" class="sx">When a cell is small next to its distance, the tree pools it into</text>
+  <text x="450" y="742" class="sx">one mass at its centre of mass. The force then visits only the</text>
+  <text x="450" y="762" class="sx">near neighbours one by one, so the cost falls from O(n²) to</text>
+  <text x="450" y="782" class="sx">about O(n log n). θ = 0.9 sets how coarse the pooling is.</text>
+  <text x="450" y="816" class="sx">The tree is rebuilt every step, because every node has moved.</text>
+  <text x="450" y="850" class="sx">The softening ε (MIN_DIST²) keeps two nodes that almost</text>
+  <text x="450" y="870" class="sx">coincide from pushing with an infinitely strong force.</text>
+  <text x="450" y="902" class="sx">A node is never pooled with itself: its own leaf is skipped.</text>
+
+  <text x="56" y="1004" class="h">3 · One step</text>
+  <rect x="56" y="1028" width="968" height="332" rx="16" class="panel"/>
+
+  <rect x="96" y="1068" width="200" height="62" rx="10" class="card"/>
+  <text x="196" y="1096" font-size="12" text-anchor="middle">accumulate a(t)</text>
+  <text x="196" y="1114" class="sx" text-anchor="middle">sum of all five forces</text>
+  <path d="M 296 1099 L 320 1099" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 320 1095 L 328 1099 L 320 1103 Z" fill="#9aa2b3"/>
+  <rect x="328" y="1068" width="200" height="62" rx="10" class="card"/>
+  <text x="428" y="1096" font-size="12" text-anchor="middle">advance x by v + ½a</text>
+  <text x="428" y="1114" class="sx" text-anchor="middle">dt = 1</text>
+  <path d="M 528 1099 L 552 1099" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 552 1095 L 560 1099 L 552 1103 Z" fill="#9aa2b3"/>
+  <rect x="560" y="1068" width="200" height="62" rx="10" class="card"/>
+  <text x="660" y="1096" font-size="12" text-anchor="middle">accumulate a(t + dt)</text>
+  <text x="660" y="1114" class="sx" text-anchor="middle">add the five forces again</text>
+  <path d="M 760 1099 L 784 1099" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 784 1095 L 792 1099 L 784 1103 Z" fill="#9aa2b3"/>
+  <rect x="792" y="1068" width="184" height="62" rx="10" class="card"/>
+  <text x="884" y="1096" font-size="12" text-anchor="middle">v ← v + ½(a₁ + a₂)</text>
+  <text x="884" y="1114" class="sx" text-anchor="middle">damp, then cap</text>
+
+  <text x="96" y="1164" class="mono">damping = 0.7 − 0.2 · (1 − min(1, α / 0.6))</text>
+  <text x="96" y="1188" class="sx">As the layout cools, the simulation keeps less of the velocity: from 0.7 down to 0.5. The last</text>
+  <text x="96" y="1208" class="sx">motion then dies out instead of jittering.</text>
+  <text x="96" y="1238" class="mono">MAX_SPEED = MAX_ACC = clamp(ringGap · 0.05, 4, 12)</text>
+  <text x="96" y="1262" class="sx">The acceleration cap equals the speed cap. A node therefore moves no more than about one and a half</text>
+  <text x="96" y="1282" class="sx">caps in a frame, so it never crosses the canvas between two frames.</text>
+  <text x="96" y="1312" class="sx">A drag pins its node at (fx, fy) and sets its velocity to zero. When you release it, the layout takes it back.</text>
+
+  <text x="56" y="1414" class="h">4 · Cooling and re-energizing</text>
+  <rect x="56" y="1438" width="968" height="422" rx="16" class="panel"/>
+
+  <text x="96" y="1466" class="sx">α, the temperature, over ticks</text>
+  <line x1="96" y1="1480" x2="96" y2="1680" class="axis"/>
+  <line x1="96" y1="1680" x2="616" y2="1680" class="axis"/>
+  <line x1="96" y1="1676" x2="616" y2="1676" stroke="#2e3341" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <polyline class="curve" points="96,1500 182,1540 269,1571 356,1596 442,1615 486,1622"/>
+  <polyline class="curve" points="486,1572 551,1591 616,1606"/>
+  <line x1="486" y1="1622" x2="486" y2="1572" class="jump"/>
+  <text x="88" y="1504" class="sx" text-anchor="end">1</text>
+  <text x="88" y="1576" class="sx" text-anchor="end">0.6</text>
+  <text x="88" y="1680" class="sx" text-anchor="end">0.02</text>
+  <text x="616" y="1702" class="sx" text-anchor="end">ticks</text>
+  <text x="486" y="1702" class="sx" text-anchor="middle">re-energized</text>
+
+  <text x="660" y="1494" class="mono">α ← max(0.02, α · 0.975)</text>
+  <text x="660" y="1520" class="sx">The temperature drops fast, so the wild phase is</text>
+  <text x="660" y="1540" class="sx">short. The floor of 0.02 then keeps a slow motion</text>
+  <text x="660" y="1560" class="sx">going, so the graph never freezes completely.</text>
+  <text x="660" y="1592" class="sx">Entering a directory, resizing or resetting raises</text>
+  <text x="660" y="1612" class="sx">it to 0.6, and a node drag raises it to 0.5. A</text>
+  <text x="660" y="1632" class="sx">plain click leaves the graph alone.</text>
+
+  <text x="96" y="1722" class="lab">Every constant follows from the ring gap</text>
+  <text x="96" y="1750" class="mono">k = clamp(ringGap · 0.5, 24, 70)   ·   CHARGE = −k² · 0.6   ·   MIN_DIST² = (max(6, k · 0.35))²   ·   θ = 0.9</text>
+  <text x="96" y="1774" class="mono">ringGap = max(70, (min(W, H) / 2 − 90) / maxDepth)   ·   radial 0.35   ·   centre 0.003   ·   collide 1.0</text>
+  <text x="96" y="1798" class="mono">links, rest / strength:  tree 150 / 0.8   ·   ref 220 / 0.05   ·   tag 260 / 0.03   ·   MAX_SPEED = MAX_ACC</text>
+  <text x="96" y="1824" class="sx">The mascot uses the same forces and the same step, with its own constants, so both run at one pace.</text>
+
+  <text x="56" y="1904" class="note">The simulation never stops, so the graph is never perfectly still. The view stays framed while it settles.</text>
+</svg>

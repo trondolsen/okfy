@@ -1,0 +1,216 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2220" viewBox="0 0 1080 2220" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">The spectrogram — okfy algorithm explainer</title>
+  <desc id="d">How the rolling mel spectrogram is drawn. Three sources feed one renderer: the assistant's speech through an analyser of fftSize 2048 and smoothing 0.5, drawn on the commentary bubble; an audio clip's preview through the same settings, drawn on the player's framed canvas; and the microphone through fftSize 1024 and smoothing 0.4, drawn on the listening bubble. The fast Fourier transform is the browser's analyser, which reports one decibel value per frequency bin; what the tool adds is the mel pooling, the decibel scale, the colour ramp and the rolling history. One animation frame reads the analyser's spectrum, pools it into forty-eight mel bands in decibels, turns each band into a colour and writes a one-pixel-wide column at the right edge of an offscreen history canvas, then shifts the history one pixel left and blits it to the visible canvas at device-pixel size. The filterbank spreads fifty points, one more than the band count plus one, evenly on the mel scale between zero hertz and the top of the range, capped at the Nyquist frequency, and maps each point back to hertz. Band m is a triangle that rises from point m, peaks at point m plus one and falls to point m plus two, so neighbouring bands overlap. Because the mel scale is nearly linear at the bottom and compresses at the top, the triangles widen as the frequency rises, so the low frequencies, where vowels and formants live, get proportionally more bands. A band's energy is the weighted sum of its frequency bins as power, written in decibels, mapped onto a seventy-decibel window from minus ninety-five to minus twenty-five, raised to the power 0.7 so quiet detail still shows, and mixed from the panel's own dark blue up to the accent colour for loud bands. Band zero, the lowest frequency, is drawn at the bottom, so pitch reads up the column while time runs left to right. The history is an offscreen canvas: each frame bakes the newest column onto its right edge, shifts the whole history one pixel left using copy compositing, which also clears the freed column so the newest column always lands on empty pixels, and blits the result to the visible canvas. A fresh clip or utterance clears the history, so its spectrogram rolls in from an empty field rather than splicing onto the last one. A snapshot copies the history into a canvas of its own, which is what keeps a spectrogram in a bubble after playback has ended and lets it be redrawn when the bubble re-renders. Only audio draws this view, because a video plays in a plain media element with the browser's own controls. The view is computed live from the analyser, so it costs one pooled spectrum per frame and never per sample, while the clip's bytes are bounded separately: a clip up to 256 mebibytes is read whole, one small enough to decode within 32 mebibytes is decoded for grain-accurate scrubbing, and above that a local clip streams from its object URL into the same analyser.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables and the node colours from
+         the script, so the figure reads as the tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .ct { font-size: 12px; font-weight: 700; fill: #e7e9ee; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .win { fill: #0e1015; stroke: #232734; stroke-width: 1.5; }
+      .axis { stroke: #2e3341; stroke-width: 1.5; fill: none; }
+      .tick { stroke: #2e3341; stroke-width: 1.5; fill: none; }
+      .filter { fill: #5b8def; fill-opacity: 0.12; stroke: #5b8def; stroke-width: 1.5; }
+      .arrow { stroke: #9aa2b3; stroke-width: 2; fill: none; }
+      .shift { stroke: #5b8def; stroke-width: 2; fill: none; }
+      .band { fill: #5b8def; }
+    </style>
+    <linearGradient id="ramp" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1b1e26"/>
+      <stop offset="1" stop-color="#5b8def"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1080" height="2220" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · ALGORITHM EXPLAINER</text>
+  <text x="56" y="110" class="title">The spectrogram</text>
+  <text x="56" y="148" class="subtitle">A rolling mel view of the live audio graph, drawn from one analyser frame</text>
+
+  <text x="56" y="214" class="h">1 · Three sources, one renderer</text>
+  <rect x="56" y="238" width="968" height="250" rx="16" class="panel"/>
+
+  <text x="76" y="284" class="lab">An AnalyserNode each, and the same frame for all three</text>
+
+  <text x="100" y="306" class="sx">source</text>
+  <text x="470" y="306" class="sx">fftSize</text>
+  <text x="580" y="306" class="sx">smoothing</text>
+  <text x="690" y="306" class="sx">drawn on</text>
+
+  <text x="100" y="336" class="br">the assistant's speech</text>
+  <text x="470" y="336" class="sx">2048</text>
+  <text x="580" y="336" class="sx">0.5</text>
+  <text x="690" y="336" class="sx">the commentary bubble</text>
+
+  <text x="100" y="366" class="br">an audio clip's preview</text>
+  <text x="470" y="366" class="sx">2048</text>
+  <text x="580" y="366" class="sx">0.5</text>
+  <text x="690" y="366" class="sx">the player's framed canvas</text>
+
+  <text x="100" y="396" class="br">the microphone</text>
+  <text x="470" y="396" class="sx">1024</text>
+  <text x="580" y="396" class="sx">0.4</text>
+  <text x="690" y="396" class="sx">the listening bubble</text>
+
+  <text x="76" y="430" class="note">The FFT is the browser's analyser: it reports one decibel value per frequency bin. The mel pooling,</text>
+  <text x="76" y="454" class="note">the decibel scale, the colour ramp and the rolling history are the tool's, and one frame draws them all.</text>
+
+  <text x="56" y="542" class="h">2 · The frame</text>
+  <rect x="56" y="566" width="968" height="300" rx="16" class="panel"/>
+
+  <text x="76" y="590" class="lab">One animation frame, about sixty times a second</text>
+
+  <rect x="96" y="614" width="210" height="84" rx="10" class="card"/>
+  <text x="201" y="648" class="ct" text-anchor="middle">the analyser</text>
+  <text x="201" y="670" class="sx" text-anchor="middle">decibels per FFT bin</text>
+  <line x1="306" y1="656" x2="320" y2="656" class="arrow"/>
+  <path d="M 330 656 L 320 651.5 L 320 660.5 Z" fill="#9aa2b3"/>
+
+  <rect x="334" y="614" width="210" height="84" rx="10" class="card"/>
+  <text x="439" y="648" class="ct" text-anchor="middle">asLogMel</text>
+  <text x="439" y="670" class="sx" text-anchor="middle">48 mel bands, in decibels</text>
+  <line x1="544" y1="656" x2="558" y2="656" class="arrow"/>
+  <path d="M 568 656 L 558 651.5 L 558 660.5 Z" fill="#9aa2b3"/>
+
+  <rect x="572" y="614" width="210" height="84" rx="10" class="card"/>
+  <text x="677" y="648" class="ct" text-anchor="middle">the colour ramp</text>
+  <text x="677" y="670" class="sx" text-anchor="middle">each band to a tint</text>
+  <line x1="782" y1="656" x2="796" y2="656" class="arrow"/>
+  <path d="M 806 656 L 796 651.5 L 796 660.5 Z" fill="#9aa2b3"/>
+
+  <rect x="810" y="614" width="210" height="84" rx="10" class="card"/>
+  <text x="915" y="648" class="ct" text-anchor="middle">the history</text>
+  <text x="915" y="670" class="sx" text-anchor="middle">bake, shift, blit</text>
+
+  <text x="76" y="746" class="note">The newest column is one pixel wide and one band tall, written at the right edge of an offscreen</text>
+  <text x="76" y="770" class="note">history canvas. The history is then shifted one pixel to the left and blitted to the visible canvas,</text>
+  <text x="76" y="794" class="note">sized in device pixels so the trace stays crisp on a high-density screen.</text>
+  <text x="76" y="818" class="note">A band's height is the canvas height divided by 48, and band 0 is drawn at the bottom.</text>
+
+  <text x="56" y="920" class="h">3 · The filterbank</text>
+  <rect x="56" y="944" width="968" height="350" rx="16" class="panel"/>
+
+  <text x="76" y="980" class="lab">Points spaced on the mel scale, so the bands widen as they rise</text>
+
+  <line x1="96" y1="1120" x2="910" y2="1120" class="axis"/>
+  <line x1="96" y1="1120" x2="96" y2="1126" class="tick"/>
+  <line x1="297" y1="1120" x2="297" y2="1126" class="tick"/>
+  <line x1="498" y1="1120" x2="498" y2="1126" class="tick"/>
+  <line x1="699" y1="1120" x2="699" y2="1126" class="tick"/>
+  <line x1="900" y1="1120" x2="900" y2="1126" class="tick"/>
+
+  <polygon class="filter" points="96,1120 119,1060 149,1120"/>
+  <polygon class="filter" points="119,1120 149,1060 189,1120"/>
+  <polygon class="filter" points="149,1120 189,1060 241,1120"/>
+  <polygon class="filter" points="189,1120 241,1060 311,1120"/>
+  <polygon class="filter" points="241,1120 311,1060 403,1120"/>
+  <polygon class="filter" points="311,1120 403,1060 525,1120"/>
+  <polygon class="filter" points="403,1120 525,1060 686,1120"/>
+  <polygon class="filter" points="525,1120 686,1060 900,1120"/>
+
+  <text x="88" y="1064" class="sx" text-anchor="end">1</text>
+  <text x="88" y="1124" class="sx" text-anchor="end">0</text>
+  <text x="96" y="1142" class="sx" text-anchor="middle">0</text>
+  <text x="297" y="1142" class="sx" text-anchor="middle">2 kHz</text>
+  <text x="498" y="1142" class="sx" text-anchor="middle">4 kHz</text>
+  <text x="699" y="1142" class="sx" text-anchor="middle">6 kHz</text>
+  <text x="900" y="1142" class="sx" text-anchor="middle">8 kHz</text>
+
+  <text x="76" y="1180" class="sx">The points are spread evenly in mel, not in hertz, so each band's triangle is wider than the one below it.</text>
+  <text x="76" y="1204" class="sx">Band m rises from point m, peaks at m + 1 and falls to m + 2, so neighbouring bands overlap; the whole set</text>
+  <text x="76" y="1228" class="sx">is built for the analyser's own fftSize and sample rate, and capped at the Nyquist frequency.</text>
+
+  <text x="56" y="1348" class="h">4 · One column, from decibels to colour</text>
+  <rect x="56" y="1372" width="968" height="340" rx="16" class="panel"/>
+
+  <text x="76" y="1408" class="lab">Forty-eight bands, each one a tint between two colours</text>
+
+  <rect x="110" y="1428" width="60" height="200" rx="4" fill="#1b1e26"/>
+  <rect class="band" x="110" y="1615.5" width="60" height="12.5" fill-opacity="0.95"/>
+  <rect class="band" x="110" y="1603" width="60" height="12.5" fill-opacity="0.80"/>
+  <rect class="band" x="110" y="1590.5" width="60" height="12.5" fill-opacity="0.50"/>
+  <rect class="band" x="110" y="1578" width="60" height="12.5" fill-opacity="0.35"/>
+  <rect class="band" x="110" y="1565.5" width="60" height="12.5" fill-opacity="0.25"/>
+  <rect class="band" x="110" y="1553" width="60" height="12.5" fill-opacity="0.40"/>
+  <rect class="band" x="110" y="1540.5" width="60" height="12.5" fill-opacity="0.55"/>
+  <rect class="band" x="110" y="1528" width="60" height="12.5" fill-opacity="0.35"/>
+  <rect class="band" x="110" y="1515.5" width="60" height="12.5" fill-opacity="0.20"/>
+  <rect class="band" x="110" y="1503" width="60" height="12.5" fill-opacity="0.12"/>
+  <rect class="band" x="110" y="1490.5" width="60" height="12.5" fill-opacity="0.10"/>
+  <rect class="band" x="110" y="1478" width="60" height="12.5" fill-opacity="0.18"/>
+  <rect class="band" x="110" y="1465.5" width="60" height="12.5" fill-opacity="0.22"/>
+  <rect class="band" x="110" y="1453" width="60" height="12.5" fill-opacity="0.14"/>
+  <rect class="band" x="110" y="1440.5" width="60" height="12.5" fill-opacity="0.08"/>
+  <rect class="band" x="110" y="1428" width="60" height="12.5" fill-opacity="0.04"/>
+
+  <text x="140" y="1656" class="sx" text-anchor="middle">one column</text>
+  <text x="140" y="1680" class="sx" text-anchor="middle">16 of 48 drawn</text>
+
+  <rect x="210" y="1430" width="290" height="12" rx="6" fill="url(#ramp)"/>
+  <text x="210" y="1462" class="sx">−95 dB, quiet</text>
+  <text x="500" y="1462" class="sx" text-anchor="end">−25 dB, loud</text>
+
+  <text x="210" y="1496" class="mono">t = (db − (−95)) / 70</text>
+  <text x="210" y="1520" class="mono">t = clamp(t, 0, 1) ^ 0.7</text>
+  <text x="210" y="1544" class="mono">fill = mix(--panel-2, --accent, t)</text>
+
+  <text x="210" y="1578" class="sx">A band's energy is the weighted sum of its bins as power, written in decibels.</text>
+  <text x="210" y="1602" class="sx">The window is 70 dB wide, and the 0.7 power lifts quiet detail so a soft phoneme still shows.</text>
+  <text x="210" y="1626" class="sx">A band below the window is the panel colour itself; one at the top is the accent.</text>
+  <text x="210" y="1650" class="sx">Band 0, the lowest frequency, sits at the bottom, so pitch reads up the column.</text>
+  <text x="210" y="1674" class="sx">In the real view each band is 1 px tall and a column of 48 is one frame of the history.</text>
+
+  <text x="56" y="1766" class="h">5 · The rolling history</text>
+  <rect x="56" y="1790" width="968" height="300" rx="16" class="panel"/>
+
+  <text x="76" y="1832" class="lab">Bake the newest column, shift one pixel, blit</text>
+
+  <rect x="96" y="1856" width="420" height="90" rx="6" class="win"/>
+
+  <rect class="band" x="104" y="1860" width="8" height="82" fill-opacity="0.30"/>
+  <rect class="band" x="118" y="1860" width="8" height="82" fill-opacity="0.45"/>
+  <rect class="band" x="132" y="1860" width="8" height="82" fill-opacity="0.20"/>
+  <rect class="band" x="146" y="1860" width="8" height="82" fill-opacity="0.35"/>
+  <rect class="band" x="160" y="1860" width="8" height="82" fill-opacity="0.15"/>
+  <rect class="band" x="174" y="1860" width="8" height="82" fill-opacity="0.25"/>
+  <rect class="band" x="188" y="1860" width="8" height="82" fill-opacity="0.10"/>
+  <rect class="band" x="202" y="1860" width="8" height="82" fill-opacity="0.18"/>
+  <rect class="band" x="216" y="1860" width="8" height="82" fill-opacity="0.08"/>
+  <rect class="band" x="230" y="1860" width="8" height="82" fill-opacity="0.12"/>
+  <rect class="band" x="244" y="1860" width="8" height="82" fill-opacity="0.06"/>
+  <rect class="band" x="258" y="1860" width="8" height="82" fill-opacity="0.10"/>
+  <rect class="band" x="272" y="1860" width="8" height="82" fill-opacity="0.05"/>
+  <rect class="band" x="286" y="1860" width="8" height="82" fill-opacity="0.08"/>
+  <rect class="band" x="508" y="1860" width="6" height="82" fill-opacity="1"/>
+
+  <line x1="500" y1="1844" x2="350" y2="1844" class="shift"/>
+  <path d="M 342 1844 L 352 1839.5 L 352 1848.5 Z" fill="#5b8def"/>
+  <text x="425" y="1838" class="sx" text-anchor="middle">one pixel left</text>
+
+  <text x="306" y="1980" class="sx" text-anchor="middle">a fresh clip clears the history, so the trace rolls in from the right</text>
+
+  <text x="560" y="1832" class="lab">What the history is for</text>
+  <text x="560" y="1862" class="sx">Each frame bakes the newest column onto the right edge of</text>
+  <text x="560" y="1884" class="sx">the offscreen history, shifts it one pixel left, and blits it</text>
+  <text x="560" y="1906" class="sx">to the visible canvas, sized in device pixels.</text>
+  <text x="560" y="1936" class="sx">The shift uses copy compositing, which clears the freed</text>
+  <text x="560" y="1958" class="sx">column, so the newest column lands on empty pixels.</text>
+  <text x="560" y="1988" class="sx">A snapshot copies the history into its own canvas, so the</text>
+  <text x="560" y="2010" class="sx">spectrogram stays in a bubble after playback has ended and</text>
+  <text x="560" y="2032" class="sx">is redrawn whenever the bubble is re-rendered.</text>
+
+  <text x="56" y="2130" class="note">Only audio draws this view: a video plays in a plain media element with the browser's own controls.</text>
+  <text x="56" y="2154" class="note">It is computed live from the analyser — one pooled spectrum per frame, never per sample — so it costs the</text>
+  <text x="56" y="2178" class="note">same for a long clip as for a short one.</text>
+</svg>

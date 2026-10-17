@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1908" viewBox="0 0 1080 1908" role="img" aria-labelledby="t d" lang="en" xml:lang="en">
+  <title id="t">Resource lifecycle — okfy security explainer</title>
+  <desc id="d">How images, previews and requests are tied to the bundle generation that made them and released when the bundle changes. A single-page tool reuses the same document and caches across bundles, so a resource keyed only by file path could let a new bundle show a previous bundle's image, text or metadata, and memory could grow without bound. A full load therefore bumps the bundle generation and retires the old set: the old blob URLs are revoked, the image and media caches are emptied, the preview stack is cleared and waiting callers are woken, while the new generation stamps every operation. Six rules keep each resource tied to its own generation: a blob URL is keyed to the blob that produced it rather than reused by path, and a replaced URL is revoked so its bytes are freed; an asynchronous preview or metadata callback verifies the render ID and the generation before it applies its result; a preview history entry records the generation, so an old entry cannot point into a new bundle; a request number makes an older HTTP result lose to a newer selected bundle; a graph is built in private structures and swapped in only if the whole build succeeds; and a rejected expansion does not change the installed file set, and a new file load is rolled back. What a switch tears down is therefore the whole set of resources the previous generation held. A late result is refused rather than shown: an asynchronous preview opens with a render ID and a generation, the bundle switches and the generation moves on, and when the callback arrives carrying the old stamp the guard fails and the result is dropped. The invariants are that no preview, image or metadata from one generation is ever shown in another, and that rejected or cancelled work frees its reservations and leaves the current bundle usable.</desc>
+  <defs>
+    <style>
+      /* The viewer's own palette: the dark theme's CSS variables and the warn tint from the
+         script, so the figure reads as the tool does. */
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; fill: #e7e9ee; }
+      .eyebrow { font-size: 20px; font-weight: 700; letter-spacing: 2px; fill: #5b8def; }
+      .title { font-size: 44px; font-weight: 700; fill: #e7e9ee; }
+      .subtitle { font-size: 22px; fill: #9aa2b3; }
+      .h { font-size: 26px; font-weight: 700; fill: #e7e9ee; }
+      .lab { font-size: 15px; font-weight: 700; fill: #e7e9ee; }
+      .note { font-size: 17px; fill: #9aa2b3; }
+      .sx { font-size: 13px; fill: #9aa2b3; }
+      .br { font-size: 13px; fill: #e7e9ee; }
+      .ct { font-size: 12px; font-weight: 700; fill: #e7e9ee; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #9aa2b3; }
+      .panel { fill: #171a21; stroke: #262b36; stroke-width: 2; }
+      .card { fill: #232734; stroke: #2e3341; stroke-width: 1.5; }
+      .warn { fill: #232734; stroke: #e0575b; stroke-opacity: 0.45; stroke-width: 1.5; }
+      .region { fill: #1b1e26; stroke: #2e3341; stroke-width: 1.5; }
+      .fence { stroke: #5b8def; stroke-width: 2; fill: none; stroke-dasharray: 5 4; opacity: 0.6; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="1908" fill="#12141a"/>
+  <rect width="1080" height="8" fill="#5b8def"/>
+  <text x="56" y="52" class="eyebrow">OKFY · SECURITY EXPLAINER</text>
+  <text x="56" y="110" class="title">Resource lifecycle</text>
+  <text x="56" y="148" class="subtitle">Every image, preview and request is tied to the bundle generation that made it</text>
+
+  <text x="56" y="214" class="h">1 · One generation at a time</text>
+  <rect x="56" y="238" width="968" height="340" rx="16" class="panel"/>
+
+  <text x="76" y="300" class="lab">A full load makes a new generation and retires the old set</text>
+
+  <rect x="96" y="336" width="396" height="172" rx="12" class="region"/>
+  <text x="112" y="366" class="br">generation N — retired</text>
+  <text x="112" y="396" class="sx">its blob URLs revoked</text>
+  <text x="112" y="420" class="sx">its image and media caches emptied</text>
+  <text x="112" y="444" class="sx">its preview stack cleared</text>
+  <text x="112" y="468" class="sx">its waiting callers woken</text>
+
+  <line x1="512" y1="330" x2="512" y2="514" class="fence"/>
+  <text x="512" y="320" class="sx" text-anchor="middle">a full load</text>
+
+  <rect x="528" y="336" width="476" height="172" rx="12" class="region"/>
+  <text x="544" y="366" class="br">generation N + 1 — live</text>
+  <text x="544" y="396" class="sx">bundleGeneration++ stamps every operation</text>
+  <text x="544" y="420" class="sx">each async result must carry the new stamp</text>
+  <text x="544" y="444" class="sx">a result from the old stamp is refused</text>
+  <text x="544" y="468" class="sx">so a new bundle never shows the old one's content</text>
+
+  <text x="76" y="538" class="note">A resource without a generation could be mistaken for the open bundle's own.</text>
+
+  <text x="56" y="632" class="h">2 · The rules</text>
+  <rect x="56" y="656" width="968" height="400" rx="16" class="panel"/>
+
+  <text x="76" y="718" class="lab">Six rules keep a resource tied to its own generation</text>
+
+  <text x="100" y="754" class="sx">rule</text>
+  <text x="380" y="754" class="sx">what it does</text>
+
+  <text x="100" y="790" class="mono">key to the blob</text>
+  <text x="380" y="790" class="sx">a blob URL is tied to the blob that made it, not reused by path</text>
+
+  <text x="100" y="824" class="mono">revoke on replace</text>
+  <text x="380" y="824" class="sx">a replaced blob URL is revoked, so its bytes are freed</text>
+
+  <text x="100" y="858" class="mono">check the stamp</text>
+  <text x="380" y="858" class="sx">an async preview or metadata callback verifies the render ID and generation first</text>
+
+  <text x="100" y="892" class="mono">history carries it</text>
+  <text x="380" y="892" class="sx">a preview history entry records the generation, so an old one cannot point into a new bundle</text>
+
+  <text x="100" y="926" class="mono">number the loads</text>
+  <text x="380" y="926" class="sx">bundleLoadRequest makes an older response lose to a newer chosen bundle</text>
+
+  <text x="100" y="960" class="mono">publish last</text>
+  <text x="380" y="960" class="sx">a graph is built in private structures and swapped in only if the whole build succeeds</text>
+
+  <text x="76" y="1016" class="note">The point is not tidiness: without a generation, a resource could show a previous bundle's content.</text>
+
+  <text x="56" y="1110" class="h">3 · What a switch tears down</text>
+  <rect x="56" y="1134" width="968" height="300" rx="16" class="panel"/>
+
+  <text x="76" y="1196" class="lab">A full load runs one teardown before it installs the new bundle</text>
+
+  <text x="100" y="1232" class="sx">released</text>
+  <text x="360" y="1232" class="sx">how</text>
+
+  <text x="100" y="1268" class="mono">the blob URLs</text>
+  <text x="360" y="1268" class="sx">every image URL is revoked and its cache dropped</text>
+
+  <text x="100" y="1302" class="mono">the media URLs</text>
+  <text x="360" y="1302" class="sx">the media and stream URL caches are revoked</text>
+
+  <text x="100" y="1336" class="mono">the preview</text>
+  <text x="360" y="1336" class="sx">the stack and index reset, and previewRenderId++ invalidates callbacks</text>
+
+  <text x="100" y="1370" class="mono">the player</text>
+  <text x="360" y="1370" class="sx">an open player stops and the caption notes reset</text>
+
+  <text x="100" y="1404" class="mono">the budget</text>
+  <text x="360" y="1404" class="sx">waiters are woken, and the file set, budget and graph are replaced</text>
+
+  <text x="56" y="1488" class="h">4 · A late result is refused</text>
+  <rect x="56" y="1512" width="968" height="280" rx="16" class="panel"/>
+
+  <text x="76" y="1574" class="lab">A stale callback never reaches the page that has moved on</text>
+
+  <rect x="96" y="1600" width="200" height="92" rx="10" class="card"/>
+  <text x="112" y="1630" class="ct">the preview opens</text>
+  <text x="112" y="1654" class="sx">a render ID and a</text>
+  <text x="112" y="1674" class="sx">generation are stamped</text>
+
+  <line x1="300" y1="1646" x2="322" y2="1646" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 330 1646 L 322 1642 L 322 1650 Z" fill="#9aa2b3"/>
+
+  <rect x="332" y="1600" width="200" height="92" rx="10" class="card"/>
+  <text x="348" y="1630" class="ct">the bundle switches</text>
+  <text x="348" y="1654" class="sx">bundleGeneration++</text>
+  <text x="348" y="1674" class="sx">retires the old set</text>
+
+  <line x1="536" y1="1646" x2="558" y2="1646" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 566 1646 L 558 1642 L 558 1650 Z" fill="#9aa2b3"/>
+
+  <rect x="568" y="1600" width="200" height="92" rx="10" class="card"/>
+  <text x="584" y="1630" class="ct">the callback arrives</text>
+  <text x="584" y="1654" class="sx">it still carries the</text>
+  <text x="584" y="1674" class="sx">old stamp</text>
+
+  <line x1="772" y1="1646" x2="794" y2="1646" stroke="#9aa2b3" stroke-width="2"/>
+  <path d="M 802 1646 L 794 1642 L 794 1650 Z" fill="#9aa2b3"/>
+
+  <rect x="804" y="1600" width="200" height="92" rx="10" class="warn"/>
+  <text x="820" y="1630" class="ct">the guard runs</text>
+  <text x="820" y="1654" class="sx">the stamps differ, so</text>
+  <text x="820" y="1674" class="sx">the result is dropped</text>
+
+  <text x="76" y="1742" class="note">The guard is one comparison: render ID and generation must both be current.</text>
+
+  <text x="56" y="1838" class="note">No preview, image or metadata from one generation is ever shown in another. Rejected or cancelled work</text>
+  <text x="56" y="1862" class="note">frees its reservations and leaves the bundle you are reading usable.</text>
+</svg>
